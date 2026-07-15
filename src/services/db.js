@@ -1,5 +1,7 @@
-import { collection, addDoc, getDocs, query, where, orderBy } from "firebase/firestore";
+import { collection, addDoc, getDocs, query, where, orderBy, doc, updateDoc } from "firebase/firestore";
 import { db } from "../firebase";
+
+
 
 export const addNote = async (subjectId, content, type = 'note') => {
   try {
@@ -166,6 +168,53 @@ export const getJournalEntries = async () => {
     return entries;
   } catch (e) {
     console.error("Error getting journal entries: ", e);
+    throw e;
+  }
+};
+
+// =============================
+// BIBLIOTECA DE CONTENIDO (Read-it-Later)
+// =============================
+export const addLibraryItem = async (title, url, type) => {
+  try {
+    const docRef = await addDoc(collection(db, "library_items"), {
+      title,
+      url,
+      type, // 'video', 'article', 'social', 'book'
+      status: 'unread',
+      createdAt: new Date().toISOString()
+    });
+    return docRef.id;
+  } catch (e) {
+    console.error("Error adding library item: ", e);
+    throw e;
+  }
+};
+
+export const getLibraryItems = async () => {
+  try {
+    const q = query(collection(db, "library_items"), orderBy("createdAt", "desc"));
+    const querySnapshot = await getDocs(q);
+    const items = [];
+    querySnapshot.forEach((doc) => {
+      items.push({ id: doc.id, ...doc.data() });
+    });
+    return items;
+  } catch (e) {
+    console.error("Error getting library items: ", e);
+    throw e;
+  }
+};
+
+export const updateLibraryItemStatus = async (id, status) => {
+  try {
+    const itemRef = doc(db, "library_items", id);
+    await updateDoc(itemRef, {
+      status,
+      updatedAt: new Date().toISOString()
+    });
+  } catch (e) {
+    console.error("Error updating library item status: ", e);
     throw e;
   }
 };

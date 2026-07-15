@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { SUBJECTS } from '../data/syllabus';
+import { getQuiz } from '../data/quizzes';
 import { getItemData, saveItemData } from '../services/store';
 
 const uid = () => Math.random().toString(36).slice(2, 9);
@@ -7,6 +8,7 @@ const uid = () => Math.random().toString(36).slice(2, 9);
 // Taller de estudio de un item: Aprender · Repasar · Ejercicios.
 const ItemWorkspace = ({ item, done, onToggleDone, onClose }) => {
   const subject = SUBJECTS[item.subject];
+  const quiz = getQuiz(item.id);
   const [tab, setTab] = useState('aprender');
   const [data, setData] = useState(() => getItemData(item.id));
 
@@ -46,7 +48,8 @@ const ItemWorkspace = ({ item, done, onToggleDone, onClose }) => {
           {[
             ['aprender', '📖 Aprender'],
             ['repasar', '🔁 Repasar'],
-            ['ejercicios', '✏️ Ejercicios']
+            ['ejercicios', '✏️ Ejercicios'],
+            ...(quiz ? [['test', '🧠 Test']] : [])
           ].map(([id, label]) => (
             <button key={id} className={`tab ${tab === id ? 'is-active' : ''}`} onClick={() => setTab(id)}>
               {label}
@@ -58,6 +61,7 @@ const ItemWorkspace = ({ item, done, onToggleDone, onClose }) => {
           {tab === 'aprender' && <LearnTab subject={subject} data={data} patch={patch} />}
           {tab === 'repasar' && <ReviewTab color={subject.color} data={data} patch={patch} />}
           {tab === 'ejercicios' && <ExercisesTab color={subject.color} data={data} patch={patch} />}
+          {tab === 'test' && quiz && <QuizTab color={subject.color} quiz={quiz} />}
         </div>
       </div>
     </div>
@@ -186,6 +190,75 @@ const ExercisesTab = ({ color, data, patch }) => {
             ))}
           </ul>
         </>
+      )}
+    </div>
+  );
+};
+
+// ── Test: opción múltiple con autocorrección ──
+const QuizTab = ({ color, quiz }) => {
+  const [answers, setAnswers] = useState({});
+  const [submitted, setSubmitted] = useState(false);
+
+  const choose = (qi, oi) => {
+    if (submitted) return;
+    setAnswers((a) => ({ ...a, [qi]: oi }));
+  };
+
+  const score = quiz.reduce((acc, q, i) => acc + (answers[i] === q.answer ? 1 : 0), 0);
+  const allAnswered = quiz.every((_, i) => answers[i] !== undefined);
+
+  const reset = () => {
+    setAnswers({});
+    setSubmitted(false);
+  };
+
+  return (
+    <div className="quiz">
+      {submitted && (
+        <div className="quiz-score" style={{ borderColor: color }}>
+          Puntaje: <strong>{score}/{quiz.length}</strong>{' '}
+          {score === quiz.length ? '🎉 ¡Perfecto!' : score >= quiz.length / 2 ? '👍 Bien' : '📚 A repasar'}
+        </div>
+      )}
+
+      {quiz.map((q, qi) => (
+        <div key={qi} className="quiz-q">
+          <p className="quiz-question">{qi + 1}. {q.q}</p>
+          <div className="quiz-options">
+            {q.options.map((opt, oi) => {
+              const chosen = answers[qi] === oi;
+              let cls = 'quiz-opt';
+              if (submitted) {
+                if (oi === q.answer) cls += ' correct';
+                else if (chosen) cls += ' wrong';
+              } else if (chosen) {
+                cls += ' chosen';
+              }
+              return (
+                <button
+                  key={oi}
+                  type="button"
+                  className={cls}
+                  onClick={() => choose(qi, oi)}
+                  style={chosen && !submitted ? { borderColor: color } : undefined}
+                >
+                  {opt}
+                  {submitted && oi === q.answer && ' ✓'}
+                  {submitted && chosen && oi !== q.answer && ' ✗'}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      ))}
+
+      {!submitted ? (
+        <button className="primary-btn" style={{ background: color }} disabled={!allAnswered} onClick={() => setSubmitted(true)}>
+          Corregir
+        </button>
+      ) : (
+        <button className="ghost-btn" onClick={reset}>↺ Reintentar</button>
       )}
     </div>
   );

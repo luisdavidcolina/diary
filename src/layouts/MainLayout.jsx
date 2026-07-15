@@ -45,6 +45,13 @@ const MainLayout = () => {
             fontWeight: isActive ? 'bold' : 'normal',
             transition: 'color 0.2s'
           })}>📝 Diario</NavLink>
+
+          <NavLink to="/library" style={({ isActive }) => ({
+            color: isActive ? 'var(--accent-color)' : 'var(--text-primary)',
+            textDecoration: 'none',
+            fontWeight: isActive ? 'bold' : 'normal',
+            transition: 'color 0.2s'
+          })}>🔖 Biblioteca</NavLink>
         </div>
         
         <button 

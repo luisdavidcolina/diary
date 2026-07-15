@@ -8,6 +8,7 @@ import ProtectedRoute from './components/ProtectedRoute';
 import Finance from './pages/Finance';
 import Lifestyle from './pages/Lifestyle';
 import Journal from './pages/Journal';
+import Library from './pages/Library';
 
 function App() {
   return (
@@ -22,6 +23,7 @@ function App() {
           <Route path="finance" element={<Finance />} />
           <Route path="lifestyle" element={<Lifestyle />} />
           <Route path="journal" element={<Journal />} />
+          <Route path="library" element={<Library />} />
         </Route>
       </Route>
     </Routes>
