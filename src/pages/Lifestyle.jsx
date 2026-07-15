@@ -1,14 +1,36 @@
 import React, { useState, useEffect } from 'react';
-import { addHabitOrTask, getLifestyleItems, setLifestyleCompleted, deleteLifestyleItem } from '../services/db';
+import {
+  addHabitOrTask, getLifestyleItems, setLifestyleCompleted, deleteLifestyleItem,
+  logHabitCompletion, getHabitLogs
+} from '../services/db';
+import Heatmap from '../components/Heatmap';
+
+const todayISO = () => {
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+};
+
+// Racha: días consecutivos (terminando hoy o ayer) con al menos un completado.
+const computeStreak = (daysSet) => {
+  const has = (d) => daysSet.has(`${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`);
+  const cursor = new Date();
+  cursor.setHours(0, 0, 0, 0);
+  if (!has(cursor)) cursor.setDate(cursor.getDate() - 1);
+  let streak = 0;
+  while (has(cursor)) { streak += 1; cursor.setDate(cursor.getDate() - 1); }
+  return streak;
+};
 
 const Lifestyle = () => {
   const [items, setItems] = useState([]);
+  const [logs, setLogs] = useState([]);
   const [title, setTitle] = useState('');
   const [category, setCategory] = useState('task');
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     loadItems();
+    loadLogs();
   }, []);
 
   const loadItems = async () => {
@@ -19,6 +41,14 @@ const Lifestyle = () => {
       console.error(e);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const loadLogs = async () => {
+    try {
+      setLogs(await getHabitLogs());
+    } catch (e) {
+      console.error(e);
     }
   };
 
@@ -35,13 +65,23 @@ const Lifestyle = () => {
   };
 
   const handleToggle = async (item) => {
+    const nowCompleted = !item.isCompleted;
     // Optimista: refleja el cambio de inmediato y persiste en segundo plano.
-    setItems((prev) => prev.map((i) => (i.id === item.id ? { ...i, isCompleted: !i.isCompleted } : i)));
+    setItems((prev) => prev.map((i) => (i.id === item.id ? { ...i, isCompleted: nowCompleted } : i)));
+    if (nowCompleted) {
+      // Registro optimista para el heatmap/racha.
+      setLogs((prev) => [{ id: `tmp-${Date.now()}`, date: todayISO() }, ...prev]);
+    }
     try {
-      await setLifestyleCompleted(item.id, !item.isCompleted);
+      await setLifestyleCompleted(item.id, nowCompleted);
+      if (nowCompleted) {
+        await logHabitCompletion(todayISO());
+        loadLogs();
+      }
     } catch (e) {
       console.error(e);
-      loadItems(); // revertir si falla
+      loadItems();
+      loadLogs();
     }
   };
 
@@ -57,6 +97,13 @@ const Lifestyle = () => {
 
   const tasks = items.filter((i) => i.category === 'task');
   const habits = items.filter((i) => i.category === 'habit');
+
+  // Datos del heatmap: conteo de completados por día + racha.
+  const counts = logs.reduce((acc, l) => {
+    if (l.date) acc[l.date] = (acc[l.date] || 0) + 1;
+    return acc;
+  }, {});
+  const streak = computeStreak(new Set(Object.keys(counts)));
 
   const renderItem = (it, color) => (
     <div
@@ -92,6 +139,17 @@ const Lifestyle = () => {
         <h1 className="text-gradient">Hábitos y Organización</h1>
         <p style={{ color: 'var(--text-secondary)' }}>Tu segundo cerebro personal.</p>
       </header>
+
+      {/* Heatmap de actividad + racha */}
+      <div className="glass-panel" style={{ marginBottom: '2rem', padding: '1.5rem' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: '1rem', flexWrap: 'wrap', gap: '0.5rem' }}>
+          <h2>Actividad</h2>
+          {streak > 0 && (
+            <span className="streak-badge">🔥 {streak} {streak === 1 ? 'día' : 'días'} de racha</span>
+          )}
+        </div>
+        <Heatmap counts={counts} color="var(--color-cloud)" />
+      </div>
 
       {/* Captura Rápida (Inbox) */}
       <div className="glass-panel" style={{ marginBottom: '2rem', padding: '1.5rem' }}>

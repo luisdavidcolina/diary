@@ -89,6 +89,16 @@ export const setLifestyleCompleted = (id, isCompleted) =>
 
 export const deleteLifestyleItem = (id) => deleteDoc(doc(db, "lifestyle", id));
 
+// Registro de actividad diaria (para heatmap y racha). Un doc por completado.
+export const logHabitCompletion = async (date) => {
+  const docRef = await addDoc(collection(db, "habit_logs"), {
+    userId: uid(), date, createdAt: new Date().toISOString()
+  });
+  return docRef.id;
+};
+
+export const getHabitLogs = () => fetchMine("habit_logs");
+
 // =============================
 // DIARIO PERSONAL (Journaling)
 // =============================
