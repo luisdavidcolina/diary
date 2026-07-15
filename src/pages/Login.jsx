@@ -1,25 +1,45 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { loginWithEmail } from '../services/auth';
+import { loginWithEmail, resetPassword } from '../services/auth';
 
 const Login = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
+  const [message, setMessage] = useState('');
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
 
   const handleLogin = async (e) => {
     e.preventDefault();
     setError('');
+    setMessage('');
     setLoading(true);
 
     try {
       await loginWithEmail(email, password);
-      // Login exitoso, la ruta protegida lo dejará pasar ahora
       navigate('/');
     } catch (err) {
       setError('Credenciales incorrectas o usuario no encontrado.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleResetPassword = async () => {
+    if (!email) {
+      setError('Por favor, ingresa tu correo arriba para recuperar tu contraseña.');
+      return;
+    }
+    setError('');
+    setMessage('');
+    setLoading(true);
+    
+    try {
+      await resetPassword(email);
+      setMessage('Te hemos enviado un correo para restablecer tu contraseña. Revisa tu bandeja de entrada o spam.');
+    } catch (err) {
+      setError('Error al intentar enviar el correo de recuperación. Verifica que el correo esté escrito correctamente.');
     } finally {
       setLoading(false);
     }
@@ -40,6 +60,12 @@ const Login = () => {
         {error && (
           <div style={{ background: 'rgba(239, 68, 68, 0.2)', color: '#ef4444', padding: '0.75rem', borderRadius: '8px', marginBottom: '1rem' }}>
             {error}
+          </div>
+        )}
+
+        {message && (
+          <div style={{ background: 'rgba(16, 185, 129, 0.2)', color: '#10b981', padding: '0.75rem', borderRadius: '8px', marginBottom: '1rem' }}>
+            {message}
           </div>
         )}
 
@@ -88,13 +114,30 @@ const Login = () => {
               borderRadius: '8px',
               fontWeight: 'bold',
               cursor: loading ? 'not-allowed' : 'pointer',
-              marginTop: '1rem',
+              marginTop: '0.5rem',
               transition: 'opacity 0.2s'
             }}
           >
-            {loading ? 'Accediendo...' : 'Entrar al Diario'}
+            {loading ? 'Procesando...' : 'Entrar al Diario'}
           </button>
         </form>
+
+        <button 
+          onClick={handleResetPassword}
+          disabled={loading}
+          style={{
+            background: 'transparent',
+            color: 'var(--text-secondary)',
+            border: 'none',
+            padding: '1rem',
+            cursor: loading ? 'not-allowed' : 'pointer',
+            marginTop: '0.5rem',
+            textDecoration: 'underline',
+            fontSize: '0.9rem'
+          }}
+        >
+          ¿Olvidaste o quieres cambiar tu contraseña?
+        </button>
       </div>
     </div>
   );

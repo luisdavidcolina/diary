@@ -1,4 +1,4 @@
-import { signInWithEmailAndPassword, setPersistence, browserLocalPersistence, signOut } from "firebase/auth";
+import { signInWithEmailAndPassword, setPersistence, browserLocalPersistence, signOut, sendPasswordResetEmail } from "firebase/auth";
 import { collection, addDoc } from "firebase/firestore";
 import { auth, db } from "../firebase";
 
@@ -56,6 +56,16 @@ export const logout = async () => {
     await signOut(auth);
   } catch (error) {
     console.error("Error cerrando sesión:", error);
+    throw error;
+  }
+};
+
+export const resetPassword = async (email) => {
+  try {
+    await sendPasswordResetEmail(auth, email);
+    return true;
+  } catch (error) {
+    console.error("Error enviando correo de recuperación:", error);
     throw error;
   }
 };
