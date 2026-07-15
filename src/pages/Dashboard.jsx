@@ -3,18 +3,21 @@ import Countdown from '../components/Countdown';
 import SubjectCard from '../components/SubjectCard';
 import TodayPlan from '../components/TodayPlan';
 import ItemWorkspace from '../components/ItemWorkspace';
+import Pomodoro from '../components/Pomodoro';
 import { SUBJECTS, SUBJECT_ORDER, ITEMS } from '../data/syllabus';
-import { buildPlan, progressBySubject } from '../services/planner';
-import { getConfig, getDoneMap, saveConfig, toggleDone } from '../services/store';
+import { buildPlan, progressBySubject, studyStreak } from '../services/planner';
+import { getConfig, getDoneMap, getPomodoros, saveConfig, toggleDone } from '../services/store';
 
 const Dashboard = () => {
   const [doneMap, setDoneMap] = useState(() => getDoneMap());
   const [config, setConfig] = useState(() => getConfig());
   const [showSettings, setShowSettings] = useState(false);
   const [openItem, setOpenItem] = useState(null);
+  const [pomoTick, setPomoTick] = useState(0);
 
   const plan = useMemo(() => buildPlan(ITEMS, doneMap, config), [doneMap, config]);
   const progress = useMemo(() => progressBySubject(ITEMS, doneMap), [doneMap]);
+  const streak = useMemo(() => studyStreak(doneMap, getPomodoros()), [doneMap, pomoTick]);
 
   const handleToggle = (id) => setDoneMap({ ...toggleDone(id) });
 
@@ -24,7 +27,10 @@ const Dashboard = () => {
     <>
       <header className="header">
         <h1 className="text-gradient">Diary</h1>
-        <p>Tu centro de control hasta septiembre · {plan.percentGlobal}% del temario completado</p>
+        <p>
+          Tu centro de control hasta septiembre · {plan.percentGlobal}% completado
+          {streak > 0 && <span className="streak-badge">🔥 {streak} {streak === 1 ? 'día' : 'días'}</span>}
+        </p>
         <Countdown targetDate={config.targetDate} />
         <button className="link-btn" onClick={() => setShowSettings((v) => !v)}>
           ⚙ Ajustes del plan
@@ -55,7 +61,12 @@ const Dashboard = () => {
         )}
       </header>
 
-      <TodayPlan plan={plan} doneMap={doneMap} onToggle={handleToggle} onOpen={setOpenItem} />
+      <div className="dash-row">
+        <div className="dash-main">
+          <TodayPlan plan={plan} doneMap={doneMap} onToggle={handleToggle} onOpen={setOpenItem} />
+        </div>
+        <Pomodoro onComplete={() => setPomoTick((t) => t + 1)} />
+      </div>
 
       <div className="grid" style={{ marginTop: '2rem' }}>
         {SUBJECT_ORDER.map((sid) => (

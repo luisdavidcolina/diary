@@ -116,6 +116,15 @@ const SubjectDetail = () => {
           )}
         </div>
       </div>
+
+      {openItem && (
+        <ItemWorkspace
+          item={openItem}
+          done={Boolean(doneMap[openItem.id])}
+          onToggleDone={handleToggle}
+          onClose={() => setOpenItem(null)}
+        />
+      )}
     </div>
   );
 };

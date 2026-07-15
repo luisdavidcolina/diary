@@ -7,6 +7,12 @@
 const KEY_DONE = 'diary.progress.v1';
 const KEY_CFG = 'diary.plan.v1';
 const KEY_ITEMS = 'diary.items.v1';
+const KEY_POMO = 'diary.pomo.v1';
+
+function todayKey() {
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+}
 
 export const DEFAULT_CONFIG = {
   // Fecha tentativa de reanudación de clases tras el terremoto.
@@ -83,4 +89,27 @@ export function itemHasContent(itemId) {
   const d = getAllItemData()[itemId];
   if (!d) return false;
   return Boolean(d.notes?.trim()) || (d.cards?.length ?? 0) > 0 || (d.exercises?.length ?? 0) > 0;
+}
+
+// ─────────── Pomodoros ───────────
+// { [dateISO]: count }
+
+export function getPomodoros() {
+  try {
+    return JSON.parse(localStorage.getItem(KEY_POMO)) || {};
+  } catch {
+    return {};
+  }
+}
+
+export function addPomodoro() {
+  const all = getPomodoros();
+  const day = todayKey();
+  all[day] = (all[day] || 0) + 1;
+  localStorage.setItem(KEY_POMO, JSON.stringify(all));
+  return all;
+}
+
+export function pomodorosToday() {
+  return getPomodoros()[todayKey()] || 0;
 }

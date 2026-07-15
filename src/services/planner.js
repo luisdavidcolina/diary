@@ -99,6 +99,28 @@ export function buildPlan(items, doneMap, config) {
   };
 }
 
+// Racha de estudio: días consecutivos (terminando hoy o ayer) con actividad.
+// Cuenta como "día activo" completar un item o hacer al menos un pomodoro.
+export function studyStreak(doneMap, pomoMap = {}) {
+  const days = new Set();
+  for (const ts of Object.values(doneMap)) {
+    if (typeof ts === 'string') days.add(ts.slice(0, 10));
+  }
+  for (const [d, n] of Object.entries(pomoMap)) {
+    if (n > 0) days.add(d);
+  }
+  const cursor = new Date(`${todayISO()}T00:00:00`);
+  const has = (dt) => days.has(isoDate(dt));
+  // Si hoy aún no hay actividad, la racha puede venir desde ayer sin romperse.
+  if (!has(cursor)) cursor.setDate(cursor.getDate() - 1);
+  let streak = 0;
+  while (has(cursor)) {
+    streak += 1;
+    cursor.setDate(cursor.getDate() - 1);
+  }
+  return streak;
+}
+
 // Progreso por materia: { subjectId: {done, total, percent} }.
 export function progressBySubject(items, doneMap) {
   const acc = {};

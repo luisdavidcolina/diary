@@ -70,6 +70,42 @@ export const getTransactions = async () => {
 };
 
 // =============================
+// CUENTAS Y WALLETS (Multimoneda)
+// =============================
+export const addOrUpdateAccount = async (id, name, currency, balance) => {
+  try {
+    if (id) {
+      // Actualizar cuenta existente (opcional, para una v2)
+      // En MVP, podemos solo añadir
+    }
+    const docRef = await addDoc(collection(db, "accounts"), {
+      name,
+      currency, // 'BS' o 'USD'
+      balance: parseFloat(balance),
+      updatedAt: new Date().toISOString()
+    });
+    return docRef.id;
+  } catch (e) {
+    console.error("Error saving account: ", e);
+    throw e;
+  }
+};
+
+export const getAccounts = async () => {
+  try {
+    const querySnapshot = await getDocs(collection(db, "accounts"));
+    const accounts = [];
+    querySnapshot.forEach((doc) => {
+      accounts.push({ id: doc.id, ...doc.data() });
+    });
+    return accounts;
+  } catch (e) {
+    console.error("Error getting accounts: ", e);
+    throw e;
+  }
+};
+
+// =============================
 // HABITOS Y TAREAS (Lifestyle)
 // =============================
 export const addHabitOrTask = async (title, category = 'task') => {

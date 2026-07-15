@@ -49,6 +49,10 @@ Para que la app realmente sea tu centro de control de vida, debe cuidar tu bolsi
 4. **Metas de Ahorro Gamificadas:**
    - ¿Quieres comprar una nueva laptop para la UCV? Creas una meta visual. Cada vez que ingresas que "No comiste en la calle y ahorraste $10", el muñequito de la app o tu barra de XP sube, transformando el ahorro (que suele ser aburrido) en un juego recompensado.
 
+5. **Saldos Multimoneda (Cuentas y Wallets):**
+   - Llevar el balance individual de cada cuenta de banco local (en Bolívares) y tu cuenta/wallet de Binance (en USDT o Dólares).
+   - Integración automatizada (mediante API) de la **tasa del BCV del día** y la **tasa P2P promedio de Binance USDT**, permitiendo convertir todos tus saldos al vuelo y mostrarte tu "Patrimonio Neto Total" en la moneda que prefieras sin hacer cálculos matemáticos manuales.
+
 ---
 
 ### ¿Cómo se integra esto en nuestra Arquitectura Actual?
