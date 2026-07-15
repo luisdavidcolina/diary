@@ -1,8 +1,33 @@
-import React from 'react';
+import React, { useEffect, useRef } from 'react';
 import { Outlet, NavLink } from 'react-router-dom';
 import { logout } from '../services/auth';
 
 const MainLayout = () => {
+  const timeoutRef = useRef(null);
+
+  const resetTimer = () => {
+    if (timeoutRef.current) clearTimeout(timeoutRef.current);
+    // 10 minutos de inactividad = cierre de sesión
+    timeoutRef.current = setTimeout(() => {
+      console.log("Sesión cerrada por inactividad (10 min)");
+      logout();
+    }, 600000);
+  };
+
+  useEffect(() => {
+    resetTimer();
+    
+    const events = ['mousemove', 'mousedown', 'keypress', 'touchmove', 'scroll'];
+    const handleActivity = () => resetTimer();
+    
+    events.forEach(evt => window.addEventListener(evt, handleActivity));
+    
+    return () => {
+      if (timeoutRef.current) clearTimeout(timeoutRef.current);
+      events.forEach(evt => window.removeEventListener(evt, handleActivity));
+    };
+  }, []);
+
   return (
     <>
       <nav style={{
