@@ -29,6 +29,8 @@ const Lifestyle = () => {
   const [reminderDate, setReminderDate] = useState('');
   const [reminderTime, setReminderTime] = useState('');
   const [loading, setLoading] = useState(true);
+  const [isSaving, setIsSaving] = useState(false);
+  const [errorMsg, setErrorMsg] = useState(null);
 
   useEffect(() => {
     loadItems();
@@ -55,20 +57,32 @@ const Lifestyle = () => {
   };
 
   const scheduleExactReminder = async (id, title, date, time) => {
+    const res = await fetch('/api/schedule-exact-reminder', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id, title, date, time })
+    });
+    
+    // Si la respuesta no es json o falla, fallamos duro
+    let data;
     try {
-      await fetch('/api/schedule-exact-reminder', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ id, title, date, time })
-      });
-    } catch (error) {
-      console.error("Error scheduling exact reminder:", error);
+      data = await res.json();
+    } catch(e) {
+      throw new Error(`Error del servidor HTTP ${res.status}`);
+    }
+
+    if (!data.success) {
+      throw new Error(JSON.stringify(data.error) || 'Fallo en la API de QStash/Vercel');
     }
   };
 
   const handleAddItem = async (e) => {
     e.preventDefault();
     if (!title.trim()) return;
+    
+    setIsSaving(true);
+    setErrorMsg(null);
+    
     try {
       const dateVal = category === 'task' ? reminderDate : null;
       const timeVal = category === 'task' ? reminderTime : null;
@@ -85,6 +99,9 @@ const Lifestyle = () => {
       loadItems();
     } catch (e) {
       console.error(e);
+      setErrorMsg(e.message || "Error desconocido al guardar");
+    } finally {
+      setIsSaving(false);
     }
   };
 
@@ -309,12 +326,25 @@ const Lifestyle = () => {
             </div>
           )}
           
-          <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
-            <button type="submit" style={{ background: 'linear-gradient(135deg, var(--accent-color) 0%, #a5b4fc 100%)', color: 'white', border: 'none', padding: '0.85rem 2rem', borderRadius: '12px', fontWeight: 'bold', cursor: 'pointer', boxShadow: '0 4px 15px var(--accent-glow)', transition: 'transform 0.2s, box-shadow 0.2s' }}
-              onMouseOver={(e) => { e.target.style.transform = 'translateY(-2px)'; e.target.style.boxShadow = '0 6px 20px var(--accent-glow)'; }}
-              onMouseOut={(e) => { e.target.style.transform = 'translateY(0)'; e.target.style.boxShadow = '0 4px 15px var(--accent-glow)'; }}
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            {errorMsg && (
+              <span style={{ color: '#ef4444', fontSize: '0.85rem', maxWidth: '300px' }}>⚠️ {errorMsg}</span>
+            )}
+            <button 
+              type="submit" 
+              disabled={isSaving}
+              style={{ 
+                background: 'linear-gradient(135deg, var(--accent-color) 0%, #a5b4fc 100%)', 
+                color: 'white', border: 'none', padding: '0.85rem 2rem', borderRadius: '12px', 
+                fontWeight: 'bold', cursor: isSaving ? 'not-allowed' : 'pointer', 
+                boxShadow: '0 4px 15px var(--accent-glow)', transition: 'transform 0.2s, box-shadow 0.2s',
+                opacity: isSaving ? 0.7 : 1,
+                marginLeft: 'auto'
+              }}
+              onMouseOver={(e) => { if(!isSaving) { e.target.style.transform = 'translateY(-2px)'; e.target.style.boxShadow = '0 6px 20px var(--accent-glow)'; } }}
+              onMouseOut={(e) => { if(!isSaving) { e.target.style.transform = 'translateY(0)'; e.target.style.boxShadow = '0 4px 15px var(--accent-glow)'; } }}
             >
-              Guardar Tarea
+              {isSaving ? 'Guardando...' : 'Guardar Tarea'}
             </button>
           </div>
         </form>
@@ -323,27 +353,28 @@ const Lifestyle = () => {
       {loading ? (
         <p style={{ color: 'var(--text-secondary)' }}>Cargando…</p>
       ) : (
-        <div className="grid">
-          {/* Hábitos Diarios */}
-          <div className="glass-panel" style={{ padding: '1.5rem' }}>
-            <h2 style={{ color: 'var(--color-cloud)' }}>Rutinas y Hábitos</h2>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', marginTop: '1rem' }}>
-              {habits.length === 0 && <p style={{ color: 'var(--text-secondary)' }}>No hay hábitos registrados.</p>}
-              {habits.map((h) => renderItem(h, 'var(--color-cloud)'))}
+        <>
+          <div className="grid">
+            {/* Hábitos Diarios */}
+            <div className="glass-panel" style={{ padding: '1.5rem' }}>
+              <h2 style={{ color: 'var(--color-cloud)' }}>Rutinas y Hábitos</h2>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', marginTop: '1rem' }}>
+                {habits.length === 0 && <p style={{ color: 'var(--text-secondary)' }}>No hay hábitos registrados.</p>}
+                {habits.map((h) => renderItem(h, 'var(--color-cloud)'))}
+              </div>
+            </div>
+
+            {/* Tareas (Pendientes Genéricos) */}
+            <div className="glass-panel" style={{ padding: '1.5rem' }}>
+              <h2 style={{ color: 'var(--color-english)' }}>Pendientes</h2>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', marginTop: '1rem' }}>
+                {genericTasks.length === 0 && <p style={{ color: 'var(--text-secondary)' }}>No hay tareas pendientes.</p>}
+                {genericTasks.map((t) => renderItem(t, 'var(--color-english)'))}
+              </div>
             </div>
           </div>
 
-          {/* Tareas (Pendientes Genéricos) */}
-          <div className="glass-panel" style={{ padding: '1.5rem' }}>
-            <h2 style={{ color: 'var(--color-english)' }}>Pendientes</h2>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', marginTop: '1rem' }}>
-              {genericTasks.length === 0 && <p style={{ color: 'var(--text-secondary)' }}>No hay tareas pendientes.</p>}
-              {genericTasks.map((t) => renderItem(t, 'var(--color-english)'))}
-            </div>
-          </div>
-        </div>
-
-        {/* Tablero Kanban para Recordatorios Programados */}
+          {/* Tablero Kanban para Recordatorios Programados */}
         {reminders.length > 0 && (
           <div style={{ marginTop: '3rem', animation: 'fadeInUp 0.8s ease' }}>
             <h2 style={{ marginBottom: '1.5rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
