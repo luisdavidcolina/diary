@@ -428,6 +428,7 @@ const Lifestyle = () => {
             </div>
           </div>
         )}
+        </>
       )}
     </div>
   );
