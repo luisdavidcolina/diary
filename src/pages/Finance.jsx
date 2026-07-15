@@ -1,18 +1,19 @@
 import React, { useState, useEffect } from 'react';
 import {
   addTransaction, getTransactions, addOrUpdateAccount, getAccounts,
-  deleteTransaction, deleteAccount
+  deleteTransaction, deleteAccount, getFinanceLimits, saveFinanceLimits
 } from '../services/db';
 
 const inputStyle = { padding: '0.75rem', borderRadius: '8px', background: 'rgba(0,0,0,0.3)', border: '1px solid var(--glass-border)', color: 'white' };
 
-// Reglas del presupuesto 50/30/20.
-const BUCKETS = [
-  { key: 'need', label: 'Necesidades', pct: 0.5, color: 'var(--color-cloud)' },
-  { key: 'want', label: 'Deseos', pct: 0.3, color: 'var(--color-security)' },
-  { key: 'saving', label: 'Ahorro', pct: 0.2, color: 'var(--accent-color)' }
+const FINANCE_CATEGORIES = [
+  { id: 'house', label: 'Gastos de casa', icon: '🏠', defaultLimit: 200, color: '#3b82f6' },
+  { id: 'food_out', label: 'Comida / Delivery', icon: '🍔', defaultLimit: 50, color: '#f59e0b' },
+  { id: 'transport', label: 'Movilidad / Taxi', icon: '🚕', defaultLimit: 40, color: '#10b981' },
+  { id: 'recreation', label: 'Recreación / Salidas', icon: '🎬', defaultLimit: 50, color: '#8b5cf6' },
+  { id: 'remittances', label: 'Remesas', icon: '💸', defaultLimit: 100, color: '#ec4899' },
+  { id: 'other', label: 'Otros / Casos raros', icon: '❓', defaultLimit: 50, color: '#64748b' }
 ];
-const CAT_LABEL = { need: 'Necesidad', want: 'Deseo', saving: 'Ahorro' };
 
 const Finance = () => {
   const [rates, setRates] = useState({ bcv: 0, binance: 0 });
@@ -20,12 +21,17 @@ const Finance = () => {
 
   const [transactions, setTransactions] = useState([]);
   const [accounts, setAccounts] = useState([]);
+  
+  // Limites
+  const [limits, setLimits] = useState({});
+  const [showLimitsModal, setShowLimitsModal] = useState(false);
+  const [tempLimits, setTempLimits] = useState({});
 
   // Transacciones
   const [amount, setAmount] = useState('');
   const [desc, setDesc] = useState('');
   const [type, setType] = useState('expense');
-  const [category, setCategory] = useState('need');
+  const [category, setCategory] = useState('house');
 
   // Cuentas (con edición)
   const [accName, setAccName] = useState('');
@@ -38,7 +44,22 @@ const Finance = () => {
     fetchRates();
     loadTransactions();
     loadAccounts();
+    loadLimits();
   }, []);
+
+  const loadLimits = async () => {
+    try {
+      const data = await getFinanceLimits();
+      if (data) {
+        setLimits(data);
+      } else {
+        const def = {};
+        FINANCE_CATEGORIES.forEach(c => def[c.id] = c.defaultLimit);
+        setLimits(def);
+        await saveFinanceLimits(def);
+      }
+    } catch (e) { console.error(e); }
+  };
 
   const loadAccounts = async () => {
     try { setDbError(null); setAccounts(await getAccounts()); } catch (e) { console.error(e); setDbError(e.message || "Error de red o permisos al leer base de datos."); }
@@ -162,46 +183,50 @@ const Finance = () => {
         </div>
       </div>
 
-      {/* PRESUPUESTO 50/30/20 */}
+      {/* CONTROL DE PRESUPUESTOS */}
       <div className="glass-panel" style={{ marginBottom: '2rem', padding: '1.5rem' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', flexWrap: 'wrap', gap: '0.5rem' }}>
-          <h2>Presupuesto del mes (50/30/20)</h2>
-          <span style={{ color: 'var(--text-secondary)' }}>
-            Ingresos: <strong style={{ color: '#10b981' }}>${income.toFixed(2)}</strong> · Gastos:{' '}
-            <strong style={{ color: '#ef4444' }}>${expenses.toFixed(2)}</strong> · Balance:{' '}
-            <strong style={{ color: income - expenses >= 0 ? '#10b981' : '#ef4444' }}>${(income - expenses).toFixed(2)}</strong>
-          </span>
+          <h2>Presupuesto Mensual por Categorías</h2>
+          <button 
+            onClick={() => { setTempLimits(limits); setShowLimitsModal(true); }}
+            style={{ background: 'var(--glass-border)', color: 'white', border: 'none', padding: '0.5rem 1rem', borderRadius: '8px', cursor: 'pointer', transition: 'background 0.2s' }}
+            onMouseOver={(e) => e.target.style.background = 'rgba(255,255,255,0.1)'}
+            onMouseOut={(e) => e.target.style.background = 'var(--glass-border)'}
+          >
+            ⚙️ Ajustar Límites
+          </button>
         </div>
-        {income === 0 ? (
-          <p style={{ color: 'var(--text-secondary)', marginTop: '1rem' }}>
-            Registra un <strong>ingreso</strong> este mes para calcular tu presupuesto.
-          </p>
-        ) : (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', marginTop: '1.25rem' }}>
-            {BUCKETS.map((b) => {
-              const budget = income * b.pct;
-              const spent = spentBy(b.key);
-              const ratio = budget > 0 ? spent / budget : 0;
-              const over = spent > budget;
-              return (
-                <div key={b.key}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.9rem', marginBottom: '0.35rem' }}>
-                    <span>{b.label} <span style={{ color: 'var(--text-secondary)' }}>({b.pct * 100}%)</span></span>
-                    <span style={{ color: over ? '#ef4444' : 'var(--text-secondary)' }}>
-                      ${spent.toFixed(2)} / ${budget.toFixed(2)}
-                    </span>
-                  </div>
-                  <div style={{ height: '10px', background: 'rgba(255,255,255,0.08)', borderRadius: '6px', overflow: 'hidden' }}>
-                    <div style={{
-                      width: `${Math.min(100, ratio * 100)}%`, height: '100%',
-                      background: over ? '#ef4444' : b.color, transition: 'width 0.6s ease'
-                    }} />
-                  </div>
+        <div style={{ color: 'var(--text-secondary)', marginTop: '0.5rem' }}>
+          Ingresos: <strong style={{ color: '#10b981' }}>${income.toFixed(2)}</strong> · Gastos:{' '}
+          <strong style={{ color: '#ef4444' }}>${expenses.toFixed(2)}</strong> · Balance:{' '}
+          <strong style={{ color: income - expenses >= 0 ? '#10b981' : '#ef4444' }}>${(income - expenses).toFixed(2)}</strong>
+        </div>
+
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', marginTop: '1.5rem' }}>
+          {FINANCE_CATEGORIES.map((cat) => {
+            const limit = limits[cat.id] || cat.defaultLimit;
+            const spent = spentBy(cat.id);
+            const ratio = limit > 0 ? spent / limit : 0;
+            const over = spent > limit;
+            return (
+              <div key={cat.id}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.9rem', marginBottom: '0.35rem' }}>
+                  <span>{cat.icon} {cat.label}</span>
+                  <span style={{ color: over ? '#ef4444' : 'var(--text-secondary)', fontWeight: over ? 'bold' : 'normal' }}>
+                    ${spent.toFixed(2)} / ${limit.toFixed(2)}
+                  </span>
                 </div>
-              );
-            })}
-          </div>
-        )}
+                <div style={{ height: '10px', background: 'rgba(255,255,255,0.08)', borderRadius: '6px', overflow: 'hidden' }}>
+                  <div style={{
+                    width: `${Math.min(100, ratio * 100)}%`, height: '100%',
+                    background: over ? '#ef4444' : cat.color, transition: 'width 0.6s ease',
+                    boxShadow: over ? '0 0 8px #ef4444' : 'none'
+                  }} />
+                </div>
+              </div>
+            );
+          })}
+        </div>
       </div>
 
       {/* CUENTAS Y WALLETS */}
@@ -254,9 +279,7 @@ const Finance = () => {
               </select>
               {type === 'expense' && (
                 <select value={category} onChange={(e) => setCategory(e.target.value)} style={inputStyle}>
-                  <option value="need">Necesidad</option>
-                  <option value="want">Deseo</option>
-                  <option value="saving">Ahorro</option>
+                  {FINANCE_CATEGORIES.map(c => <option key={c.id} value={c.id}>{c.icon} {c.label}</option>)}
                 </select>
               )}
               <input type="number" step="0.01" placeholder="Monto ($)" value={amount} onChange={(e) => setAmount(e.target.value)} required style={{ ...inputStyle, flex: 1, minWidth: '100px' }} />
@@ -277,7 +300,9 @@ const Finance = () => {
                 <span style={{ flex: 1 }}>
                   {t.description}
                   {t.type === 'expense' && t.category && (
-                    <span style={{ fontSize: '0.7rem', color: 'var(--text-secondary)', marginLeft: '0.5rem' }}>· {CAT_LABEL[t.category]}</span>
+                    <span style={{ fontSize: '0.7rem', color: 'var(--text-secondary)', marginLeft: '0.5rem' }}>
+                      · {FINANCE_CATEGORIES.find(c => c.id === t.category)?.label || t.category}
+                    </span>
                   )}
                 </span>
                 <span style={{ fontWeight: 'bold', color: t.type === 'expense' ? '#ef4444' : '#10b981' }}>
@@ -289,6 +314,49 @@ const Finance = () => {
           </div>
         </div>
       </div>
+
+      {/* MODAL DE LÍMITES */}
+      {showLimitsModal && (
+        <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.8)', backdropFilter: 'blur(4px)', display: 'flex', justifyContent: 'center', alignItems: 'center', zIndex: 999 }}>
+          <div className="glass-panel" style={{ padding: '2rem', width: '90%', maxWidth: '400px', animation: 'fadeInUp 0.3s ease' }}>
+            <h2 style={{ marginBottom: '1.5rem', color: 'var(--accent-color)' }}>Ajustar Límites Mensuales</h2>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+              {FINANCE_CATEGORIES.map(cat => (
+                <div key={cat.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <span style={{ fontSize: '0.95rem' }}>{cat.icon} {cat.label}</span>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                    <span style={{ color: 'var(--text-secondary)' }}>$</span>
+                    <input 
+                      type="number" 
+                      value={tempLimits[cat.id] ?? cat.defaultLimit}
+                      onChange={(e) => setTempLimits({ ...tempLimits, [cat.id]: parseFloat(e.target.value) || 0 })}
+                      style={{ ...inputStyle, width: '90px', padding: '0.4rem', textAlign: 'right' }}
+                    />
+                  </div>
+                </div>
+              ))}
+            </div>
+            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '1rem', marginTop: '2rem' }}>
+              <button 
+                onClick={() => setShowLimitsModal(false)} 
+                style={{ background: 'transparent', color: 'var(--text-secondary)', border: '1px solid var(--glass-border)', padding: '0.6rem 1rem', borderRadius: '8px', cursor: 'pointer' }}
+              >
+                Cancelar
+              </button>
+              <button 
+                onClick={async () => {
+                  setLimits(tempLimits);
+                  await saveFinanceLimits(tempLimits);
+                  setShowLimitsModal(false);
+                }} 
+                style={{ background: 'var(--accent-color)', color: 'white', border: 'none', padding: '0.6rem 1.25rem', borderRadius: '8px', cursor: 'pointer', fontWeight: 'bold' }}
+              >
+                Guardar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

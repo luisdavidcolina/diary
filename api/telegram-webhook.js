@@ -201,7 +201,7 @@ Ejemplo: \`/recordar 15:30 Llamar al banco\`
           type: 'expense',
           amount: amount,
           title: title || 'Gasto Telegram',
-          category: 'Varios',
+          category: 'other',
           date: new Date().toISOString().split('T')[0],
           createdAt: serverTimestamp()
         });

@@ -1,4 +1,4 @@
-import { collection, addDoc, getDocs, query, where, doc, updateDoc, deleteDoc } from "firebase/firestore/lite";
+import { collection, addDoc, getDocs, query, where, doc, updateDoc, deleteDoc, setDoc } from "firebase/firestore/lite";
 import { db, auth } from "../firebase";
 
 // UID del usuario actual. Todos los datos se scopean por usuario para que
@@ -52,6 +52,24 @@ export const addTransaction = async (amount, description, type = 'expense', cate
 export const getTransactions = () => fetchMine("transactions");
 
 export const deleteTransaction = (id) => deleteDoc(doc(db, "transactions", id));
+
+export const getFinanceLimits = async () => {
+  const q = query(collection(db, "finance_limits"), where("userId", "==", uid()));
+  const snap = await getDocs(q);
+  if (snap.empty) return null;
+  return snap.docs[0].data().limits;
+};
+
+export const saveFinanceLimits = async (limitsObj) => {
+  // Save or update user limits
+  const q = query(collection(db, "finance_limits"), where("userId", "==", uid()));
+  const snap = await getDocs(q);
+  if (snap.empty) {
+    await addDoc(collection(db, "finance_limits"), { userId: uid(), limits: limitsObj });
+  } else {
+    await updateDoc(doc(db, "finance_limits", snap.docs[0].id), { limits: limitsObj });
+  }
+};
 
 // =============================
 // CUENTAS Y WALLETS (Multimoneda)
