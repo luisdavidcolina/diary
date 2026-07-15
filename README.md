@@ -9,7 +9,7 @@ La estructura y organización de los datos se irá refinando de forma progresiva
 
 ## Prioridades Actuales
 
-> **⏳ Plazo Máximo:** Todo el plan de estudio y dominio de estos temas debe cumplirse en un lapso de **2 meses**.
+> **⏳ Plazo Máximo:** Todo el plan de estudio y dominio de estos temas debe cumplirse **antes de septiembre** (un lapso aproximado de 2 meses).
 
 ### 1. Preparación para Examen de Suficiencia de Inglés
 **Perfil del estudiante:** Principiante.
