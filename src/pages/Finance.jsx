@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { addTransaction, getTransactions, addOrUpdateAccount, getAccounts } from '../services/db';
+import { addTransaction, getTransactions, addOrUpdateAccount, getAccounts, deleteTransaction, deleteAccount } from '../services/db';
 
 const Finance = () => {
   const [rates, setRates] = useState({ bcv: 0, binance: 0 });
@@ -102,6 +102,26 @@ const Finance = () => {
     }
   };
 
+  const handleDeleteAccount = async (id) => {
+    setAccounts((prev) => prev.filter((a) => a.id !== id));
+    try {
+      await deleteAccount(id);
+    } catch (e) {
+      console.error(e);
+      loadAccounts();
+    }
+  };
+
+  const handleDeleteTransaction = async (id) => {
+    setTransactions((prev) => prev.filter((t) => t.id !== id));
+    try {
+      await deleteTransaction(id);
+    } catch (e) {
+      console.error(e);
+      loadTransactions();
+    }
+  };
+
   // --- CÁLCULOS DE PATRIMONIO NETO ---
   let totalUSD = 0;
   let totalBS = 0;
@@ -193,14 +213,21 @@ const Finance = () => {
           <div className="grid">
             {accounts.length === 0 ? <p style={{ color: 'var(--text-secondary)' }}>Aún no tienes cuentas registradas.</p> : null}
             {accounts.map(acc => (
-              <div key={acc.id} style={{ padding: '1rem', background: 'rgba(255,255,255,0.05)', borderRadius: '8px', borderLeft: `4px solid ${acc.currency === 'USD' ? 'var(--color-security)' : 'var(--color-cloud)'}` }}>
+              <div key={acc.id} style={{ padding: '1rem', background: 'rgba(255,255,255,0.05)', borderRadius: '8px', borderLeft: `4px solid ${acc.currency === 'USD' ? 'var(--color-security)' : 'var(--color-cloud)'}`, position: 'relative' }}>
+                <button
+                  onClick={() => handleDeleteAccount(acc.id)}
+                  title="Eliminar cuenta"
+                  style={{ position: 'absolute', top: '0.5rem', right: '0.5rem', background: 'transparent', border: 'none', color: 'var(--text-secondary)', cursor: 'pointer' }}
+                >
+                  🗑
+                </button>
                 <div style={{ color: 'var(--text-secondary)', fontSize: '0.9rem', marginBottom: '0.5rem' }}>{acc.name}</div>
                 <div style={{ fontSize: '1.5rem', fontWeight: 'bold' }}>
                   {acc.currency === 'USD' ? '$' : 'Bs. '}{acc.balance.toFixed(2)}
                 </div>
                 <div style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', marginTop: '0.2rem' }}>
-                  ≈ {acc.currency === 'USD' 
-                      ? `Bs. ${(acc.balance * rates.binance).toFixed(2)}` 
+                  ≈ {acc.currency === 'USD'
+                      ? `Bs. ${(acc.balance * rates.binance).toFixed(2)}`
                       : `$${rates.bcv ? (acc.balance / rates.bcv).toFixed(2) : 0}`}
                 </div>
               </div>
@@ -253,11 +280,18 @@ const Finance = () => {
           <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', marginTop: '1rem' }}>
             {transactions.length === 0 ? <p style={{ color: 'var(--text-secondary)' }}>No hay transacciones aún.</p> : null}
             {transactions.map(t => (
-              <div key={t.id} style={{ display: 'flex', justifyContent: 'space-between', padding: '0.75rem', background: 'rgba(255,255,255,0.05)', borderRadius: '8px', borderLeft: `4px solid ${t.type === 'expense' ? '#ef4444' : '#10b981'}` }}>
-                <span>{t.description}</span>
+              <div key={t.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '0.5rem', padding: '0.75rem', background: 'rgba(255,255,255,0.05)', borderRadius: '8px', borderLeft: `4px solid ${t.type === 'expense' ? '#ef4444' : '#10b981'}` }}>
+                <span style={{ flex: 1 }}>{t.description}</span>
                 <span style={{ fontWeight: 'bold', color: t.type === 'expense' ? '#ef4444' : '#10b981' }}>
                   {t.type === 'expense' ? '-' : '+'}${parseFloat(t.amount).toFixed(2)}
                 </span>
+                <button
+                  onClick={() => handleDeleteTransaction(t.id)}
+                  title="Eliminar"
+                  style={{ background: 'transparent', border: 'none', color: 'var(--text-secondary)', cursor: 'pointer' }}
+                >
+                  🗑
+                </button>
               </div>
             ))}
           </div>

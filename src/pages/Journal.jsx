@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { addJournalEntry, getJournalEntries } from '../services/db';
+import { addJournalEntry, getJournalEntries, deleteJournalEntry } from '../services/db';
 
 const MOODS = [
   { emoji: '🔥', label: 'Imparable' },
@@ -45,6 +45,16 @@ const Journal = () => {
   const getMoodEmoji = (label) => {
     const mood = MOODS.find(m => m.label === label);
     return mood ? mood.emoji : '📝';
+  };
+
+  const handleDelete = async (id) => {
+    setEntries((prev) => prev.filter((en) => en.id !== id));
+    try {
+      await deleteJournalEntry(id);
+    } catch (error) {
+      console.error(error);
+      loadEntries();
+    }
   };
 
   return (
@@ -149,11 +159,20 @@ const Journal = () => {
                 {getMoodEmoji(entry.mood)}
               </div>
               
-              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '1rem', paddingLeft: '1.5rem' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '0.5rem', marginBottom: '1rem', paddingLeft: '1.5rem' }}>
                 <span style={{ color: 'var(--accent-color)', fontWeight: 'bold' }}>{entry.mood}</span>
-                <span style={{ color: 'var(--text-secondary)', fontSize: '0.9rem' }}>
-                  {new Date(entry.createdAt).toLocaleDateString('es-ES', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
-                </span>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                  <span style={{ color: 'var(--text-secondary)', fontSize: '0.9rem' }}>
+                    {new Date(entry.createdAt).toLocaleDateString('es-ES', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
+                  </span>
+                  <button
+                    onClick={() => handleDelete(entry.id)}
+                    title="Eliminar"
+                    style={{ background: 'transparent', border: 'none', color: 'var(--text-secondary)', cursor: 'pointer' }}
+                  >
+                    🗑
+                  </button>
+                </div>
               </div>
               
               <p style={{ whiteSpace: 'pre-wrap', lineHeight: '1.6', color: 'var(--text-primary)' }}>

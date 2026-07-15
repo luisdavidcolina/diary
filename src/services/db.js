@@ -1,220 +1,120 @@
-import { collection, addDoc, getDocs, query, where, orderBy, doc, updateDoc } from "firebase/firestore";
-import { db } from "../firebase";
+import { collection, addDoc, getDocs, query, where, doc, updateDoc, deleteDoc } from "firebase/firestore";
+import { db, auth } from "../firebase";
 
+// UID del usuario actual. Todos los datos se scopean por usuario para que
+// cada cuenta vea solo lo suyo.
+const uid = () => auth.currentUser?.uid || null;
 
+// Ordena por createdAt desc en el cliente (evita índices compuestos en Firestore).
+const byNewest = (arr) =>
+  [...arr].sort((a, b) => (a.createdAt < b.createdAt ? 1 : a.createdAt > b.createdAt ? -1 : 0));
 
+// Trae todos los docs de una colección que pertenecen al usuario actual.
+async function fetchMine(collectionName) {
+  const q = query(collection(db, collectionName), where("userId", "==", uid()));
+  const snap = await getDocs(q);
+  const out = [];
+  snap.forEach((d) => out.push({ id: d.id, ...d.data() }));
+  return byNewest(out);
+}
+
+// =============================
+// APUNTES (Notes)
+// =============================
 export const addNote = async (subjectId, content, type = 'note') => {
-  try {
-    const docRef = await addDoc(collection(db, "notes"), {
-      subjectId,
-      content,
-      type,
-      createdAt: new Date().toISOString()
-    });
-    return docRef.id;
-  } catch (e) {
-    console.error("Error adding document: ", e);
-    throw e;
-  }
+  const docRef = await addDoc(collection(db, "notes"), {
+    userId: uid(), subjectId, content, type, createdAt: new Date().toISOString()
+  });
+  return docRef.id;
 };
 
 export const getNotes = async (subjectId) => {
-  try {
-    const q = query(
-      collection(db, "notes"), 
-      where("subjectId", "==", subjectId),
-      orderBy("createdAt", "desc")
-    );
-    
-    const querySnapshot = await getDocs(q);
-    const notes = [];
-    querySnapshot.forEach((doc) => {
-      notes.push({ id: doc.id, ...doc.data() });
-    });
-    return notes;
-  } catch (e) {
-    console.error("Error getting documents: ", e);
-    throw e;
-  }
+  const q = query(collection(db, "notes"), where("userId", "==", uid()), where("subjectId", "==", subjectId));
+  const snap = await getDocs(q);
+  const out = [];
+  snap.forEach((d) => out.push({ id: d.id, ...d.data() }));
+  return byNewest(out);
 };
+
+export const deleteNote = (id) => deleteDoc(doc(db, "notes", id));
 
 // =============================
 // FINANZAS (Transacciones)
 // =============================
 export const addTransaction = async (amount, description, type = 'expense') => {
-  try {
-    const docRef = await addDoc(collection(db, "transactions"), {
-      amount: parseFloat(amount),
-      description,
-      type, // 'expense' o 'income'
-      createdAt: new Date().toISOString()
-    });
-    return docRef.id;
-  } catch (e) {
-    console.error("Error adding transaction: ", e);
-    throw e;
-  }
+  const docRef = await addDoc(collection(db, "transactions"), {
+    userId: uid(), amount: parseFloat(amount), description, type, createdAt: new Date().toISOString()
+  });
+  return docRef.id;
 };
 
-export const getTransactions = async () => {
-  try {
-    const q = query(collection(db, "transactions"), orderBy("createdAt", "desc"));
-    const querySnapshot = await getDocs(q);
-    const transactions = [];
-    querySnapshot.forEach((doc) => {
-      transactions.push({ id: doc.id, ...doc.data() });
-    });
-    return transactions;
-  } catch (e) {
-    console.error("Error getting transactions: ", e);
-    throw e;
-  }
-};
+export const getTransactions = () => fetchMine("transactions");
+
+export const deleteTransaction = (id) => deleteDoc(doc(db, "transactions", id));
 
 // =============================
 // CUENTAS Y WALLETS (Multimoneda)
 // =============================
 export const addOrUpdateAccount = async (id, name, currency, balance) => {
-  try {
-    if (id) {
-      // Actualizar cuenta existente (opcional, para una v2)
-      // En MVP, podemos solo añadir
-    }
-    const docRef = await addDoc(collection(db, "accounts"), {
-      name,
-      currency, // 'BS' o 'USD'
-      balance: parseFloat(balance),
-      updatedAt: new Date().toISOString()
-    });
-    return docRef.id;
-  } catch (e) {
-    console.error("Error saving account: ", e);
-    throw e;
+  const payload = { name, currency, balance: parseFloat(balance), updatedAt: new Date().toISOString() };
+  if (id) {
+    await updateDoc(doc(db, "accounts", id), payload);
+    return id;
   }
+  const docRef = await addDoc(collection(db, "accounts"), {
+    userId: uid(), createdAt: new Date().toISOString(), ...payload
+  });
+  return docRef.id;
 };
 
-export const getAccounts = async () => {
-  try {
-    const querySnapshot = await getDocs(collection(db, "accounts"));
-    const accounts = [];
-    querySnapshot.forEach((doc) => {
-      accounts.push({ id: doc.id, ...doc.data() });
-    });
-    return accounts;
-  } catch (e) {
-    console.error("Error getting accounts: ", e);
-    throw e;
-  }
-};
+export const getAccounts = () => fetchMine("accounts");
+
+export const deleteAccount = (id) => deleteDoc(doc(db, "accounts", id));
 
 // =============================
 // HABITOS Y TAREAS (Lifestyle)
 // =============================
 export const addHabitOrTask = async (title, category = 'task') => {
-  try {
-    const docRef = await addDoc(collection(db, "lifestyle"), {
-      title,
-      category, // 'task' o 'habit'
-      isCompleted: false,
-      createdAt: new Date().toISOString()
-    });
-    return docRef.id;
-  } catch (e) {
-    console.error("Error adding lifestyle item: ", e);
-    throw e;
-  }
+  const docRef = await addDoc(collection(db, "lifestyle"), {
+    userId: uid(), title, category, isCompleted: false, createdAt: new Date().toISOString()
+  });
+  return docRef.id;
 };
 
-export const getLifestyleItems = async () => {
-  try {
-    const q = query(collection(db, "lifestyle"), orderBy("createdAt", "desc"));
-    const querySnapshot = await getDocs(q);
-    const items = [];
-    querySnapshot.forEach((doc) => {
-      items.push({ id: doc.id, ...doc.data() });
-    });
-    return items;
-  } catch (e) {
-    console.error("Error getting lifestyle items: ", e);
-    throw e;
-  }
-};
+export const getLifestyleItems = () => fetchMine("lifestyle");
+
+export const setLifestyleCompleted = (id, isCompleted) =>
+  updateDoc(doc(db, "lifestyle", id), { isCompleted });
+
+export const deleteLifestyleItem = (id) => deleteDoc(doc(db, "lifestyle", id));
 
 // =============================
 // DIARIO PERSONAL (Journaling)
 // =============================
 export const addJournalEntry = async (content, mood) => {
-  try {
-    const docRef = await addDoc(collection(db, "journal_entries"), {
-      content,
-      mood,
-      createdAt: new Date().toISOString()
-    });
-    return docRef.id;
-  } catch (e) {
-    console.error("Error adding journal entry: ", e);
-    throw e;
-  }
+  const docRef = await addDoc(collection(db, "journal_entries"), {
+    userId: uid(), content, mood, createdAt: new Date().toISOString()
+  });
+  return docRef.id;
 };
 
-export const getJournalEntries = async () => {
-  try {
-    const q = query(collection(db, "journal_entries"), orderBy("createdAt", "desc"));
-    const querySnapshot = await getDocs(q);
-    const entries = [];
-    querySnapshot.forEach((doc) => {
-      entries.push({ id: doc.id, ...doc.data() });
-    });
-    return entries;
-  } catch (e) {
-    console.error("Error getting journal entries: ", e);
-    throw e;
-  }
-};
+export const getJournalEntries = () => fetchMine("journal_entries");
+
+export const deleteJournalEntry = (id) => deleteDoc(doc(db, "journal_entries", id));
 
 // =============================
 // BIBLIOTECA DE CONTENIDO (Read-it-Later)
 // =============================
 export const addLibraryItem = async (title, url, type) => {
-  try {
-    const docRef = await addDoc(collection(db, "library_items"), {
-      title,
-      url,
-      type, // 'video', 'article', 'social', 'book'
-      status: 'unread',
-      createdAt: new Date().toISOString()
-    });
-    return docRef.id;
-  } catch (e) {
-    console.error("Error adding library item: ", e);
-    throw e;
-  }
+  const docRef = await addDoc(collection(db, "library_items"), {
+    userId: uid(), title, url, type, status: 'unread', createdAt: new Date().toISOString()
+  });
+  return docRef.id;
 };
 
-export const getLibraryItems = async () => {
-  try {
-    const q = query(collection(db, "library_items"), orderBy("createdAt", "desc"));
-    const querySnapshot = await getDocs(q);
-    const items = [];
-    querySnapshot.forEach((doc) => {
-      items.push({ id: doc.id, ...doc.data() });
-    });
-    return items;
-  } catch (e) {
-    console.error("Error getting library items: ", e);
-    throw e;
-  }
-};
+export const getLibraryItems = () => fetchMine("library_items");
 
-export const updateLibraryItemStatus = async (id, status) => {
-  try {
-    const itemRef = doc(db, "library_items", id);
-    await updateDoc(itemRef, {
-      status,
-      updatedAt: new Date().toISOString()
-    });
-  } catch (e) {
-    console.error("Error updating library item status: ", e);
-    throw e;
-  }
-};
+export const updateLibraryItemStatus = (id, status) =>
+  updateDoc(doc(db, "library_items", id), { status, updatedAt: new Date().toISOString() });
+
+export const deleteLibraryItem = (id) => deleteDoc(doc(db, "library_items", id));

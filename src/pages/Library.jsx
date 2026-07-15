@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { addLibraryItem, getLibraryItems, updateLibraryItemStatus } from '../services/db';
+import { addLibraryItem, getLibraryItems, updateLibraryItemStatus, deleteLibraryItem } from '../services/db';
 
 const Library = () => {
   const [items, setItems] = useState([]);
@@ -60,6 +60,16 @@ const Library = () => {
       loadItems();
     } catch (e) {
       console.error(e);
+    }
+  };
+
+  const handleDelete = async (id) => {
+    setItems((prev) => prev.filter((i) => i.id !== id));
+    try {
+      await deleteLibraryItem(id);
+    } catch (e) {
+      console.error(e);
+      loadItems();
     }
   };
 
@@ -164,9 +174,18 @@ const Library = () => {
             <div>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '0.5rem' }}>
                 <span style={{ fontSize: '1.5rem' }}>{getTypeIcon(item.type)}</span>
-                <span style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>
-                  {new Date(item.createdAt).toLocaleDateString()}
-                </span>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                  <span style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>
+                    {new Date(item.createdAt).toLocaleDateString()}
+                  </span>
+                  <button
+                    onClick={() => handleDelete(item.id)}
+                    title="Eliminar"
+                    style={{ background: 'transparent', border: 'none', color: 'var(--text-secondary)', cursor: 'pointer' }}
+                  >
+                    🗑
+                  </button>
+                </div>
               </div>
               <h3 style={{ margin: '0.5rem 0 1rem 0', fontSize: '1.1rem' }}>{item.title}</h3>
               {item.url && (
