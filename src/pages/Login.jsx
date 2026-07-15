@@ -53,9 +53,9 @@ const Login = () => {
       minHeight: '100vh',
       flexDirection: 'column'
     }}>
-      <div className="glass-panel" style={{ maxWidth: '400px', width: '100%', textAlign: 'center' }}>
+      <div className="glass-panel" style={{ maxWidth: '400px', width: '100%', textAlign: 'center', padding: '2rem' }}>
         <h1 className="text-gradient" style={{ marginBottom: '0.5rem' }}>Diary</h1>
-        <p style={{ color: 'var(--text-secondary)', marginBottom: '2rem' }}>Centro de Control Estudiantil</p>
+        <p style={{ color: 'var(--text-secondary)', marginBottom: '2rem' }}>Sistema Operativo Personal</p>
         
         {error && (
           <div style={{ background: 'rgba(239, 68, 68, 0.2)', color: '#ef4444', padding: '0.75rem', borderRadius: '8px', marginBottom: '1rem' }}>
