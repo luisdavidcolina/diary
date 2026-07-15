@@ -21,7 +21,15 @@ export default async function handler(req, res) {
       body: JSON.stringify({
         chat_id: chatId,
         text: message,
-        parse_mode: 'Markdown'
+        parse_mode: 'Markdown',
+        reply_markup: {
+          inline_keyboard: [
+            [
+              { text: "✅ Completar", callback_data: `complete_${req.body.id}` },
+              { text: "⏳ Posponer 1h", callback_data: `snooze_${req.body.id}` }
+            ]
+          ]
+        }
       }),
     });
 
