@@ -1,5 +1,5 @@
 import { signInWithEmailAndPassword, setPersistence, browserLocalPersistence, signOut, sendPasswordResetEmail } from "firebase/auth";
-import { collection, addDoc } from "firebase/firestore";
+import { collection, addDoc } from "firebase/firestore/lite";
 import { auth, db } from "../firebase";
 
 // Función para obtener la IP pública

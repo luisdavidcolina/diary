@@ -31,6 +31,7 @@ const Lifestyle = () => {
   const [loading, setLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [errorMsg, setErrorMsg] = useState(null);
+  const [dbError, setDbError] = useState(null);
 
   useEffect(() => {
     loadItems();
@@ -39,10 +40,12 @@ const Lifestyle = () => {
 
   const loadItems = async () => {
     try {
+      setDbError(null);
       const data = await getLifestyleItems();
       setItems(data);
     } catch (e) {
       console.error(e);
+      setDbError(e.message || "Error al conectar con la base de datos.");
     } finally {
       setLoading(false);
     }
@@ -352,6 +355,12 @@ const Lifestyle = () => {
 
       {loading ? (
         <p style={{ color: 'var(--text-secondary)' }}>Cargando…</p>
+      ) : dbError ? (
+        <div style={{ padding: '2rem', background: 'rgba(239, 68, 68, 0.1)', border: '1px solid rgba(239, 68, 68, 0.3)', borderRadius: '12px', color: '#fca5a5' }}>
+           <h3>Error de Conexión</h3>
+           <p style={{ marginTop: '0.5rem' }}>{dbError}</p>
+           <p style={{ fontSize: '0.85rem', marginTop: '1rem', color: '#f87171' }}>Sugerencia: Si usas Brave u otro bloqueador de anuncios, intenta desactivar los escudos para esta página, ya que pueden bloquear la base de datos.</p>
+        </div>
       ) : (
         <>
           <div className="grid">

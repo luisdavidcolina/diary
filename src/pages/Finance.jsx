@@ -32,6 +32,7 @@ const Finance = () => {
   const [accCurrency, setAccCurrency] = useState('BS');
   const [accBalance, setAccBalance] = useState('');
   const [editingId, setEditingId] = useState(null);
+  const [dbError, setDbError] = useState(null);
 
   useEffect(() => {
     fetchRates();
@@ -40,10 +41,10 @@ const Finance = () => {
   }, []);
 
   const loadAccounts = async () => {
-    try { setAccounts(await getAccounts()); } catch (e) { console.error(e); }
+    try { setDbError(null); setAccounts(await getAccounts()); } catch (e) { console.error(e); setDbError(e.message || "Error de red o permisos al leer base de datos."); }
   };
   const loadTransactions = async () => {
-    try { setTransactions(await getTransactions()); } catch (e) { console.error(e); }
+    try { setDbError(null); setTransactions(await getTransactions()); } catch (e) { console.error(e); setDbError(e.message || "Error de red o permisos al leer base de datos."); }
   };
 
   const fetchRates = async () => {
@@ -134,6 +135,13 @@ const Finance = () => {
         <h1 className="text-gradient">Finanzas Personales</h1>
         <p style={{ color: 'var(--text-secondary)' }}>Controla tu presupuesto y sigue las tasas del día.</p>
       </header>
+
+      {dbError && (
+        <div style={{ padding: '1rem 1.5rem', marginBottom: '2rem', background: 'rgba(239, 68, 68, 0.1)', border: '1px solid rgba(239, 68, 68, 0.3)', borderRadius: '12px', color: '#fca5a5' }}>
+           <strong>Error de Conexión:</strong> {dbError}
+           <p style={{ fontSize: '0.85rem', marginTop: '0.5rem', color: '#f87171' }}>Sugerencia: Si usas bloqueadores de anuncios (ej. Brave Shields), intenta desactivarlos para esta página.</p>
+        </div>
+      )}
 
       {/* PATRIMONIO Y TASAS */}
       <div className="grid" style={{ marginBottom: '2rem' }}>

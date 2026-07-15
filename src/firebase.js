@@ -1,5 +1,5 @@
 import { initializeApp } from "firebase/app";
-import { initializeFirestore } from "firebase/firestore";
+import { getFirestore } from "firebase/firestore/lite";
 import { getAuth } from "firebase/auth";
 
 const firebaseConfig = {
@@ -12,6 +12,6 @@ const firebaseConfig = {
 };
 
 const app = initializeApp(firebaseConfig);
-// Usamos initializeFirestore con experimentalForceLongPolling para intentar evadir algunos adblockers
-export const db = initializeFirestore(app, { experimentalForceLongPolling: true });
+// Al usar firestore/lite evitamos los WebChannels que bloquean los adblockers
+export const db = getFirestore(app);
 export const auth = getAuth(app);

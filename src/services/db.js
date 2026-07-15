@@ -1,4 +1,4 @@
-import { collection, addDoc, getDocs, query, where, doc, updateDoc, deleteDoc } from "firebase/firestore";
+import { collection, addDoc, getDocs, query, where, doc, updateDoc, deleteDoc } from "firebase/firestore/lite";
 import { db, auth } from "../firebase";
 
 // UID del usuario actual. Todos los datos se scopean por usuario para que
