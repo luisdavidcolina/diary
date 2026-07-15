@@ -1,0 +1,400 @@
+\documentclass[11pt,a4paper]{article}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[english]{babel}
+\usepackage{geometry}
+\usepackage{xcolor}
+\usepackage{titlesec}
+\usepackage{enumitem}
+\usepackage{tcolorbox}
+\usepackage{fontawesome5}
+\usepackage{titlesec}
+
+\geometry{top=0.8in, bottom=0.8in, left=1in, right=1in}
+
+% Modern Colors
+\definecolor{primary}{HTML}{2B547E}
+\definecolor{secondary}{HTML}{1E90FF}
+\definecolor{accent}{HTML}{E74C3C}
+\definecolor{bg}{HTML}{F8F9FA}
+
+% Section Titles
+\titleformat{\section}{\large\bfseries\color{primary}}{}{0em}{\faChevronRight \quad}
+\titleformat{\subsection}{\normalsize\bfseries\color{secondary}}{}{0em}{}
+
+% Custom Boxes
+\newtcolorbox{hackbox}[1]{
+    colback=bg,
+    colframe=primary,
+    fonttitle=\bfseries,
+    title=#1,
+    arc=3pt,
+    boxrule=1pt
+}
+
+\newtcolorbox{trapbox}{
+    colback=red!5,
+    colframe=accent,
+    fonttitle=\bfseries,
+    title=\faExclamationTriangle \quad EXAM TRAP!,
+    arc=3pt,
+    boxrule=1pt
+}
+
+\begin{document}
+
+\begin{center}
+    {\Huge \color{primary} \textbf{EXAM STRATEGY GUIDE}} \\
+    \vspace{0.2cm}
+    {\large \color{secondary} Road to a Perfect Score - English UCV}
+\end{center}
+
+\vspace{0.5cm}
+
+\begin{tcolorbox}[colback=blue!5,colframe=primary,title=\faInfoCircle \quad CÓMO USAR ESTA GUÍA (Spanish Intro)]
+    Esta guía está diseñada para que logres un puntaje perfecto. \textbf{No intentes memorizar todo el diccionario.} Enfócate en los recuadros de \textit{"hackbox"} (estrategias) y \textit{"trapbox"} (trampas). Cada sección tiene una breve explicación en español para asegurar que entiendas la lógica detrás de cada respuesta.
+\end{tcolorbox}
+
+\begin{tcolorbox}[colback=gray!5,colframe=gray!50,title=\faBullseye \quad OBJECTIVES - LO QUE DEBES LOGRAR]
+    Para eximir esta materia, tu preparación debe cubrir estos 5 puntos clave:
+    \begin{itemize}[noitemsep]
+        \item \textbf{Reading:} Entender textos científicos sin traducir palabra por palabra.
+        \item \textbf{Grammar:} Dominar tiempos perfectos y condicionales (el 40\% del examen).
+        \item \textbf{Translation:} Traducir frases técnicas de forma natural.
+        \item \textbf{Vocabulary:} No caer en trampas de homófonos o falsos amigos.
+        \item \textbf{Composition:} Escribir 160+ palabras de forma fluida y coherente.
+    \end{itemize}
+\end{tcolorbox}
+
+\vspace{0.3cm}
+
+\section{Fase 1: Fundamentos (Nivel Cero)}
+\textit{Si las bases no son sólidas, los temas avanzados colapsarán. Empecemos desde el principio comprobando qué sabes.}
+
+\subsection{1. Glosario de Términos Gramaticales Rápidos}
+No podemos hablar de reglas en inglés sin saber de qué partes de la oración estamos hablando.
+\begin{hackbox}{Conceptos Claves Mínimos (Parts of Speech)}
+    \begin{itemize}[noitemsep]
+        \item \textbf{Sustantivo (Noun):} Una cosa, persona o idea. Ej: \textit{Cell} (célula), \textit{Doctor}.
+        \item \textbf{Verbo (Verb):} Una acción o un estado. Ej: \textit{Mutate} (mutar), \textbf{Be} (ser/estar).
+        \item \textbf{Adjetivo (Adjective):} Describe al sustantivo. ¡En inglés van \textbf{antes} de lo que describen! Ej: \textit{Red blood cell} (glóbulo rojo).
+        \item \textbf{Adverbio (Adverb):} Describe cómo se hace una acción. Muchos terminan en "-mente" (-ly). Ej: \textit{Quickly} (rápidamente).
+        \item \textbf{Pronombre (Pronoun):} Sustituye al sustantivo. Ej: \textit{He, She, It, They}.
+        \item \textbf{Preposición (Preposition):} Indica ubicación o relación temporal. Ej: \textit{On, In, At}.
+    \end{itemize}
+\end{hackbox}
+
+\subsection{2. La Estructura de Piedra: Sujeto + Verbo + Predicado}
+En español omitimos el sujeto a veces ("Pensamos que..."). \textbf{En inglés, el sujeto NUNCA se omite.} Siempre hay un responsable de la acción.
+
+\begin{trapbox}{La Trampa de los Textos Científicos}
+    La UCV suele poner sujetos larguísimos para que pierdas de vista al verbo real. \\
+    \textbf{Estructura Fija:} [ S U J E T O ] + [ \textbf{Verbo} ] + [ Predicado ]. \\
+    \textbf{Ejemplo:} [ \textit{The mutated virus from the African region} ] \textbf{has} [ \textit{a fast spread rate} ].
+\end{trapbox}
+
+\subsection{3. El Rey del Idioma: El Verbo "To Be" y Pronombres}
+"To Be" (Ser o Estar) es fundamental: es el único verbo auxiliar principal que no necesita otros verbos para negar o preguntar en presente simple.
+
+\begin{hackbox}{Pronombres y su "To Be" en Presente Simple}
+    \begin{itemize}[noitemsep]
+        \item \textbf{I} am (Yo soy/estoy)
+        \item \textbf{You / We / They} are (Tú/Ustedes, Nosotros, Ellos son/están)
+        \item \textbf{He / She / It} is (Él, Ella, Eso es/está) - \textit{¡Ojo! \textbf{It} es vital en textos médicos para referirse a una enfermedad, órgano o proceso ("It is a cell").}
+    \end{itemize}
+    \textbf{Negación:} Agrega \textit{not} después del verbo. $\to$ \textit{It is \textbf{not} an easy exam.} \\
+    \textbf{Pregunta:} Invierte verbo y sujeto. $\to$ \textit{\textbf{Is} it an easy exam?}
+\end{hackbox}
+
+\vspace{0.4cm}
+
+\section{Fase 2: Dominio de Tiempos Básicos y Continuos}
+\textit{Antes de llegar a los "Perfectos", debes saber cómo funciona el tiempo normal. El inglés es como hacer matemáticas con palabras.}
+
+\subsection{1. Presente, Pasado y Futuro Simple}
+El inglés usa "Verbos Auxiliares". Estos verbos no significan nada por sí solos, solo te dicen \textbf{en qué tiempo está la oración} cuando hay negaciones o preguntas.
+
+\begin{hackbox}{Los 3 Tiempos Simples y sus Auxiliares}
+    \begin{itemize}[noitemsep]
+        \item \textbf{Presente (Do / Does):} Habla de rutinas o verdades. \\
+        \textit{(+) He \textbf{works} in the lab.} (Añadimos "s" para He/She/It en positivo). \\
+        \textit{(-) He \textbf{does not} work in the lab.} (El auxiliar absorbe la "s"). \\
+        \textit{(?) \textbf{Does} he work in the lab?}
+        
+        \item \textbf{Pasado (Did):} Algo que ya terminó. \\
+        \textit{(+) They \textbf{discovered} a new cell.} (Verbo en pasado, usualmente -ed). \\
+        \textit{(-) They \textbf{did not} discover a new cell.} ("Did" hace el trabajo de pasado, el verbo vuelve a su forma normal). \\
+        \textit{(?) \textbf{Did} they discover a new cell?}
+        
+        \item \textbf{Futuro (Will):} Predicciones o decisiones rápicas. \\
+        \textit{(+) The virus \textbf{will} mutate.} \\
+        \textit{(-) The virus \textbf{will not} (won't) mutate.} \\
+        \textit{(?) \textbf{Will} the virus mutate?}
+    \end{itemize}
+\end{hackbox}
+
+\begin{trapbox}{Regla de Oro de los Auxiliares}
+    ¡Si usas \textbf{Does}, \textbf{Did} o \textbf{Will}, el verbo principal NUNCA cambia! \\
+    Mal: \textit{He did not \textbf{went}.} $\to$ Bien: \textit{He did not \textbf{go}.}
+\end{trapbox}
+
+\subsection{2. Tiempos Continuos (El famoso -ING)}
+Cualquier cosa "Continua" implica que la acción está ocurriendo en ese momento exacto. La fórmula matemática nunca cambia:
+
+\begin{center}
+    \textbf{Sujeto + Verbo "To Be" (am/is/are/was/were) + Verbo principal con -ING}
+\end{center}
+
+\begin{itemize}[noitemsep]
+    \item \textbf{Presente Continuo:} (Lo que está pasando AHORA o tendencias actuales). \\
+    \textit{The cells \textbf{are dividing} rapidly.} (Las células \textbf{se están} dividiendo).
+    \item \textbf{Pasado Continuo:} (Lo que estaba pasando cuando otra cosa interrumpió). \\
+    \textit{The doctor \textbf{was examining} the patient.} (El doctor \textbf{estaba} examinando).
+\end{itemize}
+
+\vspace{0.4cm}
+
+\section{Fase 3: El Núcleo del Examen (Perfectos y Condicionales)}
+\textit{Anteriormente "Phase 1". Este es el \textbf{40\% del examen}. No solo memorices trucos, entiende la lógica para dominar cualquier variante.}
+
+\subsection{1. The Perfect Tenses (El Pasado Relevante)}
+Los tiempos perfectos se usan para conexiones entre dos tiempos (Ej: Pasado y Presente, o dos momentos en el Pasado). \textbf{Su auxiliar siempre es HAVE/HAS o HAD, y el verbo principal siempre va en Participio Pasado (la 3ra columna de los verbos irregulares).}
+
+\begin{hackbox}{Present Perfect: Have/Has + Participio Pasado}
+    \textbf{Uso:} Algo que ocurrió en el pasado pero tiene impacto AHORA, o una experiencia de vida sin fecha exacta.
+    \begin{itemize}[noitemsep]
+        \item \textbf{Fórmula Positiva:} \textit{Sujeto + Have/Has + Participio Pasado.} \\
+        \textit{The package \textbf{has been} mailed.} (Ya se envió en algún punto, lo importante es que el impacto es que ahora está en camino).
+        \item \textbf{Negativa:} \textit{Sujeto + Haven't/Hasn't + Participio Pasado.} \\
+        \textit{Scientists \textbf{haven't found} a vaccine yet.} (Aún no la han encontrado, hasta el día de hoy).
+        \item \textbf{Pregunta:} \textit{Have/Has + Sujeto + Participio Pasado?} \\
+        \textit{\textbf{Have} you ever \textbf{seen} a mongoose?}
+    \end{itemize}
+    \textit{\textbf{Tip de Examen:} Si ves la palabra "Since" (Desde) o "For" (Por X cantidad de tiempo), casi siempre es Present Perfect. Ej: "I have lived here \textbf{since} 2010"}.
+\end{hackbox}
+
+\begin{hackbox}{Past Perfect: Had + Participio Pasado}
+    \textbf{Uso:} Para organizar gráficamente el pasado. Es para hablar de una acción que terminó \textbf{antes} que otra acción en el pasado (el "pasado del pasado").
+    \begin{itemize}[noitemsep]
+        \item \textbf{Lógica Matemática:} Acción 1 (Had + Participio) $\to$ Acción 2 (Pasado Simple).
+        \item \textit{The mutation \textbf{had started} (Ac.1) when they \textbf{tested} (Ac.2) the blood.} \\
+          (La mutación había empezado cuando ellos probaron la sangre. ¿Qué pasó primero? La mutación).
+    \end{itemize}
+\end{hackbox}
+
+\subsection{2. Conditionals (Estructuras de Probabilidad)}
+\textit{El examen pondrá la mitad de la oración y tú debes completar la otra mitad respetando el "equilibrio" temporal.}
+
+\begin{tcolorbox}[colback=yellow!5,colframe=accent,title=\faBalanceScale \quad La Balanza de los Condicionales]
+    \begin{itemize}
+        \item \textbf{Zero (Hechos Científicos):} [If + Presente], [Presente]. \\
+        \textit{If you heat ice, it melts.} (Si calientas hielo, se derrite).
+        
+        \item \textbf{First (Posible en el Futuro):} [If + Presente], [\textbf{Will} + Verbo Normal]. \\
+        \textit{If they test the sample, they \textbf{will find} the virus.} (Si prueban la muestra, encontrarán el virus).
+        
+        \item \textbf{Second (Hipotético/Imaginario):} [If + Pasado], [\textbf{Would} + Verbo Normal]. \\
+        \textit{If I \textbf{had} a microscope, I \textbf{would see} the cell.} (Si tuviera un microscopio, vería la célula). \\
+        \textit{\faExclamationTriangle \textbf{Trampa UCV:} El verbo "To Be" en Second Conditional \textbf{SIEMPRE es "were"} para todas las personas. Nunca uses "was". Ej: "If I \textbf{were} rich... (Si yo fuera rico...)".}
+        
+        \item \textbf{Third (Lamento del Pasado):} [If + Past Perfect (Had+Part.)], [\textbf{Would have} + Participio]. \\
+        \textit{If they \textbf{had isolated} the patient, the virus \textbf{would not have spread}.} (Si hubieran aislado al paciente, no se habría esparcido). (Pero no lo aislaron, y sí se esparció).
+    \end{itemize}
+\end{tcolorbox}
+
+\subsection{3. Modal Verbs (Posibilidad y Obligación)}
+\textit{Los verbos modales son "auxiliares con significado". Cambian el matiz de la oración. Muy usados en la sección B y C. Regla de Oro: \textbf{El verbo que va después de un modal NUNCA lleva "to" ni terminaciones (-s, -ed, -ing).}}
+
+\begin{itemize}
+    \item \textbf{Can / Could:} Habilidad o posibilidad (Puedo / Podía-Podría). \textit{"I \textbf{can} code."}
+    \item \textbf{May / Might:} Probabilidad baja (Puede que / Podría ser que). \textit{"There \textbf{may be} excess blood."} (Puede que haya...).
+    \item \textbf{Should:} Consejo (Debería). \textit{"You \textbf{should} double-check the results."}
+    \item \textbf{Must:} Obligación fuerte o deducción lógica (Debe). \textit{"The levels are high, he \textbf{must} be sick."} (Sus niveles están altos, \textit{debe} estar enfermo).
+\end{itemize}
+
+\begin{hackbox}{PRACTICE BLOCK - Phase 3}
+    Aplica lo aprendido (respuestas al final):
+    \begin{enumerate}
+        \item By the time the doctor arrived, the patient \underline{\hspace{2cm}} (die). \\ \textit{(Pista: El paciente murió \textbf{antes} de que llegara el doctor. Es el pasado del pasado).}
+        \item If you \underline{\hspace{2cm}} (see) him now, you would be surprised. \\ \textit{(Pista: Mira la segunda mitad. Dice "would". Es el Second Conditional).}
+        \item She \underline{\hspace{2cm}} (live) in Caracas since 2010. \\ \textit{(Pista: Empezó en el pasado y sigue ahí. Mira la palabra "since").}
+    \end{enumerate}
+\end{hackbox}
+\vspace{0.3cm}
+\textit{\textbf{Respuestas:} 1. \textbf{had died} (Past Perfect). 2. \textbf{saw} (Pasado, porque el condicional 2 pide pasado en la parte del If). 3. \textbf{has lived} (Present Perfect por el "since").}
+
+\vspace{0.4cm}
+
+\section{Fase 4: Nivel Científico y Sintaxis Avanzada (Traducción)}
+\textit{Anteriormente "Phase 3".} Las secciones D y G requieren un español natural. \textbf{Evita el "espanglish" técnico.} La clave para eximir es que tu traducción no suene como Google Translate del 2010.
+
+\subsection{1. The "Se" Impersonal (Voz Pasiva)}
+En inglés científico, no importa \textit{quién} hace la acción, sino \textit{qué} se logró. Por eso, en vez de decir "Vimos los resultados" (We saw the results), dicen "The results were seen". Al traducir esto al español, \textbf{SIEMPRE busca usar el "Se"}:
+\begin{itemize}
+    \item \textit{"It is thought that the virus mutates..."} $\to$ \textbf{\textcolor{blue}{Se} piensa que el virus muta...} (No "Es pensado que...").
+    \item \textit{"They were known to cause disease..."} $\to$ \textbf{\textcolor{blue}{Se} conocía que causaban enfermedades...} (Revisar Pregunta D3 de exámenes pasados).
+\end{itemize}
+\textit{\textbf{Nota Crítica:} Si traduces "They were known to..." como "Ellos eran conocidos por...", suena muy forzado y podrías perder puntos valiosos por estilo.}
+
+\subsection{2. Natural Prepositions (Preposiciones Naturales)}
+Trata de traducir la \textbf{idea}, no la palabra aislada.
+\begin{itemize}
+    \item \textit{"On exercise, the heart rate increases..."} $\to$ \textbf{Durante el ejercicio / Al ejercitarse...} (Revisar Pregunta D5). \\
+    \textit{(En español no decimos "En ejercicio los dolores crecen", usamos "durante" o formatemos de otra manera).}
+    \item \textit{"At room temperature..."} $\to$ \textbf{A temperatura ambiente...} (No "En temperatura de cuarto").
+\end{itemize}
+
+\subsection{3. Prefijos y Sufijos (El hack de vocabulario)}
+Si no sabes qué significa una palabra en la Sección A o B, mira cómo termina:
+\begin{itemize}
+    \item \textbf{-tion, -ment, -ness:} Convierten la palabra en Sustantivos (Cosos/Ideas). Ej: \textit{Isolate} (aislar) $\to$ \textit{Isola\textbf{tion}} (aislamiento). \textit{Assess} $\to$ \textit{Assess\textbf{ment}} (evaluación). \textit{Weak} $\to$ \textit{Weak\textbf{ness}} (debilidad).
+    \item \textbf{-ly:} Convierte la palabra en Adverbio (Cómo se hace, usualmente terminan en "-mente" en español). Ej: \textit{Rapid} $\to$ \textit{Rapid\textbf{ly}} (rápidamente).
+    \item \textbf{-ize, -ify:} Verbos (Acciones). Ej: \textit{Standard\textbf{ize}} (estandarizar), \textit{Class\textbf{ify}} (clasificar).
+\end{itemize}
+
+\subsection{4. Fórmulas Intraducibles (Comparativos y Existenciales)}
+El examen intentará confundirte con estructuras que no tienen traducción literal. ¡Memorízalas!
+\begin{itemize}
+    \item \textbf{The [Comparative], the [Comparative]:} Cuanto más X, más Y. \\
+    \textit{"The happier the better"} $\to$ \textbf{Cuanto más feliz, mejor.} (Cuidado: La trampa es traducirlo como "El más feliz es el mejor").
+    \item \textbf{There + To Be / Modals:} Verbo "Haber" (Existencia). \\
+    \textit{"There may be excess blood"} $\to$ \textbf{Puede haber exceso de sangre.} (Ojo: Evita traducir "There" como "Allí" cuando acompaña a palabras como \textit{is, are, was, were, may be}).
+\end{itemize}
+
+\vspace{0.4cm}
+
+\section{Fase 5: Comprensión Lectora y Vocabulario (El 40\% Oculto)}
+\textit{No necesitas entender cada palabra para responder bien. Las secciones de Reading y Vocabulario (A, B, E y F) están llenas de patrones predecibles.}
+
+\subsection{1. Reading Strategies (Las 3 Reglas de Oro)}
+\begin{itemize}[noitemsep]
+    \item \textbf{Skimming (Escaneo Rápido):} Lee solo la primera y última línea de cada párrafo. Esto te da el Tema Central sin perder tiempo estudiando cada palabra.
+    \item \textbf{Scanning (Búsqueda de Datos):} Cuando la pregunta pide una fecha, nombre, o causa (Ej: "What does X imply?"), no leas todo: \textit{escanea} el texto buscando esa palabra clave exacta.
+    \item \textbf{Context Clues:} Si no sabes qué significa "Breakthrough" o "Overthrow", mira el contexto. El examen suele poner pistas o sinónimos en la misma oración.
+\end{itemize}
+
+\subsection{2. El terror del examen: Gerundios vs. Infinitivos}
+\textit{En la Sección C siempre te pedirán elegir entre "To + Verbo" o verbo en "-ING". La regla depende puramente del verbo anterior.}
+\begin{hackbox}{Qué usar después de ciertos verbos}
+    \begin{itemize}[noitemsep]
+        \item \textbf{Opinion/Suggestion (Piden -ING):} \textit{Enjoy, Suggest, Dislike, Feel like, Regret}. \\ 
+        Ej: \textit{I suggest \textbf{taking} the bus.} / \textit{People enjoy \textbf{living} here.}
+        \item \textbf{Decision/Intention (Piden TO + Verbo):} \textit{Want, Need, Refuse, Ask}. \\
+        Ej: \textit{Alejandro refused \textbf{to leave}.} / \textit{I asked you \textbf{to come}.}
+        \item \textbf{Preposiciones (SIEMPRE piden -ING):} Después de \textit{On, In, At, After, Before, By}, el verbo que le siga va en -ING. \\
+        Ej: \textit{Francisco went back after \textbf{eating} lunch.} / \textit{Insisted on \textbf{doing}...}
+    \end{itemize}
+\end{hackbox}
+
+\subsection{3. Phrasal Verbs de Alta Frecuencia}
+\begin{itemize}[noitemsep]
+    \item \textbf{Work out:} Resolver (un problema / matemáticas) o hacer ejercicio.
+    \item \textbf{Make up:} Decidirse ("Make up your mind"), inventar una excusa o maquillarse.
+    \item \textbf{Take after / Look after:} \textit{Take after} = Parecerse a alguien (física o en actitud). \textit{Look after} = Cuidar de alguien (niños, pacientes).
+    \item \textbf{Look up to:} Admirar a alguien.
+\end{itemize}
+
+\subsection{4. Homophones \& Confusing Words (Palabras Trampa)}
+\textit{La Sección E del examen pone a prueba si sabes cuál forma escribir basándote en el contexto.}
+\begin{trapbox}{Misma pronunciación, diferente significado}
+    \begin{itemize}[noitemsep]
+        \item \textbf{Brake / Break:} \textit{Brake} = Freno (del auto). \textit{Break} = Romper / Descanso.
+        \item \textbf{Pain / Pane:} \textit{Pain} = Dolor (\textit{Chest pain}). \textit{Pane} = Panel (de vidrio/ventana).
+        \item \textbf{Beside / Besides:} \textit{Beside} = Al lado de. \textit{Besides} = Además de.
+        \item \textbf{Afraid / Worried (Preposiciones fijas):} \textit{Afraid \textbf{of}} = Miedo a... \textit{Worried \textbf{about}} = Preocupado por...
+    \end{itemize}
+\end{trapbox}
+
+\vspace{0.4cm}
+
+\section{Fase 6: Hackeando el Examen (Composición General)}
+\textit{Anteriormente "Phase 4".} El objetivo es escribir \textbf{160+ palabras} sin perder puntos por gramática o inventar vocabulario. \textbf{No intentes ser Shakespeare; intenta ser preciso.}
+
+\subsection{1. Párrafo 1: The Hook (La Introducción)}
+Empieza SIEMPRE con una frase general irrefutable (Plantilla A) y luego aterriza en el tema específico (Plantilla B).
+
+\begin{hackbox}{Plantilla de Introducción Segura (35-45 palabras)}
+    \textit{"In today's globalized world, the importance of \textbf{[TEMA DEL EXAMEN]} cannot be overstated.} (En el mundo globalizado de hoy, la importancia de X no puede ser exagerada). \\
+    \textit{From my perspective, this topic plays a crucial role in our modern society because it affects both our personal lives and our professional development in many different ways."}
+\end{hackbox}
+
+\subsection{2. Párrafos 2 \& 3: Development (El Desarrollo "Lego")}
+Usa un párrafo para ver el tema desde un lado (positivo/profesional) y otro para el otro lado (negativo/personal). Esto te da muchas palabras fáciles.
+
+\begin{hackbox}{Conectores para construir (Connector Palette)}
+    \begin{itemize}[noitemsep]
+        \item \textbf{Inicio Párrafo 2:} \textit{To start with, it is important to mention that...} (Para empezar, es importante mencionar que...).
+        \item \textbf{Añadir ideas (P2):} \textit{Furthermore...} (Además) / \textit{For instance...} (Por ejemplo).
+        \item \textbf{Inicio Párrafo 3:} \textit{On the other hand, we must also consider that...} (Por otro lado, también debemos considerar que...).
+        \item \textbf{Contraste (P3):} \textit{However...} (Sin embargo) / \textit{Despite this fact...} (A pesar de este hecho).
+    \end{itemize}
+\end{hackbox}
+
+\subsection{3. Párrafo 4: Conclusion (La Salida Limpia)}
+No añadas ideas nuevas al final, solo resume lo que ya dijiste y cierra con una predicción o recomendación en futuro o condicional (así demuestras al profesor que sabes usar esos tiempos).
+
+\begin{hackbox}{Plantilla de Conclusión (30-40 palabras)}
+    \textit{"To sum up, it is clear that \textbf{[TEMA]} is essential. Taking everything into consideration, I believe that if we continue to study this field, the results \textbf{will be} even better in the future."} (Uso perfecto del First Conditional al final para ganar puntos extra).
+\end{hackbox}
+
+\subsection{Falsos Amigos y Alta Frecuencia (Las Trampas Sensoriales)}
+\textit{Pequeños puntos que separan a un 10 de un 20. Si ves estas palabras en el texto de Reading, no las asumas por su apariencia.}
+
+\begin{trapbox}{Common False Friends / (Falsos Amigos)}
+    \begin{itemize}[noitemsep]
+        \item \textbf{Actually:} En realidad. (No es "actualmente". Actualmente es \textit{Currently}).
+        \item \textbf{Assist:} Ayudar. (No es "asistir a un lugar". Ir a clase es \textit{Attend}).
+        \item \textbf{Library:} Biblioteca. (No es "librería". Librería donde venden libros es \textit{Bookstore}).
+        \item \textbf{Success:} Éxito. (No es "suceso trágico". Un suceso es un \textit{Event} o \textit{Incident}).
+        \item \textbf{Realize:} Darse cuenta. (No es "realizar una acción". Hacer algo es \textit{Make/Do/Perform}).
+    \end{itemize}
+\end{trapbox}
+
+\section{Fase 7: Simuladores y Material de Repaso Externo}
+\textit{La mejor forma de estudiar para este examen no es leer diccionarios, sino \textbf{desarmar textos reales}.}
+
+\subsection{1. Simulacro Rápido (Error Correction)}
+¿Qué está mal en estas frases típicas de estudiantes de Nivel Cero?
+
+\begin{hackbox}{Encuentra el error (Respuestas abajo)}
+    \begin{enumerate}[noitemsep]
+        \item \textit{I suggest to go to the party.}
+        \item \textit{If I am you, I would take the exam.}
+        \item \textit{The mutation have been analyzed.}
+        \item \textit{The doctor was knowing the patient.}
+    \end{enumerate}
+\end{hackbox}
+\textit{\textbf{Correcciones:} 1. \textbf{going} (Después de suggest va verbo en -ing). 2. \textbf{were} (Second Conditional siempre es "were" en el If). 3. \textbf{has} (Mutation es "It", singular). 4. \textbf{knew} ("Know" es un verbo de estado mental, NUNCA se usa con -ing continuo).}
+
+\subsection{2. ¿De dónde sacar material externo de calidad?}
+El examen de la UCV casi siempre saca textos de revistas científicas de divulgación media. Nunca uses libros de cuentos infantiles o novelas para practicar.
+\begin{itemize}
+    \item \textbf{ScienceDaily / BBC Health:} Entra a estas páginas y busca el nivel "Health" o "Biology". Lee un artículo al día.
+    \item \textbf{La Estrategia de Lectura:} NO uses traductor. Lee el párrafo completo. Subraya los verbos (para ver si es Pasado, Presente o Perfecto) y subraya los Conectores (para saber si la oración suma ideas o las contradice).
+\end{itemize}
+
+\subsection{3. Generando Exámenes Infinitos con IA}
+La mejor herramienta que tienes a tu disposición hoy en día es ChatGPT, Claude o Gemini. No les pidas "Enséñame inglés", pídeles que simulen el examen.
+
+\begin{trapbox}{El 'Prompt' Perfecto (Cópialo y Pégalo en tu IA)}
+    "Actúa como un profesor de Inglés de la Universidad Central de Venezuela. Genera un texto científico de 250 palabras sobre [Tema: VIH / Células Madre / Covid] con un nivel B1-B2. Luego, créame un examen con 3 preguntas de Verdadero/Falso justificadas basadas en el texto, y 3 ejercicios donde tenga que completar la oración usando verbos modales, Tiempos Perfectos o Condicionales. No me des las respuestas hasta que yo conteste."
+\end{trapbox}
+
+\section{El Resumen de 2 Minutos (Cheat Sheet Final)}
+\textit{(Lee esto justo antes de entrar al examen):}
+\begin{itemize}[noitemsep]
+    \item Sustantivo = Coso / Verbo = Acción / Adjetivo = Describe al coso.
+    \item \textbf{Tenses:} Had + Participio (Pasado del Pasado). Have/Has + Participio (Present Perfect, impacto ahora).
+    \item \textbf{Conditionals:} Will (Posible 1), Would (Imaginario 2), Would have (Lamento 3). "Were" siempre para el If en el 2.
+    \item \textbf{Grammar Hacks:} Después de preposiciones (\textit{after, on}) y sugerencias (\textit{enjoy, suggest, feel like}) $\to$ usa verbo en \textbf{-ING}.
+    \item \textbf{Connectors:} Furthermore (Añadir), However (Contrastar), Therefore (Consecuencia).
+    \item \textbf{Translate:} Impersonal "Se" (It is said that... $\to$ \textbf{Se} dice que...). ¡Ojo! \textit{The [más], the [mejor]} = Cuanto más X, más Y.
+    \item \textbf{Composición:} 4 Párrafos, Intro Segura, 2 lados de la moneda, Conclusión en futuro. Evita False Friends (Actually = En realidad).
+\end{itemize}
+
+\vspace{0.8cm}
+\begin{center}
+    \textit{Has llegado al final. La base gramatical está sólida y la lógica del examen descubierta. ¡El 20/20 es tuyo!}
+\end{center}
+
+\end{document}

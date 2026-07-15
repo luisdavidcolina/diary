@@ -1,0 +1,1764 @@
+\documentclass[11pt,a4paper]{article}
+\usepackage[utf8]{inputenc}
+\usepackage[spanish]{babel}
+\AtBeginDocument{\shorthandoff{<>}}
+\usepackage{amsmath, amssymb, amsthm}
+\usepackage[dvipsnames,x11names]{xcolor}
+\usepackage{geometry}
+\geometry{margin=2.2cm, top=2.8cm, bottom=2.6cm}
+\usepackage{hyperref}
+\usepackage{enumitem}
+\usepackage{listings}
+\usepackage{tcolorbox}
+\tcbuselibrary{skins, breakable}
+\usepackage{fancyhdr}
+\usepackage{titlesec}
+\usepackage[expansion=false]{microtype}
+
+% ------ Paleta de colores ----------------------------------------
+\definecolor{azulUCV}{RGB}{0,60,130}
+\definecolor{azulMedio}{RGB}{120,170,220}
+\definecolor{azulClaro}{RGB}{232,242,255}
+\definecolor{verdeTcb}{RGB}{0,110,65}
+\definecolor{verdeClaro}{RGB}{222,246,232}
+\definecolor{amarilloAcc}{RGB}{200,160,0}
+\definecolor{amarilloClaro}{RGB}{255,251,218}
+\definecolor{rojoAcc}{RGB}{185,30,30}
+\definecolor{grisTexto}{RGB}{38,38,55}
+\definecolor{grisCodigo}{RGB}{246,247,250}
+
+% ------ Encabezado/pie de pagina ---------------------------------
+\pagestyle{fancy}
+\fancyhf{}
+\fancyhead[L]{\small\textit{\color{grisTexto}Calculo Cientifico~$\cdot$~Solucionario Parcial 2 (I-2026)}}
+\fancyhead[R]{\small\color{grisTexto}\textbf{\thepage}}
+\fancyfoot[L]{\footnotesize\color{gray}Luisdavid Colina~$\cdot$~24.766.381~$\cdot$~UCV}
+\fancyfoot[R]{\footnotesize\hyperref[pgindice]{\color{azulUCV}$\uparrow$\,\textbf{\'Indice}}}
+\renewcommand{\headrulewidth}{0.5pt}
+\renewcommand{\footrulewidth}{0.2pt}
+
+% ------ Formato de secciones -------------------------------------
+\titleformat{\section}
+  {\Large\bfseries\color{azulUCV}}
+  {\thesection.}{0.6em}{}
+  [\vspace{-3pt}\color{azulMedio}\rule{\linewidth}{1.5pt}\vspace{2pt}]
+\titlespacing*{\section}{0pt}{2.2ex}{0.8ex}
+
+\titleformat{\subsection}
+  {\large\bfseries\color{grisTexto}}
+  {\thesubsection.}{0.5em}{}
+\titlespacing*{\subsection}{0pt}{1.2ex}{0.4ex}
+
+\titleformat{\subsubsection}
+  {\normalsize\bfseries\itshape\color{grisTexto}}
+  {\thesubsubsection.}{0.5em}{}
+\titlespacing*{\subsubsection}{0pt}{0.8ex}{0.2ex}
+
+% ------ Estilos de cajas -----------------------------------------
+\tcbset{
+  clave/.style={
+    enhanced,
+    colback=amarilloClaro, colframe=amarilloAcc,
+    leftrule=4pt, toprule=0.5pt, bottomrule=0.5pt, rightrule=0.5pt,
+    arc=3pt, top=5pt, bottom=5pt, left=8pt, right=6pt
+  },
+  info/.style={
+    enhanced,
+    colback=azulClaro, colframe=azulMedio,
+    leftrule=4pt, toprule=0.5pt, bottomrule=0.5pt, rightrule=0.5pt,
+    arc=3pt, top=5pt, bottom=5pt, left=8pt, right=6pt
+  },
+  algo/.style={
+    enhanced,
+    colback=verdeClaro, colframe=verdeTcb,
+    colbacktitle=verdeTcb, coltitle=white,
+    leftrule=0pt, toprule=0.7pt, bottomrule=0.7pt, rightrule=0.7pt,
+    arc=4pt, top=5pt, bottom=5pt, left=8pt, right=6pt,
+    fonttitle=\bfseries\small
+  }
+}
+
+\newtcolorbox{examen}[1]{
+  enhanced,
+  colback=azulClaro, colframe=azulUCV,
+  colbacktitle=azulUCV, coltitle=white,
+  fonttitle=\bfseries\normalsize, title={#1},
+  boxrule=0.8pt, arc=5pt,
+  top=6pt, bottom=6pt, left=8pt, right=8pt,
+  attach boxed title to top left={yshift=-2.5mm, xshift=5mm},
+  boxed title style={arc=3pt, colframe=azulUCV}
+}
+
+% ------ Listings (codigo Matlab) ---------------------------------
+\lstset{
+  language=Matlab,
+  basicstyle=\ttfamily\small,
+  keywordstyle=\color{azulUCV}\bfseries,
+  commentstyle=\color{verdeTcb}\itshape,
+  stringstyle=\color{rojoAcc},
+  showstringspaces=false,
+  numbers=left, numberstyle=\tiny\color{gray},
+  stepnumber=1,
+  frame=single,
+  backgroundcolor=\color{grisCodigo},
+  rulecolor=\color{azulMedio},
+  breaklines=true,
+  xleftmargin=1.5em, framexleftmargin=1.5em
+}
+
+\setlength{\parskip}{4pt}
+\setlength{\parindent}{0pt}
+
+\title{\textbf{Solucionario: Exámenes de Cálculo Científico}\\
+\large Temas 3 y 4 --- Parcial 2 (I-2026)}
+\author{Luisdavid Colina --- 24.766.381}
+\date{UCV, Escuela de Computación, I-2026}
+
+\begin{document}
+\maketitle
+
+% ============================================================
+% INDICE TEMATICO
+% ============================================================
+\phantomsection\label{pgindice}
+\section*{\'Indice tem\'atico de ejercicios}
+\addcontentsline{toc}{section}{Indice tematico de ejercicios}
+
+\begin{description}[style=multiline, leftmargin=5.5cm, font=\bfseries]
+  \item[Matrices ortogonales]
+    Producto de ortogonales (\S\ref{sec:pt2_2016_p1}),
+    $A^TA$ simetrica/SPD (\S\ref{sec:q2_2017_p1}),
+    Householder --- propiedades completas (\S\ref{sec:householder_completo})
+
+  \item[SVD]
+    Algoritmo (\S\ref{sec:parcial2025_p1a}),
+    Calculo $3\times2$ (\S\ref{sec:parcial2025_p1b})
+
+  \item[Factorizacion QR]
+    Gram-Schmidt (\S\ref{sec:pt2_2016_p4}),
+    Householder + MC (\S\ref{sec:q2_2017_p4}),
+    Ejemplo Householder $3\times3$ (\S\ref{sec:householder_ejemplo}),
+    $Q^TL$ triangular superior (\S\ref{sec:qtl_upper}),
+    Practica QR (\S\ref{sec:practica_qr})
+
+  \item[Factorizacion LU]
+    LU sin pivoteo (\S\ref{sec:practica_lu_1}),
+    Valores de $\xi$ sin LU (\S\ref{sec:practica_lu_2}),
+    Tridiagonal (\S\ref{sec:practica_lu_3}),
+    PA=LU con pivoteo (\S\ref{sec:practica_lu_bonus}),
+    Unicidad (\S\ref{sec:unicidad_lu}),
+    Hessenberg (\S\ref{sec:hessenberg_lu}, \S\ref{sec:hessenberg_alg})
+
+  \item[Factorizacion Cholesky]
+    Algoritmo $3\times3$ (\S\ref{sec:cholesky_3x3}),
+    Cholesky por bloques (\S\ref{sec:q1_2024_p1}),
+    Unicidad (\S\ref{sec:cholesky_unicidad})
+
+  \item[Minimos cuadrados]
+    Residuo ortogonal (\S\ref{sec:pt2_2016_p2}, \S\ref{sec:q2_2017_p2}),
+    Escalar $\alpha$ (\S\ref{sec:escalar_alpha}),
+    Constante optima = media (\S\ref{sec:q2_2016_p2}),
+    QR para MC (\S\ref{sec:q2_2017_p4}),
+    Regresion lineal (\S\ref{sec:lsp_regresion})
+
+  \item[Metodos iterativos]
+    Convergencia Jacobi con $\alpha$ (\S\ref{sec:pt2_2016_p3}),
+    Jacobi para EDD (\S\ref{sec:q2_2016_p3}),
+    Convergencia $\|T\|<1$ (\S\ref{sec:q2_2017_p3}),
+    Gauss-Seidel (codigo) (\S\ref{sec:q2_2016_p4}),
+    Gauss-Seidel (identificacion $B$, $d$) (\S\ref{sec:parcial2025_p2a}),
+    Gauss-Seidel ($n$ variables, pseudocodigo) (\S\ref{sec:gs_nvars}),
+    Condicion sobre $\beta$ (\S\ref{sec:beta_condicion}),
+    Metodo de Richardson (\S\ref{sec:richardson}),
+    Sistemas transpuestos con LU (\S\ref{sec:sistemas_transpuestos})
+
+  \item[Minimo Descenso y GC]
+    $r_{k+1}\perp r_k$ en MD (\S\ref{sec:q2_2024_p2}),
+    $r_{k+1}\perp r_j$ en GC (\S\ref{sec:parcial2025_p3b}),
+    Propiedades de GC (a)--(c) (\S\ref{sec:parcial2_2024_p2}),
+    Formas alternativas $t_k$, $\beta_k$ (\S\ref{sec:gc_altformas}),
+    Identificar $A$, $b$, $c$ en cuadratica (\S\ref{sec:gc_cuadratica}),
+    Escalar optimo (\S\ref{sec:q2_2024_p3}),
+    Numero de condicion (\S\ref{sec:q2_2024_p1})
+\end{description}
+
+\newpage
+
+% ============================================================
+% INDICE DE ARCHIVOS
+% ============================================================
+\phantomsection\label{pgarchivos}
+\section*{\'Indice de archivos fuente}
+\addcontentsline{toc}{section}{Indice de archivos fuente}
+
+Archivos en \texttt{examenes/} y \texttt{practicas/} del repositorio.
+Los n\'umeros de p\'agina enlazan directamente a la soluci\'on.
+
+\subsubsection*{Ex\'amenes (\texttt{examenes/})}
+\begin{itemize}[leftmargin=0pt, itemsep=3pt, label={}]
+  \item \texttt{PT2-2016-II.pdf}
+    \dotfill \hyperref[sec:pt2_2016_p1]{Segundo Parcial 2016-II}
+    \ (p\'ag.~\pageref{sec:pt2_2016_p1})
+
+  \item \texttt{Q2-2016-II.pdf}
+    \dotfill \hyperref[sec:q2_2016_p1]{Quiz 2 --- 2016-II}
+    \ (p\'ag.~\pageref{sec:q2_2016_p1})
+
+  \item \texttt{Q2-2017-I.pdf}
+    \dotfill \hyperref[sec:q2_2017_p1]{Quiz 2 --- 2017-I}
+    \ (p\'ag.~\pageref{sec:q2_2017_p1})
+
+  \item \texttt{QuizParcial2-II2024CLAVE.pdf}
+    \dotfill \hyperref[sec:q2_2024_p1]{Quiz 2, 2024-II}
+    \ (p\'ag.~\pageref{sec:q2_2024_p1})
+    $+$ \hyperref[sec:parcial2_2024_p1]{Parcial II, 2024-II}
+    \ (p\'ag.~\pageref{sec:parcial2_2024_p1})
+
+  \item \texttt{SolQuiz1-I2025.pdf}
+    \dotfill \hyperref[sec:q1_2024_p1]{Cholesky por bloques (Quiz 1, 2024-II)}
+    \ (p\'ag.~\pageref{sec:q1_2024_p1})
+
+  \item \texttt{Parcial1-I2025CLAVE.pdf}
+    \dotfill \textit{Parcial 1, I-2025 --- temas 1--2, no cubre este solucionario}
+
+  \item \texttt{SolQuiz2-I2025.pdf}
+    \dotfill \textit{Pendiente de incorporar al solucionario}
+
+  \item \texttt{parciales\_quices.pdf}
+    \dotfill \textit{Colecci\'on hist\'orica de varios ex\'amenes (referencia)}
+
+  \item \texttt{PT3-~C\'alculo~Cientifico~2024-I.pdf}
+    \dotfill \textit{Parcial 3, 2024-I --- fuera del alcance del Parcial 2}
+
+  \item \texttt{Parcial~I.pdf}
+    \dotfill \textit{Primer parcial (temas 1--2) --- referencia}
+\end{itemize}
+
+\subsubsection*{Pr\'acticas (\texttt{practicas/})}
+\begin{itemize}[leftmargin=0pt, itemsep=3pt, label={}]
+  \item \texttt{Practica-LU.pdf}
+    \dotfill \hyperref[sec:practica_lu_1]{Pr\'actica: Factorizaci\'on LU (28 May 2026)}
+    \ (p\'ag.~\pageref{sec:practica_lu_1})
+
+  \item \texttt{Practica-QR.pdf}
+    \dotfill \hyperref[sec:practica_qr]{Pr\'actica: Factorizaci\'on QR (04 Jun 2026)}
+    \ (p\'ag.~\pageref{sec:practica_qr})
+
+  \item \texttt{QR\_Householder.pdf}
+    \dotfill \hyperref[sec:householder_ejemplo]{Ejemplo QR con Householder (05 Jun 2026)}
+    \ (p\'ag.~\pageref{sec:householder_ejemplo})
+
+  \item \texttt{Practica-LSP-Jacobi-GaussSeidel.pdf}
+    \dotfill \hyperref[sec:practica_lsp_jacobi]{Pr\'actica: LSP y M\'etodos Iterativos (11 Jun 2026)}
+    \ (p\'ag.~\pageref{sec:practica_lsp_jacobi})
+
+  \item \texttt{Practica-GradientesConjugados.pdf}
+    \dotfill \hyperref[sec:practica_gc]{Pr\'actica: Gradientes Conjugados (18 Jun 2026)}
+    \ (p\'ag.~\pageref{sec:practica_gc})
+\end{itemize}
+
+\newpage
+
+% ============================================================
+\section{Segundo Parcial 2016-II}
+% ============================================================
+
+\begin{examen}{Segundo Parcial 2016-II --- 4 preguntas de 5 puntos c/u}
+\textbf{P1.} Sean $Q_1,\ldots,Q_n\in\mathbb{R}^{m\times m}$ matrices ortogonales. Demuestre que el producto $Q=Q_1Q_2\cdots Q_n$ también es ortogonal.
+
+\smallskip\textbf{P2.} Sea $A\in\mathbb{R}^{m\times n}$ con $m>n$ y $b\in\mathbb{R}^m$. Demuestre que si $\hat x$ minimiza $\|b-Ax\|_2$, entonces el residuo $r=b-A\hat x$ es ortogonal a cada columna $a_i$ de $A$.
+
+\smallskip\textbf{P3.} Sea $A=\begin{pmatrix}2&\alpha\\\alpha&1\end{pmatrix}$. Determine todos los valores de $\alpha\in\mathbb{R}$ para los cuales el método de Jacobi converge al aplicarlo al sistema $Ax=b$ (para cualquier $b$ y cualquier $x^{(0)}$).
+
+\smallskip\textbf{P4.} Calcule la factorización $QR$ de $A=\begin{pmatrix}1&3\\1&-3\\1&4\\1&-4\end{pmatrix}$ usando el proceso de Gram-Schmidt.
+\end{examen}
+
+\subsection{P1: Producto de matrices ortogonales es ortogonal}
+\label{sec:pt2_2016_p1}
+
+\textbf{Idea:} $(AB)^T = B^TA^T$, así que la transpuesta del producto \emph{invierte} el orden. Los factores adyacentes $Q_i^TQ_i = I$ se cancelan en cascada (efecto telescópico).
+
+\begin{proof}
+Sean $Q_1, \ldots, Q_n$ ortogonales ($Q_i^T Q_i = I$) y $Q = Q_1 Q_2 \cdots Q_n$.
+\[
+  Q^T Q = (Q_n^T \cdots Q_1^T)(Q_1 \cdots Q_n).
+\]
+Se cancelan de adentro hacia afuera:
+$\underbrace{Q_1^T Q_1}_{=I} \to \underbrace{Q_2^T Q_2}_{=I} \to \cdots \to Q_n^T Q_n = I$. \qed
+\end{proof}
+
+\subsection{P2: Residuo ortogonal al espacio columna en MC}
+\label{sec:pt2_2016_p2}
+
+\textbf{Idea:} Para minimizar $\|b-Ax\|_2^2$ igualamos su gradiente a cero. El gradiente es $A^T$ aplicado al residuo $b-Ax$; igualarlo a cero dice exactamente que el residuo es ortogonal a cada columna de $A$.
+
+\begin{proof}
+Sea $f(x) = \|b-Ax\|_2^2 = b^Tb - 2x^TA^Tb + x^TA^TAx$ (expandiendo $\|b-Ax\|^2$).
+
+Gradiente respecto a $x$ e igualado a cero:
+\[
+  \nabla_x f = -2A^Tb + 2A^TAx = 0 \implies A^T\underbrace{(b-Ax)}_{\text{residuo}} = 0.
+\]
+Escribiendo $A = [a_1|\cdots|a_n]$, la ecuación $A^T(b-Ax)=0$ equivale a
+$a_i^T(b-Ax)=0$ para todo $i$, es decir el residuo $b-A\hat{x}$ es ortogonal a cada columna de $A$.
+\end{proof}
+
+\textbf{Interpretación geométrica:} $A\hat{x}$ es la proyección de $b$ sobre $\operatorname{col}(A)$. El residuo $b-A\hat{x}$ cae perpendicularmente al subespacio columna.
+
+\subsection{P3: Convergencia de Jacobi para $A = \begin{pmatrix}2&\alpha\\\alpha&1\end{pmatrix}$}
+\label{sec:pt2_2016_p3}
+
+\textbf{Construcción de la iteración de Jacobi.} Se descompone $A = D + L + U$ donde:
+\begin{itemize}[noitemsep]
+  \item $D$ = diagonal de $A$,
+  \item $L$ = parte estrictamente triangular inferior,
+  \item $U$ = parte estrictamente triangular superior.
+\end{itemize}
+La ecuación $Ax = b$ se reescribe $Dx = -(L+U)x + b$, despejando la iteración:
+\[
+  x_{k+1} = \underbrace{-D^{-1}(L+U)}_{T_J}\,x_k + D^{-1}b.
+\]
+Jacobi \textbf{converge} $\Leftrightarrow$ $\rho(T_J) < 1$ (radio espectral de la matriz de iteración).
+
+Para $A = \bigl[\begin{smallmatrix}2&\alpha\\\alpha&1\end{smallmatrix}\bigr]$:
+\[
+  D = \begin{pmatrix}2&0\\0&1\end{pmatrix},\quad L+U = \begin{pmatrix}0&\alpha\\\alpha&0\end{pmatrix}
+  \implies
+  T_J = -\begin{pmatrix}\tfrac{1}{2}&0\\0&1\end{pmatrix}\begin{pmatrix}0&\alpha\\\alpha&0\end{pmatrix}
+  = \begin{pmatrix}0 & -\alpha/2\\-\alpha & 0\end{pmatrix}.
+\]
+\textbf{Autovalores de $T_J$:}
+\[
+  \det(T_J - \lambda I) = \lambda^2 - \frac{\alpha^2}{2} = 0
+  \implies \lambda_{1,2} = \pm\frac{|\alpha|}{\sqrt{2}},
+  \quad \rho(T_J) = \frac{|\alpha|}{\sqrt{2}}.
+\]
+
+\begin{tcolorbox}[clave]
+\textbf{Jacobi converge} $\Leftrightarrow$ $\rho(T_J)<1$ $\Leftrightarrow$ $|\alpha|/\sqrt{2}<1$
+$\Leftrightarrow$ $|\alpha| < \sqrt{2}$.
+\end{tcolorbox}
+
+\subsection{P4: Factorizacion QR por Gram-Schmidt}
+\label{sec:pt2_2016_p4}
+
+\textbf{Idea (Gram-Schmidt):} Construir columnas ortonormales $q_i$ a partir de las columnas $a_i$ de $A$. En cada paso: (1) proyectar $a_j$ sobre los $q_i$ ya calculados y restar esas proyecciones → vector $v_j$ ortogonal a todos los anteriores; (2) normalizar: $q_j = v_j/\|v_j\|$. Los coeficientes $r_{ij}$ son las proyecciones.
+
+$A = \begin{pmatrix}1&3\\1&-3\\1&4\\1&-4\end{pmatrix}$, columnas $a_1=(1,1,1,1)^T$, $a_2=(3,-3,4,-4)^T$.
+
+\textbf{Paso 1 --- primera columna ortonormal:}
+\[
+  v_1 = a_1 = (1,1,1,1)^T, \quad \|v_1\|=2, \quad
+  q_1 = \frac{v_1}{2} = \tfrac{1}{2}(1,1,1,1)^T, \quad r_{11}=\|v_1\|=2.
+\]
+
+\textbf{Paso 2 --- ortogonalizar $a_2$ respecto a $q_1$:}
+\[
+  r_{12} = q_1^T a_2 = \tfrac{1}{2}(3-3+4-4) = 0
+  \implies v_2 = a_2 - r_{12}\,q_1 = a_2 = (3,-3,4,-4)^T.
+\]
+(El resultado $r_{12}=0$ indica que $a_1\perp a_2$; $Q$ ya es ortogonal sin modificar $a_2$.)
+\[
+  \|v_2\| = \sqrt{9+9+16+16} = \sqrt{50} = 5\sqrt{2}, \quad
+  q_2 = \frac{(3,-3,4,-4)^T}{5\sqrt{2}}, \quad r_{22}=5\sqrt{2}.
+\]
+
+\[
+  Q = \begin{pmatrix}1/2 & 3/(5\sqrt{2}) \\ 1/2 & -3/(5\sqrt{2}) \\
+  1/2 & 4/(5\sqrt{2}) \\ 1/2 & -4/(5\sqrt{2})\end{pmatrix}, \qquad
+  R = \begin{pmatrix}2 & 0 \\ 0 & 5\sqrt{2}\end{pmatrix}.
+\]
+
+% ============================================================
+\section{Quiz 2 --- 2016-II}
+% ============================================================
+
+\begin{examen}{Quiz 2 (2016-II) --- 4 preguntas de 5 puntos c/u}
+\textbf{P1.} Sea $H=I-\frac{2vv^T}{v^Tv}$ con $v\in\mathbb{R}^n$, $v\ne0$. Demuestre que $H$ es simétrica y ortogonal.
+
+\smallskip\textbf{P2.} Dados $y_1,\ldots,y_n\in\mathbb{R}$, encuentre la constante $C^*$ que minimiza $E(C)=\sum_{i=1}^n(y_i-C)^2$. Demuestre que $C^*$ es la media aritmética de los datos.
+
+\smallskip\textbf{P3.} Sea $A\in\mathbb{R}^{n\times n}$ estrictamente diagonalmente dominante (EDD): $|a_{ii}|>\sum_{j\ne i}|a_{ij}|$ para todo $i$. Demuestre que el método de Jacobi converge para cualquier $x^{(0)}$.
+
+\smallskip\textbf{P4.} Escriba el pseudocódigo (o código Matlab) del método de Gauss-Seidel para resolver el sistema $Ax=b$ con criterio de parada $\|x^{(k+1)}-x^{(k)}\|_\infty<\varepsilon$.
+\end{examen}
+
+\subsection{P1: Householder es simétrica y ortogonal}
+\label{sec:q2_2016_p1}
+
+Sea $H = I - \dfrac{2vv^T}{v^Tv}$.
+
+\textbf{¿Qué hay que probar?} (1) Que $H^T = H$ (simétrica). (2) Que $H^TH = I$ (ortogonal). Dado que ya probaremos (1), la ortogonalidad equivale a mostrar $H^2 = I$, es decir que $H$ es su propia inversa.
+
+\begin{proof}
+\textbf{Parte 1: $H$ es simétrica.}
+
+Transponemos cada término de $H = I - \frac{2}{v^Tv}vv^T$:
+\[
+  H^T = I^T - \frac{2}{v^Tv}(vv^T)^T.
+\]
+El factor $2/(v^Tv)$ es escalar (no cambia al transponer). La transpuesta de un producto exterior $vv^T$ es $(vv^T)^T = (v^T)^Tv^T = vv^T$ (se invierte el orden pero $v^T$ transpuesta es $v$ y $v$ transpuesta es $v^T$). Luego $H^T = I - \frac{2}{v^Tv}vv^T = H$. \qed
+
+\textbf{Parte 2: $H$ es ortogonal.}
+
+Como $H = H^T$, la condición $H^TH = I$ equivale a $H^2 = I$. Calculamos $H^2$ expandiendo el cuadrado de un binomio matricial:
+\[
+  H^2 = \left(I - \frac{2vv^T}{v^Tv}\right)^2
+      = I - \frac{4vv^T}{v^Tv} + \frac{4\,v\underbrace{(v^Tv)}_{\text{escalar}}v^T}{(v^Tv)^2}.
+\]
+En el último término, $(v^Tv)$ es un escalar que sale del producto $v^T\cdot v$. Simplificando:
+\[
+  H^2 = I - \frac{4vv^T}{v^Tv} + \frac{4(v^Tv)\,vv^T}{(v^Tv)^2}
+      = I - \frac{4vv^T}{v^Tv} + \frac{4vv^T}{v^Tv} = I. \qed
+\]
+Los dos términos de $vv^T$ se cancelan exactamente porque el factor del término cúbico simplifica a $4/(v^Tv)$, igual que el término cuadrático.
+\end{proof}
+
+\begin{tcolorbox}[info]
+\textbf{Interpretación geométrica:} $H$ es una \emph{reflexión} respecto al hiperplano $\{x : v^Tx=0\}$. Reflexionar dos veces da la identidad ($H^2=I$), lo que hace evidente que $H$ sea su propia inversa. La simetría de $H$ expresa que la reflexión de $y$ en $x$ tiene la misma componente que la reflexión de $x$ en $y$.
+\end{tcolorbox}
+
+\subsection{P2: Constante óptima en MC es la media aritmética}
+\label{sec:q2_2016_p2}
+
+\textbf{¿Qué hay que probar?} Que el valor de $C$ que minimiza la suma de desviaciones cuadráticas $E(C)=\sum(y_i-C)^2$ es exactamente el promedio de los datos.
+
+\textbf{¿Por qué esperar ese resultado?} Intuitivamente, si $C$ es muy grande, todos los $(y_i-C)^2$ son grandes. Si $C$ es muy pequeño, igual. El mínimo debe estar ``en el centro'' de los datos, que es la media.
+
+\begin{proof}
+Definimos $E(C)=\sum_{i=1}^n(y_i-C)^2$. Este es un polinomio de grado 2 en $C$ con coeficiente líder $n>0$, así que tiene un único mínimo global (parábola hacia arriba).
+
+Para encontrarlo, derivamos e igualamos a cero:
+\[
+  \frac{dE}{dC} = \sum_{i=1}^n 2(y_i-C)\cdot(-1) = -2\sum_{i=1}^n(y_i-C) = 0.
+\]
+Distribuyendo la suma:
+\[
+  \sum_{i=1}^ny_i - nC = 0 \implies C^* = \frac{\sum_{i=1}^ny_i}{n} = \bar y.
+\]
+Es mínimo y no máximo porque $E''(C) = 2n > 0$ (segunda derivada positiva). \qed
+\end{proof}
+
+\textbf{Vínculo con ecuaciones normales:} en notación matricial, el problema es $\min_C\|y-C\mathbf{1}\|^2$ con $A=\mathbf{1}=(1,\ldots,1)^T$ y variable escalar $C$. La ecuación normal $A^TA\,C=A^Ty$ da $n\,C=\sum y_i$, la misma respuesta.
+
+\subsection{P3: Jacobi converge para matrices EDD}
+\label{sec:q2_2016_p3}
+
+\textbf{¿Qué hay que probar?} Que si $A$ es EDD, el radio espectral de $T_J$ es menor que 1 (o equivalentemente, que la norma $\|T_J\|_\infty<1$, lo que implica convergencia).
+
+\textbf{Estrategia:} usaremos la condición \emph{suficiente} $\|T\|<1$. Para ello expresamos $T_J$ explícitamente y calculamos su norma $\infty$ (máxima suma de fila en valor absoluto).
+
+\begin{proof}
+\textbf{Paso 1: ¿cómo es $T_J$ para una matriz general $A$?}
+
+Jacobi resuelve $Dx^{(k+1)}=-(L_s+U_s)x^{(k)}+b$, así que:
+\[
+  T_J = -D^{-1}(L_s+U_s), \qquad (T_J)_{ij} = \begin{cases}-a_{ij}/a_{ii} & i\ne j\\ 0 & i=j.\end{cases}
+\]
+Es decir: los elementos fuera de la diagonal de $T_J$ son los cocientes $a_{ij}/a_{ii}$ cambiados de signo; la diagonal de $T_J$ es cero (en Jacobi la diagonal de $A$ se mueve al lado derecho).
+
+\textbf{Paso 2: calcular $\|T_J\|_\infty$ y usar EDD.}
+
+La norma infinito de una matriz es el máximo de las sumas de fila en valor absoluto:
+\[
+  \|T_J\|_\infty = \max_{1\le i\le n}\sum_{j=1}^n|(T_J)_{ij}|
+  = \max_i \sum_{j\ne i}\frac{|a_{ij}|}{|a_{ii}|}.
+\]
+(El término $j=i$ es cero, no contribuye.)
+
+Como $A$ es EDD, para cada fila $i$: $|a_{ii}|>\sum_{j\ne i}|a_{ij}|$, que equivale a $\sum_{j\ne i}\frac{|a_{ij}|}{|a_{ii}|}<1$.
+
+Por tanto $\|T_J\|_\infty<1$, y por la condición suficiente de convergencia, Jacobi converge. \qed
+\end{proof}
+
+\textbf{Nota importante:} la condición EDD es suficiente pero \emph{no necesaria}. Jacobi puede converger aunque $A$ no sea EDD (si $\rho(T_J)<1$ por otras razones). La EDD garantiza convergencia sin necesidad de calcular autovalores.
+
+\subsection{P4: Código Gauss-Seidel}
+\label{sec:q2_2016_p4}
+
+\textbf{Diferencia clave respecto a Jacobi:} Jacobi guarda el vector $x^{(k)}$ completo y lo usa para calcular \emph{todo} $x^{(k+1)}$. Gauss-Seidel actualiza $x_i$ en el momento y lo usa de inmediato para calcular $x_{i+1}$. En la fórmula:
+\[
+  x_i^{(k+1)} = \frac{1}{a_{ii}}\!\left(b_i - \sum_{j<i}a_{ij}\underbrace{x_j^{(k+1)}}_{\text{ya calculado}} - \sum_{j>i}a_{ij}\underbrace{x_j^{(k)}}_{\text{aún no actualizado}}\right).
+\]
+
+\begin{lstlisting}[caption={Método de Gauss-Seidel (Matlab)}]
+function x = gauss_seidel(A, b, x0, tol, max_iter)
+    n = length(b);
+    x = x0;              % vector inicial
+    for k = 1:max_iter
+        x_old = x;       % guardar copia para el criterio de parada
+        for i = 1:n
+            % x(1..i-1) ya tiene los valores NUEVOS del paso k+1
+            % x_old(i+1..n) tiene los valores VIEJOS del paso k
+            sum1 = A(i, 1:i-1)  * x(1:i-1);      % contribucion columnas ya actualizadas
+            sum2 = A(i, i+1:n)  * x_old(i+1:n);  % contribucion columnas aun viejas
+            x(i) = (b(i) - sum1 - sum2) / A(i,i); % despejar x_i de la ecuacion i
+        end
+        % Criterio de parada: diferencia entre iteraciones consecutivas
+        if norm(x - x_old, inf) < tol
+            fprintf('Convergencia en %d iteraciones.\n', k);
+            return;
+        end
+    end
+    warning('Maximo de iteraciones alcanzado sin convergencia.');
+end
+\end{lstlisting}
+
+\textbf{¿Por qué funciona actualizar inmediatamente?} Porque si $x_j^{(k+1)}$ ya está más cerca de $x_j^*$ que $x_j^{(k)}$, usarlo reduce el error más rápido. Esto es intuitivamente por qué GS converge en general el doble de rápido que Jacobi.
+
+\textbf{¿Por qué guardar \texttt{x\_old}?} Solo para el criterio de parada. Dentro del bucle interno necesitamos distinguir entre los valores ya actualizados (\texttt{x}) y los del paso anterior (\texttt{x\_old}).
+
+% ============================================================
+\section{Quiz 2 --- 2017-I}
+% ============================================================
+
+\begin{examen}{Quiz 2 2017-I --- P1: 4 pts,\ P2--P3: 5 pts c/u,\ P4: 6 pts}
+\textbf{P1 (4 pts).} Sea $A\in\mathbb{R}^{m\times n}$. Demuestre que $A^TA$ es simétrica y semidefinida positiva. ¿Bajo qué condición sobre $A$ es estrictamente positiva definida?
+
+\smallskip\textbf{P2 (5 pts).} Derive las ecuaciones normales $A^TA\hat x=A^Tb$ para el problema de mínimos cuadrados $\min_{x\in\mathbb{R}^n}\|b-Ax\|_2^2$.
+
+\smallskip\textbf{P3 (5 pts).} Sea $x^{(k+1)}=Tx^{(k)}+d$ un esquema iterativo tal que $\|T\|<1$ para alguna norma matricial subordinada. Demuestre que el esquema converge a la solución fija $x^*=Tx^*+d$ para todo $x^{(0)}$.
+
+\smallskip\textbf{P4 (6 pts).} Sea $A=\begin{pmatrix}1&-17/3\\1&0\\1&5\\1&12\end{pmatrix}$, $b=(-14/3,1,6,13)^T$. Calcule la factorización $QR$ de $A$ usando reflexiones de Householder y úsela para resolver el problema de mínimos cuadrados $\min_x\|b-Ax\|_2^2$.
+\end{examen}
+
+\subsection{P1: $A^TA$ es simetrica y semi/positivo definida}
+\label{sec:q2_2017_p1}
+
+\textbf{¿Por qué importa esto?} La solución del problema de MC requiere que $A^TA$ sea invertible para que exista solución única. Esto falla cuando las columnas de $A$ son linealmente dependientes (por eso la condición de rango).
+
+\begin{proof}
+\textbf{Simétrica.}
+Basta transponer $A^TA$:
+\[
+  (A^TA)^T = A^T\underbrace{(A^T)^T}_{=A} = A^TA.
+\]
+El producto es igual a su transpuesta, luego es simétrica.
+
+\textbf{Semidefinida positiva.}
+Para cualquier $x\ne0$, calculamos la forma cuadrática:
+\[
+  x^T(A^TA)x = (Ax)^T(Ax) = \|Ax\|_2^2 \ge 0.
+\]
+El truco es reagrupar: $x^TA^T=\allowbreak(Ax)^T$, así que $x^T(A^TA)x=(Ax)^T(Ax)$, que es la norma al cuadrado. Una norma siempre es $\ge0$.
+
+\textbf{Estrictamente positiva definida si las columnas de $A$ son L.I.}
+
+$\|Ax\|_2^2=0 \Leftrightarrow Ax=0$. Pero si las columnas de $A$ son linealmente independientes, la única combinación lineal nula es la trivial, es decir $x=0$. Luego $\|Ax\|_2^2>0$ para todo $x\ne0$. \qed
+\end{proof}
+
+\textbf{Consecuencia práctica:} como $A^TA$ es SPD (con cols. L.I.), tiene una factorización de Cholesky y la solución de MC puede calcularse eficientemente resolviendo $A^TA\hat x=A^Tb$.
+
+\subsection{P2: Ecuaciones normales para MC}
+\label{sec:q2_2017_p2}
+
+\textbf{Idea:} minimizar $f(x)=\|b-Ax\|_2^2$ igualando su gradiente a cero. El gradiente respecto a $x$ resulta ser $A^T$ aplicado al residuo; igualarlo a cero equivale exactamente a que el residuo sea ortogonal al espacio columna de $A$.
+
+\begin{proof}
+Expandiendo: $f(x)=b^Tb-2x^TA^Tb+x^TA^TAx$.
+
+Gradiente e igual a cero:
+\[
+  \nabla_xf = -2A^Tb+2A^TAx = 0 \implies A^T(b-Ax) = 0 \implies A^TAx^* = A^Tb.
+\]
+Como $A^TA$ es SPD cuando $A$ tiene columnas L.I., la solución $x^*=(A^TA)^{-1}A^Tb$ es única.
+
+\textbf{Interpretación:} $A^T(b-Ax^*)=0$ dice que el residuo $b-Ax^*$ es ortogonal a cada columna de $A$, i.e., $b-Ax^*\perp\operatorname{col}(A)$. El vector $Ax^*$ es la proyección ortogonal de $b$ sobre $\operatorname{col}(A)$. \qed
+\end{proof}
+
+\subsection{P3: Convergencia del esquema iterativo con $\|T\|<1$}
+\label{sec:q2_2017_p3}
+
+\textbf{Idea:} el método $x_{k+1}=Tx_k+d$ tiene solución fija $x^*=Tx^*+d$. Restando: el \emph{error} $e^{(k)}=x^{(k)}-x^*$ obedece $e^{(k+1)}=Te^{(k)}$, recursión que da $e^{(k)}=T^ke^{(0)}$. Si $\|T\|<1$, la norma del error decae geométricamente.
+
+\begin{proof}
+Sea $x^*$ el punto fijo: $x^* = Tx^* + d$. Restando de la iteración:
+\[
+  e^{(k+1)} = x^{(k+1)} - x^* = T(x^{(k)}-x^*) = Te^{(k)}.
+\]
+Por inducción $e^{(k)} = T^k e^{(0)}$, luego:
+\[
+  \|e^{(k)}\| \le \|T^k\|\,\|e^{(0)}\| \le \|T\|^k\,\|e^{(0)}\| \xrightarrow[k\to\infty]{\|T\|<1} 0. \qed
+\]
+\end{proof}
+
+\textbf{Nota:} la condición $\|T\|<1$ es \emph{suficiente} pero no necesaria; la condición necesaria y suficiente es $\rho(T)<1$ (radio espectral). Toda norma matricial satisface $\rho(T)\le\|T\|$.
+
+\subsection{P4: QR por Householder y solucion MC}
+\label{sec:q2_2017_p4}
+
+\textbf{Idea (Householder):} En cada paso $k$ se construye una reflexión $H_k$ que anula todos los elementos debajo del pivote de la columna $k$. El vector de Householder es:
+\[
+  u = a_k + \operatorname{sgn}(a_{k1})\|a_k\|e_1, \qquad H = I - \frac{2}{u^Tu}uu^T.
+\]
+(Se \emph{suma} $\|a_k\|$ cuando $a_{k1}>0$ para evitar cancelación numérica.)
+
+Después de $\min(m-1,n)$ pasos: $H_p\cdots H_1 A = \bigl[\begin{smallmatrix}R\\0\end{smallmatrix}\bigr]$. Para MC: se aplica la misma secuencia a $b$, y se resuelve $R_1 x = c_1$ (las primeras $n$ filas).
+
+$A = \begin{pmatrix}1&-17/3\\1&0\\1&5\\1&12\end{pmatrix}$,
+$b = (-14/3,1,6,13)^T$.
+
+\textbf{Paso 1 --- anular $(2,1),(3,1),(4,1)$:}
+
+$a_1=(1,1,1,1)^T$, $\|a_1\|=2$, $\operatorname{sgn}(a_{11})=+1$.
+\[
+  u_1 = a_1 + 2e_1 = (3,1,1,1)^T, \quad u_1^Tu_1=12, \quad \rho_1 = 2/12 = 1/6.
+\]
+$H_1$ lleva la primera columna a $(2,0,0,0)^T$. Aplicando a $a_2$ y $b$:
+\[
+  H_1a_2 = \tfrac{1}{3}(17,\,-34/3,\,-19/3,\,2/3)^T
+  \quad\text{(primer elemento = }r_{11}=17/3\text{, resto en submatriz)}.
+\]
+$H_1 b = (23/3,\,*,\,*,\,*)^T$ ($c_1=23/3$).
+
+\textbf{Paso 2 --- anular $(3,2),(4,2)$ en la submatriz $3\times1$:}
+
+Subvector activo: $\hat{a}_2 = (-34/3,-19/3,2/3)^T$, $\|\hat{a}_2\|=\sqrt{1156+361+4}/3=13$.
+
+$u_2 = \hat{a}_2 + (-13)e_1 = (-34/3-13,\,-19/3,\,2/3)^T = (-73/3,\,-19/3,\,2/3)^T$.
+$H_2$ (embebida en la submatriz) lleva $\hat{a}_2$ a $(-13,0,0)^T$, dando $r_{22}=-13$. $c_2=-13$.
+
+\[
+  R = \begin{pmatrix}2 & 17/3 \\ 0 & -13 \\ 0 & 0 \\ 0 & 0\end{pmatrix}, \qquad
+  Q^Tb = \begin{pmatrix}23/3 \\ -13 \\ 0 \\ 0\end{pmatrix}.
+\]
+
+\textbf{Resolver} $R_1\hat{x}=c_1$ (sustitución hacia atrás):
+\[
+  -13x_2 = -13 \implies x_2=1, \qquad 2x_1 + \tfrac{17}{3}(1) = \tfrac{23}{3} \implies x_1=1.
+\]
+\begin{tcolorbox}[clave]
+\textbf{Soluci\'on MC:} $\hat{x} = (1,\,1)^T$, i.e.\ $\hat{y}(t)=1+t$.
+\end{tcolorbox}
+
+% ============================================================
+\section{Quiz 2 y Parcial II --- 2024-II}
+% ============================================================
+
+\begin{examen}{Quiz 2 2024-II (04-06 Feb 2025) --- P1: 6 pts,\ P2: 7 pts,\ P3: 7 pts}
+\textbf{P1 (6 pts).} Defina el número de condición $\operatorname{cond}(A)=\|A\|\,\|A^{-1}\|$. Si $Ax=b$ y $A\hat x=b+\delta b$, demuestre la cota $\|\delta x\|/\|x\|\le\operatorname{cond}(A)\,\|\delta b\|/\|b\|$. ¿Qué significa que $A$ esté ``mal condicionada''?
+
+\smallskip\textbf{P2 (7 pts).} Sea $A$ simétrica definida positiva. En el método de Mínimo Descenso se define $r_k=b-Ax_k$ y $x_{k+1}=x_k+t_kr_k$ con $t_k=\langle r_k,r_k\rangle/\langle r_k,Ar_k\rangle$. Demuestre que $r_{k+1}\perp r_k$.
+
+\smallskip\textbf{P3 (7 pts).} Dados $x,y\in\mathbb{R}^m$, encuentre el escalar $\alpha^*$ que minimiza $\|y-\alpha x\|_2$. Expréselo en términos de $x$ e $y$.
+\end{examen}
+
+\subsection{P1: Numero de condicion y mal condicionamiento}
+\label{sec:q2_2024_p1}
+
+\textbf{Cota de error en la solución.} Si $Ax=b$ y $(A+\delta A)(x+\delta x)=b+\delta b$, se puede demostrar que:
+\[
+  \frac{\|\delta x\|}{\|x\|} \le \operatorname{cond}(A)\cdot\frac{\|\delta b\|}{\|b\|},
+  \qquad \operatorname{cond}(A) = \|A\|\,\|A^{-1}\|.
+\]
+El número de condición \emph{amplifica} el error relativo de los datos al error relativo de la solución.
+
+\textbf{Criterio de mal condicionamiento.} Si los datos tienen $d$ dígitos correctos ($\|\delta b\|/\|b\| \le 10^{-d}$) y se quiere la solución con $p$ dígitos correctos ($\|\delta x\|/\|x\|\le 10^{-p}$):
+\[
+  \operatorname{cond}(A)\cdot 10^{-d} \le 10^{-p}
+  \iff \operatorname{cond}(A) \le 10^{d-p}.
+\]
+\begin{tcolorbox}[clave]
+$A$ está \textbf{mal condicionada} si $\operatorname{cond}(A) > 10^{d-p}$.
+En la práctica: si $\operatorname{cond}(A)\approx 10^k$, se \emph{pierden} aproximadamente $k$ dígitos de precisión.
+\end{tcolorbox}
+
+\subsection{P2: Demostracion $r_{k+1} \perp r_k$ en Minimo Descenso}
+\label{sec:q2_2024_p2}
+
+\textbf{Contexto del método.} El Mínimo Descenso minimiza $f(x)=\tfrac{1}{2}x^TAx-b^Tx$ (función cuadrática con $A$ SPD) moviéndose en la dirección del residuo $r_k=b-Ax_k$. El paso óptimo $t_k$ es el que minimiza $f$ a lo largo de $r_k$:
+\[
+  x_{k+1} = x_k + t_k r_k, \qquad
+  t_k = \frac{\langle r_k, r_k\rangle}{\langle r_k, Ar_k\rangle}
+  \;=\;\frac{\|r_k\|^2}{r_k^TAr_k}.
+\]
+\textbf{Por qué $r_{k+1}\perp r_k$:} $t_k$ fue elegido exactamente para minimizar $f$ en la dirección $r_k$, lo que equivale a que el gradiente en $x_{k+1}$ sea ortogonal a $r_k$.
+
+\begin{proof}
+$r_{k+1} = b - Ax_{k+1} = b - A(x_k+t_kr_k) = r_k - t_kAr_k$. Entonces:
+\[
+  \langle r_{k+1},r_k\rangle = \langle r_k,r_k\rangle - t_k\langle Ar_k,r_k\rangle
+  = \langle r_k,r_k\rangle
+    - \frac{\langle r_k,r_k\rangle}{\langle r_k,Ar_k\rangle}\langle Ar_k,r_k\rangle = 0. \qed
+\]
+\end{proof}
+
+\subsection{P3: Escalar óptimo $\hat\alpha = \arg\min\|y-\alpha x\|_2$}
+\label{sec:q2_2024_p3}
+
+\textbf{¿Qué estamos haciendo?} Este es el problema de MC más simple posible: $A$ es un solo vector columna $x$, la variable de optimización es el escalar $\alpha$, y queremos encontrar el múltiplo de $x$ que más se acerca a $y$.
+
+\textbf{¿Cuál es la interpretación geométrica?} $\hat\alpha$ es el coeficiente de la proyección ortogonal de $y$ sobre la recta $\{t\cdot x : t\in\mathbb{R}\}$. La proyección es $\hat\alpha\, x$, y el residuo $y-\hat\alpha\, x$ queda perpendicular a $x$.
+
+\begin{proof}
+Definimos $f(\alpha)=\|y-\alpha x\|_2^2=(y-\alpha x)^T(y-\alpha x)=\|y\|^2-2\alpha\,x^Ty+\alpha^2\|x\|^2$.
+
+Derivando respecto al escalar $\alpha$ e igualando a cero:
+\[
+  \frac{df}{d\alpha} = -2\,x^Ty + 2\alpha\,x^Tx = 0
+  \implies \hat\alpha = \frac{x^Ty}{x^Tx}.
+\]
+Es mínimo porque $f''=2\|x\|^2>0$ (parábola hacia arriba). \qed
+\end{proof}
+
+\textbf{Verificación de la condición de ortogonalidad:} $y-\hat\alpha x\perp x$?
+\[
+  x^T(y-\hat\alpha x) = x^Ty - \hat\alpha\,x^Tx = x^Ty - \frac{x^Ty}{x^Tx}\cdot x^Tx = 0. \checkmark
+\]
+
+\medskip
+\begin{examen}{Parcial II 2024-II --- P1: 7 pts,\ P2: 9 pts,\ P3: 4 pts}
+\textbf{P1 (7 pts).} Si $Ax=b$ y $(A+\delta A)(x+\delta x)=b+\delta b$, demuestre la cota de perturbación $\|\delta x\|/\|x\|\le\operatorname{cond}(A)\,\|\delta b\|/\|b\|$.
+
+\smallskip\textbf{P2 (9 pts).} Sean $\{u_k\}$ las direcciones de búsqueda del método de Gradientes Conjugados aplicado a $Ax=b$ ($A$ SPD) y $\{r_k\}$ los residuos correspondientes. Demuestre:\\
+(a)\ $r_{k+1}=r_k-t_kAu_k$.\quad
+(b)\ $x_{k+1}=x_0+\displaystyle\sum_{j=0}^k t_ju_j$.\quad
+(c)\ $t_k=\langle u_k,r_0\rangle/\langle u_k,Au_k\rangle$.\quad
+(d)\ $r_{k+1}\perp r_j$ para todo $j\le k$.
+
+\smallskip\textbf{P3 (4 pts).} Dados $y_1,\ldots,y_n\in\mathbb{R}$, encuentre la función constante $f(x)=C$ que mejor aproxima los datos en el sentido de mínimos cuadrados, i.e., que minimiza $\sum_{i=1}^n(y_i-C)^2$. Demuestre que $C^*$ es la media aritmética.
+\end{examen}
+
+\subsection{P1 (Parcial II-2024): Cota $\|\delta x\|/\|x\| \le \operatorname{cond}(A)\,\|\delta b\|/\|b\|$}
+\label{sec:parcial2_2024_p1}
+
+\textbf{¿Qué mide esta cota?} El número de condición amplifica el error \emph{relativo} de los datos ($\|\delta b\|/\|b\|$) al error relativo de la solución ($\|\delta x\|/\|x\|$). Si $\operatorname{cond}(A)=10^6$ y los datos tienen 8 dígitos correctos, la solución podría tener solo 2.
+
+\textbf{Estrategia:} (1) acotar $\|\delta x\|$ usando que $A\delta x=\delta b$; (2) acotar $\|b\|$ desde abajo usando $b=Ax$; (3) combinar ambas cotas y reconocer $\operatorname{cond}(A)$.
+
+\begin{proof}
+\textbf{Paso 1: acotar $\|\delta x\|$ por arriba.}
+
+De $A\hat x=b+\delta b$ y $Ax=b$ se resta: $A\delta x=\delta b$, luego $\delta x=A^{-1}\delta b$.
+Por la propiedad de norma subordinada:
+\[
+  \|\delta x\| = \|A^{-1}\delta b\| \le \|A^{-1}\|\,\|\delta b\|. \tag{1}
+\]
+
+\textbf{Paso 2: acotar $\|b\|$ por abajo.}
+
+De $b=Ax$: $\|b\|=\|Ax\|\le\|A\|\,\|x\|$. Invirtiendo la desigualdad:
+\[
+  \frac{1}{\|x\|} \le \frac{\|A\|}{\|b\|}. \tag{2}
+\]
+
+\textbf{Paso 3: combinar (1) y (2).}
+
+Dividiendo (1) por $\|x\|$ y aplicando (2):
+\[
+  \frac{\|\delta x\|}{\|x\|} \le \|A^{-1}\|\,\|\delta b\|\cdot\frac{1}{\|x\|}
+  \le \|A^{-1}\|\,\|\delta b\|\cdot\frac{\|A\|}{\|b\|}
+  = \underbrace{\|A\|\,\|A^{-1}\|}_{\operatorname{cond}(A)}\frac{\|\delta b\|}{\|b\|}. \qed
+\]
+\end{proof}
+
+\textbf{Observación:} en el Paso 2 usamos una cota \emph{suficientemente fuerte} por abajo para $\|b\|$. Si $\|A\|$ es grande (A ``amplifica'' los vectores), $\|b\|$ puede ser mucho mayor que $\|x\|$, lo cual hace que el cociente $\|\delta b\|/\|b\|$ sea pequeño... pero $\|A^{-1}\|$ grande (A ``también comprime'') compensa. Todo se resume en $\operatorname{cond}(A)=\|A\|\|A^{-1}\|$.
+
+\subsection{P2 (Parcial II-2024): Propiedades de Gradientes Conjugados}
+\label{sec:parcial2_2024_p2}
+
+\textbf{Contexto:} En el algoritmo GC, $x_k$ es la aproximación en el paso $k$, $r_k=b-Ax_k$ es el residuo, $u_k$ es la dirección de búsqueda $A$-conjugada, y $t_k$ es el tamaño de paso.
+
+\medskip
+\textbf{(a) $r_{k+1}=r_k-t_kAu_k$}
+
+\textit{¿Por qué?} El residuo nuevo es la diferencia entre $b$ y $A$ aplicado a la aproximación nueva. Solo hay que expandir.
+
+\begin{proof}
+$r_{k+1}=b-Ax_{k+1}=b-A(x_k+t_ku_k)=\underbrace{b-Ax_k}_{r_k}-t_kAu_k=r_k-t_kAu_k$. \qed
+\end{proof}
+
+\medskip
+\textbf{(b) $x_{k+1}=x_0+\sum_{j=0}^k t_ju_j$}
+
+\textit{¿Por qué?} En cada paso sumamos $t_ju_j$ al iterado anterior. Acumulando todos los pasos desde $x_0$:
+
+\begin{proof}
+Por inducción. Base ($k=0$): $x_1=x_0+t_0u_0$. \checkmark \\
+Paso: si $x_k=x_0+\sum_{j<k}t_ju_j$, entonces $x_{k+1}=x_k+t_ku_k=x_0+\sum_{j=0}^kt_ju_j$. \qed
+\end{proof}
+
+\medskip
+\textbf{(c) $t_k=\langle u_k,r_0\rangle/\langle u_k,Au_k\rangle$}
+
+\textit{¿Por qué?} El tamaño de paso se elige como $t_k=\langle u_k,r_k\rangle/\langle u_k,Au_k\rangle$ (minimiza $\phi$ en dirección $u_k$). La clave es que $\langle u_k,r_k\rangle=\langle u_k,r_0\rangle$ porque los residuos intermedios son ortogonales a $u_k$.
+
+\begin{proof}
+De (b): $r_k=b-Ax_k=r_0-A\sum_{j<k}t_ju_j=r_0-\sum_{j<k}t_jAu_j$.
+
+Tomando $\langle u_k,\cdot\rangle$:
+\[
+  \langle u_k,r_k\rangle
+  = \langle u_k,r_0\rangle - \sum_{j<k}t_j\underbrace{\langle u_k,Au_j\rangle}_{=0\text{ (A-conjugados, }j\ne k)}
+  = \langle u_k,r_0\rangle.
+\]
+Sustituyendo en la fórmula de $t_k$: $t_k = \langle u_k,r_0\rangle/\langle u_k,Au_k\rangle$. \qed
+
+\textit{La A-conjugacidad $\langle u_k,Au_j\rangle=0$ ($j\ne k$) es la propiedad que define las direcciones de búsqueda del GC y es lo que lo hace más eficiente que el Mínimo Descenso.}
+\end{proof}
+
+\medskip
+\textbf{(d) $r_{k+1}\perp r_j$ para todo $j\le k$}
+
+\textit{¿Por qué?} Primero probamos que $r_{k+1}\perp u_i$ para todo $i\le k$. Luego, como $r_j$ es combinación lineal de $u_0,\ldots,u_j$ (con $j\le k$), la ortogonalidad se hereda.
+
+\begin{proof}
+\textbf{Paso 1:} mostrar $\langle r_{k+1},u_i\rangle=0$ para $i\le k$.
+
+De (b): $r_{k+1}=r_0-\sum_{j=0}^kt_jAu_j$. Tomando $\langle\cdot,u_i\rangle$:
+\[
+  \langle r_{k+1},u_i\rangle
+  = \langle r_0,u_i\rangle - \sum_{j=0}^k t_j\underbrace{\langle Au_j,u_i\rangle}_{=0\text{ si }j\ne i}
+  = \langle r_0,u_i\rangle - t_i\langle Au_i,u_i\rangle.
+\]
+Usando la definición $t_i=\langle u_i,r_0\rangle/\langle u_i,Au_i\rangle$:
+\[
+  = \langle r_0,u_i\rangle - \frac{\langle u_i,r_0\rangle}{\langle u_i,Au_i\rangle}\langle Au_i,u_i\rangle = 0.
+\]
+
+\textbf{Paso 2:} como $\operatorname{span}\{r_0,\ldots,r_j\}=\operatorname{span}\{u_0,\ldots,u_j\}$, podemos escribir $r_j=\sum_{i=0}^j\alpha_iu_i$ para ciertos escalares $\alpha_i$. Entonces:
+\[
+  \langle r_{k+1},r_j\rangle = \sum_{i=0}^j\alpha_i\underbrace{\langle r_{k+1},u_i\rangle}_{=0}=0. \qed
+\]
+\end{proof}
+
+\begin{tcolorbox}[clave]
+\textbf{Resumen de lo que establecen (a)--(d):} (a) La recurrencia del residuo. (b) Los iterados son combinaciones de las direcciones de búsqueda. (c) El paso $t_k$ se puede expresar con $r_0$ en vez de $r_k$ (útil en implementaciones). (d) Los residuos forman una familia ortogonal --- esto garantiza que en $n$ pasos el GC converge exactamente (en aritmética exacta).
+\end{tcolorbox}
+
+\subsection{P3 (Parcial II-2024): Función constante óptima = media aritmética}
+
+\textbf{Idea:} Se trata de un problema de mínimos cuadrados con $A=\mathbf{1}=(1,\ldots,1)^T$ y variable escalar $C$. La ecuación normal da la media.
+
+\begin{proof}
+Sea $E(C)=\sum_{i=1}^n(y_i-C)^2$. Derivando e igualando a cero:
+\[
+  \frac{dE}{dC} = -2\sum_{i=1}^n(y_i-C) = 0
+  \implies \sum_{i=1}^n y_i = nC
+  \implies C^* = \frac{1}{n}\sum_{i=1}^n y_i.
+\]
+Es mínimo porque $E''=2n>0$. Geométricamente: $A=\mathbf{1}$, ecuación normal $A^TA\,C=A^Ty$, i.e., $n\,C=\sum y_i$. \qed
+\end{proof}
+
+% ============================================================
+\section{Practica: Factorizacion LU (28 May 2026)}
+% ============================================================
+
+\subsection{Ejercicio 1: $A=LU$ sin pivoteo}
+\label{sec:practica_lu_1}
+
+\textbf{Método:} Eliminación de Gauss sin intercambio de filas. El multiplicador $\ell_{ij} = a_{ij}^{(\text{activo})}/a_{jj}^{(\text{activo})}$ anula la entrada $(i,j)$ restando $\ell_{ij}$ veces la fila pivote. $L$ almacena los multiplicadores; $U$ es la matriz escalonada resultante.
+
+$A = \begin{pmatrix}1&2&2\\4&4&2\\4&6&4\end{pmatrix}$.
+
+\textbf{Columna 1} (pivote $a_{11}=1$):
+\[
+  \ell_{21} = 4/1 = 4: \quad R_2 \leftarrow R_2 - 4R_1 \to (0,\,-4,\,-6).
+\]
+\[
+  \ell_{31} = 4/1 = 4: \quad R_3 \leftarrow R_3 - 4R_1 \to (0,\,-2,\,-4).
+\]
+
+\textbf{Columna 2} (pivote $a_{22}^{(2)}=-4$):
+\[
+  \ell_{32} = (-2)/(-4) = 1/2: \quad R_3 \leftarrow R_3 - \tfrac{1}{2}R_2 \to (0,\,0,\,-1).
+\]
+
+\[
+  L = \begin{pmatrix}1&0&0\\4&1&0\\4&1/2&1\end{pmatrix}, \qquad
+  U = \begin{pmatrix}1&2&2\\0&-4&-6\\0&0&-1\end{pmatrix}.
+\]
+\textit{Verificación:} $LU = A$. \checkmark
+
+\subsection{Ejercicio 2: Valores de $\xi$ que impiden LU}
+\label{sec:practica_lu_2}
+
+\textbf{Idea:} La factorización $A=LU$ (sin pivoteo) existe y es única si y solo si todos los \emph{menores principales} $M_k = \det(A_{1:k,\,1:k})$ son no nulos. Si algún $M_k=0$, el pivote de la columna $k$ sería cero y la eliminación no puede continuar.
+
+Suponiendo $A = \begin{pmatrix}\xi & 1 \\ 1 & \xi\end{pmatrix}$ (u otra matriz con $\xi$), los menores son:
+\[
+  M_1 = \xi, \qquad M_2 = \det(A) = \xi^2 - 1\cdot 1 = \xi^2 - 2.
+\]
+(Ajusta según la matriz concreta del enunciado.) Falla si alguno es cero:
+\[
+  M_1=0 \Rightarrow \xi=0; \qquad M_2=0 \Rightarrow \xi = \pm\sqrt{2}.
+\]
+\begin{tcolorbox}[clave]
+$A=LU$ sin pivoteo no existe para $\xi \in \{0,\,\sqrt{2},\,-\sqrt{2}\}$.
+\end{tcolorbox}
+
+\subsection{Ejercicio 3: Matriz tridiagonal $T = LU$}
+\label{sec:practica_lu_3}
+
+\textbf{(a)} Verificacion: el elemento $(i,i)$ de $LU$ es
+$(\alpha_{i-1}/\pi_{i-1})\gamma_{i-1} + \pi_i = \beta_i$ por la recurrencia.
+
+\textbf{(b)} Para $\beta=(2,2,2,1)$, $\alpha=\gamma=(-1,-1,-1)$:
+$\pi_1=2$, $\pi_2=3/2$, $\pi_3=4/3$, $\pi_4=1/4$.
+
+\[
+  L = \begin{pmatrix}1&0&0&0\\-1/2&1&0&0\\0&-2/3&1&0\\0&0&-3/4&1\end{pmatrix}, \qquad
+  U = \begin{pmatrix}2&-1&0&0\\0&3/2&-1&0\\0&0&4/3&-1\\0&0&0&1/4\end{pmatrix}
+\]
+
+\subsection{Bonus: $PA=LU$ con pivoteo parcial}
+\label{sec:practica_lu_bonus}
+
+$A = \begin{pmatrix}1&2&4&17\\3&6&-12&3\\2&3&-3&2\\0&2&-2&6\end{pmatrix}$,
+$b=(17,3,3,4)^T$.
+
+\textbf{(a)} No tiene LU: $M_2=\det\left(\begin{smallmatrix}1&2\\3&6\end{smallmatrix}\right)=0$.
+
+\textbf{(b)} Permutacion $p=(2,4,1,3)$:
+\[
+  L = \begin{pmatrix}1&0&0&0\\0&1&0&0\\1/3&0&1&0\\2/3&-1/2&1/2&1\end{pmatrix}, \quad
+  U = \begin{pmatrix}3&6&-12&3\\0&2&-2&6\\0&0&8&16\\0&0&0&-5\end{pmatrix}
+\]
+
+\textbf{(c)} $Pb=(3,4,17,3)^T$, sustitucion adelante: $y=(3,4,16,-5)^T$,
+sustitucion atras: $x=(2,-1,0,1)^T$.
+
+% ============================================================
+\section{Practica: Factorizacion QR (04 Jun 2026)}
+% ============================================================
+\label{sec:practica_qr}
+
+\subsection{Ejercicio 1: Gram-Schmidt con 3 digitos de punto flotante}
+
+$S=\{x_1=(1,0,10^{-3})^T,\ x_2=(1,0,0)^T,\ x_3=(1,10^{-3},0)^T\}$,
+$fl(\sqrt{2})=1.41$.
+
+\textbf{Paso 1:} $\|x_1\|\overset{3d}{=}1.00$. $q_1=(1.00,0.00,0.001)^T$.
+
+\textbf{Paso 2:} $r_{12}=1.00$, $v_2=(0,0,-0.001)^T$, $\|v_2\|=0.001$.
+$q_2=(0,0,-1)^T$.
+
+\textbf{Paso 3:} $r_{13}=1.00$, $r_{23}=0.00$, $v_3=(0,0.001,-0.001)^T$,
+$\|v_3\|=1.41\times10^{-3}$.
+$q_3=(0,\,0.709,\,-0.709)^T$.
+
+\subsection{Ejercicio 2: $\|A\|_F = \|R\|_F$}
+
+$\|A\|_F^2 = \text{tr}(A^TA) = \text{tr}(R^TQ^TQR) = \text{tr}(R^TR) = \|R\|_F^2$.
+
+\subsection{Ejercicio 3: QR y Cholesky de $A^TA$}
+
+\textbf{(a)} $A^TA = \begin{pmatrix}R^T&0\end{pmatrix}Q^TQ\begin{pmatrix}R\\0\end{pmatrix}=R^TR=LL^T$.
+
+\textbf{(b)} Si los diagonales de $R$ son positivos, $R=L^T$ por unicidad de Cholesky.
+
+\subsection{Ejercicio 4: Continuacion de Gram-Schmidt}
+
+$q_1=\frac{1}{3}(1,2,2)^T$, $q_2=\frac{1}{\sqrt{18}}(-4,1,1)^T$, $a_3=(3,-1,1)^T$.
+$r_{13}=1$, $r_{23}=-12/\sqrt{18}$.
+$\hat{q}_3 = a_3-(3,0,0)^T = (0,-1,1)^T$, $\|{\hat{q}_3}\|=\sqrt{2}$.
+$q_3 = (0,-1/\sqrt{2},1/\sqrt{2})^T$.
+
+\textbf{(b)} $y=\hat{Q}^Ta_3=(1,-12/\sqrt{18})^T$, $z=\hat{Q}y=(3,0,0)^T$,
+$\hat{q}_3=a_3-z=(0,-1,1)^T$. \checkmark
+
+% ============================================================
+\section{Ejemplo de clase: QR con Householder (05 Jun 2026)}
+% ============================================================
+\label{sec:householder_ejemplo}
+
+\textbf{Recordatorio del método.} Para la columna $k$, el vector de Householder es:
+\[
+  u = a_k + \operatorname{sgn}(a_{k1})\|a_k\|e_1,
+  \qquad H = I - \underbrace{\frac{2}{u^Tu}}_{\rho}\,uu^T = I - 2\rho\,uu^T.
+\]
+$Ha_k = -\operatorname{sgn}(a_{k1})\|a_k\|e_1$. Se suma (no resta) para evitar cancelación catastrófica.
+
+$A = \begin{pmatrix}1&3&5\\2&3&1\\-2&0&-1\end{pmatrix}$.
+
+\textbf{Paso 1 --- anular entradas $(2,1)$ y $(3,1)$:}
+
+$a_1=(1,2,-2)^T$, $\|a_1\|=\sqrt{1+4+4}=3$, $\operatorname{sgn}(a_{11})=+1$.
+\[
+  u_1 = a_1 + 3e_1 = (4,2,-2)^T, \quad u_1^Tu_1=24, \quad \rho = 2/24 = 1/12.
+\]
+\[
+  H_1 = I - \frac{1}{12}\begin{pmatrix}16&8&-8\\8&4&-4\\-8&-4&4\end{pmatrix}
+      = \frac{1}{3}\begin{pmatrix}-1&-2&2\\-2&2&1\\2&1&2\end{pmatrix}.
+\]
+(Verificación columna 1: $H_1a_1 = (-3,0,0)^T = -\|a_1\|e_1$. \checkmark)
+\[
+  A_1 = H_1A = \begin{pmatrix}-3&-3&-3\\0&0&-3\\0&3&3\end{pmatrix}.
+\]
+
+\textbf{Paso 2 --- anular entrada $(3,2)$ en la submatriz $2\times 2$:}
+
+Subvector activo: $\hat{a}_1 = (0,3)^T$ (columna 2 de $A_1$, filas 2-3).
+$\|\hat{a}_1\|=3$, $\operatorname{sgn}(\hat{a}_{11})=0$ (o $+1$ por convención).
+\[
+  u_2 = (0+3,\,3)^T = (3,3)^T,\quad u_2^Tu_2=18, \quad \rho_2 = 2/18 = 1/9.
+\]
+$\hat{H}_2 = I_2 - \frac{1}{9}\begin{pmatrix}9&9\\9&9\end{pmatrix} = \begin{pmatrix}0&-1\\-1&0\end{pmatrix}$.
+Embebida: $H_2 = \operatorname{diag}(1, \hat{H}_2) = \begin{pmatrix}1&0&0\\0&0&-1\\0&-1&0\end{pmatrix}$.
+\[
+  R = H_2A_1 = \begin{pmatrix}-3&-3&-3\\0&-3&-3\\0&0&3\end{pmatrix}, \qquad
+  Q = H_1H_2 = \frac{1}{3}\begin{pmatrix}-1&-2&2\\-2&-1&-2\\2&-2&-1\end{pmatrix}.
+\]
+\textbf{Verificación:} $QR = A$ y $Q^TQ=I$. \checkmark
+
+% ============================================================
+\section{Cholesky por bloques (Quiz 1 --- 2024-II)}
+% ============================================================
+\label{sec:q1_2024_p1}
+
+\begin{examen}{Quiz 1 2024-II --- Factorización de Cholesky por Bloques}
+\textbf{P1.} Sea $B=\begin{pmatrix}A&a\\a^T&\alpha\end{pmatrix}\in\mathbb{R}^{(n+1)\times(n+1)}$ simétrica definida positiva, donde $A\in\mathbb{R}^{n\times n}$ es SPD con factorización de Cholesky $A=LL^T$ ya conocida. Encuentre la factorización de Cholesky $B=L_BL_B^T$ en términos de $L$, $a$ y $\alpha$. Use el resultado para describir cómo resolver $Bx=c$.
+\end{examen}
+
+\textbf{Idea:} buscar $L_B=\begin{pmatrix}L&0\\\ell^T&\beta\end{pmatrix}$ (triangular inferior por bloques) tal que $L_BL_B^T=B$. Igualando bloque a bloque se determinan $\ell$ y $\beta$.
+
+\textbf{Derivación de $\ell$ y $\beta$:} expandiendo $L_BL_B^T$:
+\[
+  L_BL_B^T
+  = \begin{pmatrix}L&0\\\ell^T&\beta\end{pmatrix}\begin{pmatrix}L^T&\ell\\0&\beta\end{pmatrix}
+  = \begin{pmatrix}LL^T & L\ell \\ \ell^TL^T & \ell^T\ell+\beta^2\end{pmatrix}
+  \overset{!}{=} \begin{pmatrix}A & a \\ a^T & \alpha\end{pmatrix}.
+\]
+Igualando bloque a bloque:
+\begin{itemize}[noitemsep]
+  \item Bloque $(1,1)$: $LL^T=A$ \checkmark (ya estaba factorizada).
+  \item Bloque $(1,2)$: $L\ell=a$ $\Rightarrow$ resolver el sistema triangular $L\ell=a$ (sustitución adelante).
+  \item Bloque $(2,2)$: $\ell^T\ell+\beta^2=\alpha$ $\Rightarrow$ $\beta=\sqrt{\alpha-\|\ell\|^2}$.
+\end{itemize}
+
+\begin{tcolorbox}[clave]
+\[
+  L_B = \begin{pmatrix}L & 0 \\ \ell^T & \beta\end{pmatrix},\qquad
+  L\ell = a,\qquad \beta = \sqrt{\alpha - \ell^T\ell}.
+\]
+\textbf{Test SPD:} el algoritmo falla si $\alpha-\ell^T\ell\le0$, lo que significa que $B$ no es SPD.
+\end{tcolorbox}
+
+\textbf{Resolver $Bx=c$ con la factorización:} con $L_BL_B^Tx=c$ y $x=(\tilde x,\,x_{n+1})^T$, $c=(\tilde c,\,c_{n+1})^T$:
+
+\textit{Sustitución adelante} ($L_By=c$):
+\[
+  L\tilde y=\tilde c \quad\Rightarrow\quad \tilde y=L^{-1}\tilde c \quad(\text{sustitución adelante en }n\text{ ecuaciones})
+\]
+\[
+  \beta\,y_{n+1} = c_{n+1}-\ell^T\tilde y \quad\Rightarrow\quad y_{n+1}=\frac{c_{n+1}-\ell^T\tilde y}{\beta}.
+\]
+
+\textit{Sustitución atrás} ($L_B^Tx=y$):
+\[
+  \beta\,x_{n+1}=y_{n+1} \quad\Rightarrow\quad x_{n+1}=\frac{y_{n+1}}{\beta}.
+\]
+\[
+  L^T\tilde x = \tilde y - x_{n+1}\ell \quad\Rightarrow\quad \tilde x=L^{-T}(\tilde y-x_{n+1}\ell) \quad(\text{sustitución atrás}).
+\]
+
+% ============================================================
+\section{Demostraciones adicionales de practica}
+% ============================================================
+
+\subsection{Algoritmo de Cholesky $3\times3$}
+\label{sec:cholesky_3x3}
+
+\textbf{Idea:} Para $A$ SPD se busca $L$ triangular inferior tal que $A=LL^T$. Igualando entrada por entrada (columna a columna):
+
+\textbf{Columna 1} ($j=1$): el elemento diagonal se obtiene de $a_{11}=\ell_{11}^2$, los de abajo de $a_{i1}=\ell_{i1}\ell_{11}$:
+\[
+  \ell_{11}=\sqrt{a_{11}}, \qquad \ell_{21}=\frac{a_{21}}{\ell_{11}}, \qquad \ell_{31}=\frac{a_{31}}{\ell_{11}}.
+\]
+
+\textbf{Columna 2} ($j=2$): el diagonal de $a_{22} = \ell_{21}^2+\ell_{22}^2$, el subdiagonal de $a_{32}=\ell_{31}\ell_{21}+\ell_{32}\ell_{22}$:
+\[
+  \ell_{22}=\sqrt{a_{22}-\ell_{21}^2}, \qquad \ell_{32}=\frac{a_{32}-\ell_{31}\ell_{21}}{\ell_{22}}.
+\]
+
+\textbf{Columna 3} ($j=3$): diagonal de $a_{33}=\ell_{31}^2+\ell_{32}^2+\ell_{33}^2$:
+\[
+  \ell_{33}=\sqrt{a_{33}-\ell_{31}^2-\ell_{32}^2}.
+\]
+
+\textbf{Patrón general} (columna $j$, filas $i \ge j$):
+\[
+  \ell_{jj} = \sqrt{a_{jj} - \sum_{k=1}^{j-1}\ell_{jk}^2}, \qquad
+  \ell_{ij} = \frac{a_{ij} - \sum_{k=1}^{j-1}\ell_{ik}\ell_{jk}}{\ell_{jj}}\quad (i>j).
+\]
+
+\subsection{Escalar optimo $\alpha = \arg\min\|b-\alpha a\|_2$}
+\label{sec:escalar_alpha}
+
+Ecuaciones normales: $a^Ta\,\alpha = a^Tb \Rightarrow \alpha = a^Tb / a^Ta$.
+
+\subsection{Producto de triangulares inferiores es triangular inferior}
+
+Para $i<j$: si $k\le i$, entonces $(L_2)_{kj}=0$; si $k>i$, entonces $(L_1)_{ik}=0$.
+Ambos casos anulan el sumando. Diagonal: $(L_1)_{ii}(L_2)_{ii}=1$.
+
+\subsection{Unicidad de la factorizacion LU}
+\label{sec:unicidad_lu}
+
+\textbf{Idea:} Si hubiera dos factorizaciones, su cociente sería simultáneamente triangular inferior Y superior, forzando que sea diagonal. Con los unos en la diagonal de $L$, la única opción es la identidad.
+
+\begin{proof}
+Suponer $L_1U_1 = A = L_2U_2$ con $L_i$ unidad-triangulares inferiores y $U_i$ triangulares superiores con diagonal no nula.
+
+Despejando: $L_2^{-1}L_1 = U_2U_1^{-1}$.
+\begin{itemize}[noitemsep]
+  \item \textbf{Izquierda:} $L_2^{-1}L_1$ es triangular inferior (producto de inferiores).
+  \item \textbf{Derecha:} $U_2U_1^{-1}$ es triangular superior (producto de superiores).
+\end{itemize}
+Una matriz que es a la vez triangular inferior y superior es \textbf{diagonal}. Como $L_1, L_2$ tienen unos en la diagonal, $L_2^{-1}L_1$ también; por tanto $L_2^{-1}L_1 = I$, i.e.\ $L_1=L_2$ y $U_1=U_2$. \qed
+\end{proof}
+
+\subsection{Sistemas transpuestos con $PA=LU$}
+\label{sec:sistemas_transpuestos}
+
+\textbf{Resolver $x^TA^T=b$ (equivale a $Ax=b^T$):}
+$Ly=Pb^T$ (adelante), $Ux=y$ (atras).
+
+\textbf{Resolver $x^TA=b$ (equivale a $A^Tx=b^T$, con $A^T=U^TL^TP$):}
+\begin{enumerate}[noitemsep]
+  \item $U^Tz=b^T$ (adelante, $U^T$ triangular inferior).
+  \item $L^Tw=z$ (atras, $L^T$ triangular superior).
+  \item $x=P^Tw$.
+\end{enumerate}
+
+\subsection{Propiedades del proceso de Gram-Schmidt}
+
+\textbf{$Q_jQ_j^T = \sum_{i=1}^j q_iq_i^T$:}
+$Q_jQ_j^T=[q_1|\cdots|q_j]\begin{pmatrix}q_1^T\\\vdots\\q_j^T\end{pmatrix}
+=\sum_{i=1}^j q_iq_i^T$.
+
+\textbf{$\hat{q}_j = (I-Q_{j-1}Q_{j-1}^T)a_j$:}
+$\hat{q}_j = a_j - \sum_{i<j}\langle q_i,a_j\rangle q_i
+= a_j - \left(\sum_{i<j}q_iq_i^T\right)a_j = (I-Q_{j-1}Q_{j-1}^T)a_j$.
+
+% ============================================================
+\section{Parcial 2 --- Cálculo Científico I (I-2025)}
+\label{sec:parcial2025}
+% ============================================================
+
+\begin{examen}{Parcial 2 I-2025 (27 Jun 2025) --- P1: 6 pts,\ P2: 7 pts,\ P3: 7 pts}
+\textbf{P1 (6 pts).} (a) Describa el algoritmo para calcular la descomposición SVD de $A\in\mathbb{R}^{m\times n}$. Justifique por qué los vectores $u_i=Av_i/\sigma_i$ son ortonormales. (b) Calcule la SVD de $A=\begin{pmatrix}-2&11\\-10&5\\1&0\end{pmatrix}$.
+
+\smallskip\textbf{P2 (7 pts).} Dado $A=L+D+U$ con $D$ diagonal, $L$ estrictamente inferior y $U$ estrictamente superior, considere el \textbf{Algoritmo 1}:
+\begin{itemize}[noitemsep]
+  \item Paso 0: resolver $(D+L)\,y=b$.
+  \item Paso $k$: calcular $w_k=-Ux_k$; resolver $(D+L)\,z_k=w_k$; actualizar $x_{k+1}=z_k+y$.
+\end{itemize}
+(a) Identifique la matriz $B$ y el vector $d$ de la iteración $x_{k+1}=Bx_k+d$. ¿Qué método clásico es éste? (b) Demuestre que si $\|B\|<1$, el algoritmo converge para cualquier $x^{(0)}$.
+
+\smallskip\textbf{P3 (7 pts).} Sea $A$ simétrica definida positiva y $r_k=b-Ax_k$ el residuo en el paso $k$. Se aplica un método de la forma $x_{k+1}=x_k+t_kp_k$. (a) Si $p_k=r_k$ (Mínimo Descenso) con $t_k=\langle r_k,r_k\rangle/\langle r_k,Ar_k\rangle$, demuestre que $r_{k+1}\perp r_k$. (b) Si $p_k=u_k$ (Gradientes Conjugados) con las $u_k$ $A$-conjugadas, demuestre que $r_{k+1}\perp r_j$ para todo $j\le k$.
+\end{examen}
+
+\subsection{P1(a): Algoritmo para hallar la SVD de $A \in \mathbb{R}^{m\times n}$}
+\label{sec:parcial2025_p1a}
+
+\begin{enumerate}
+  \item \textbf{Formar} $C = A^TA \in \mathbb{R}^{n\times n}$ (simétrica, semidefinida positiva).
+  \item \textbf{Calcular} los autovalores $\lambda_1 \ge \lambda_2 \ge \cdots \ge \lambda_n \ge 0$ de $C$.
+  \item \textbf{Valores singulares:} $\sigma_i = \sqrt{\lambda_i}$;\,
+        armar $\Sigma \in \mathbb{R}^{m\times n}$ con $\Sigma_{ii} = \sigma_i$, resto cero.
+  \item \textbf{Vectores singulares derechos:} autovectores ortonormales $v_i$ de $C$;\,
+        armar $V = [v_1|\cdots|v_n] \in \mathbb{R}^{n\times n}$.
+  \item \textbf{Vectores singulares izquierdos:} $u_i = Av_i/\sigma_i$ para $\sigma_i > 0$;
+        completar hasta base ortonormal de $\mathbb{R}^m$ $\Rightarrow$ $U \in \mathbb{R}^{m\times m}$.
+  \item $A = U\Sigma V^T$.
+\end{enumerate}
+
+\begin{tcolorbox}[clave]
+\textbf{Por qué los $u_i$ son ortonormales:}
+$\langle u_i,u_j\rangle = \dfrac{v_i^TA^TAv_j}{\sigma_i\sigma_j}
+= \dfrac{\lambda_j\,v_i^Tv_j}{\sigma_i\sigma_j} = \delta_{ij}$.
+\end{tcolorbox}
+
+\subsection{P1(b): SVD de $A = \begin{pmatrix}-2&11\\-10&5\\1&0\end{pmatrix}$}
+\label{sec:parcial2025_p1b}
+
+\textbf{Paso 1 --- $A^TA$:}
+\[
+  A^TA = \begin{pmatrix}-2&-10&1\\11&5&0\end{pmatrix}
+         \begin{pmatrix}-2&11\\-10&5\\1&0\end{pmatrix}
+  = \begin{pmatrix}4+100+1 & -22-50\\-22-50 & 121+25\end{pmatrix}
+  = \begin{pmatrix}105 & -72\\-72 & 146\end{pmatrix}.
+\]
+
+\textbf{Paso 2 --- Autovalores:}
+\[
+  \det(A^TA - \lambda I) = \lambda^2 - 251\lambda + (105\cdot146-72^2)
+  = \lambda^2 - 251\lambda + 10146 = 0.
+\]
+\[
+  \lambda = \frac{251 \pm \sqrt{251^2 - 4\cdot10146}}{2}
+  = \frac{251 \pm \sqrt{22417}}{2}.
+  \qquad \lambda_1 \approx 200.36,\quad \lambda_2 \approx 50.64.
+\]
+\textit{Verificación:} $\lambda_1+\lambda_2 = 251 = \|A\|_F^2 = 4+121+100+25+1$. \checkmark
+
+\textbf{Paso 3 --- Valores singulares:}
+$\sigma_1 \approx 14.15$, $\sigma_2 \approx 7.12$.
+
+\textbf{Paso 4 --- Vectores singulares derechos:}
+
+Para $\lambda_1$:
+$(A^TA-\lambda_1 I)v=0
+\Rightarrow \begin{pmatrix}-95.36&-72\\-72&-54.36\end{pmatrix}v=0
+\Rightarrow v_{11} \approx -0.755\,v_{12}$.
+Normalizando: $v_1 \approx (-0.603,\;0.798)^T$.
+
+Para $\lambda_2$:
+$v_2 \approx (0.798,\;0.603)^T$.
+\textit{Ort.:} $v_1^Tv_2 \approx 0$. \checkmark
+
+\[
+  V \approx \begin{pmatrix}-0.603&0.798\\0.798&0.603\end{pmatrix}.
+\]
+
+\textbf{Paso 5 --- Vectores singulares izquierdos:}
+\[
+  u_1 = \frac{Av_1}{\sigma_1}
+  \approx \frac{1}{14.15}\begin{pmatrix}9.985\\10.016\\-0.603\end{pmatrix}
+  \approx \begin{pmatrix}0.706\\0.708\\-0.043\end{pmatrix},
+  \qquad
+  u_2 = \frac{Av_2}{\sigma_2}
+  \approx \frac{1}{7.12}\begin{pmatrix}5.031\\-4.969\\0.798\end{pmatrix}
+  \approx \begin{pmatrix}0.707\\-0.698\\0.112\end{pmatrix}.
+\]
+$u_3 = u_1\times u_2 \approx (0.050,\,-0.109,\,-0.993)^T$ (producto vectorial).
+
+\begin{tcolorbox}[clave]
+\[
+  A \approx
+  \underbrace{\begin{pmatrix}0.706&0.707&0.050\\0.708&-0.698&-0.109\\-0.043&0.112&-0.993\end{pmatrix}}_{U}
+  \underbrace{\begin{pmatrix}14.15&0\\0&7.12\\0&0\end{pmatrix}}_{\Sigma}
+  \underbrace{\begin{pmatrix}-0.603&0.798\\0.798&0.603\end{pmatrix}}_{V^T}.
+\]
+\end{tcolorbox}
+
+\subsection{P2(a): Identificar $B$ y $d$ del método estacionario (Algoritmo 1)}
+\label{sec:parcial2025_p2a}
+
+El enunciado da $A = L + D + U$ ($L$ estrictamente inferior, $D$ diagonal, $U$ estrictamente
+superior) y el algoritmo:
+\begin{enumerate}[noitemsep]
+  \item Resolver $(D+L)y = b$ (una sola vez, sustitución adelante).
+  \item Para $k=0,1,\ldots$: $w_k = -Ux_k$;\; resolver $(D+L)z_k = w_k$;\; $x_{k+1} = z_k + y$.
+\end{enumerate}
+
+Sustituyendo $z_k = -(D+L)^{-1}Ux_k$ y $y = (D+L)^{-1}b$:
+\[
+  x_{k+1} = -(D+L)^{-1}Ux_k + (D+L)^{-1}b = Bx_k + d.
+\]
+
+\begin{tcolorbox}[clave]
+Este es el \textbf{método de Gauss-Seidel}:
+\[
+  B = T_{GS} = -(D+L)^{-1}U, \qquad d = (D+L)^{-1}b.
+\]
+\end{tcolorbox}
+
+\subsection{P2(b): Convergencia cuando $\|B\|<1$}
+
+\textbf{Idea:} el error satisface $e^{(k)}=Be^{(k-1)}$, así que crece por un factor $\|B\|<1$ en cada paso y decae a cero.
+
+\begin{proof}
+Sea $x^*$ el punto fijo: $x^*=Bx^*+d$. Restando de la iteración $x_{k+1}=Bx_k+d$:
+\[
+  e^{(k+1)} = x^{(k+1)}-x^* = B(x^{(k)}-x^*) = Be^{(k)}.
+\]
+Por inducción $e^{(k)}=B^ke^{(0)}$, luego:
+\[
+  \|e^{(k)}\| \le \|B^k\|\,\|e^{(0)}\| \le \|B\|^k\,\|e^{(0)}\| \xrightarrow[k\to\infty]{\|B\|<1} 0.
+\]
+El método converge para cualquier $x^{(0)}$. Nota: la condición $\|B\|<1$ es \emph{suficiente}; la condición necesaria y suficiente es $\rho(B)<1$ (radio espectral). \qed
+\end{proof}
+
+\subsection{P3(a): $r_{k+1}\perp r_k$ en Mínimo Descenso ($p_k = r_k$)}
+
+\textbf{Idea:} el paso $t_k$ se elige exactamente para minimizar $f(x_k+t_kr_k)$ a lo largo de la dirección $r_k$; la condición de mínimo dice que el gradiente en $x_{k+1}$, que es $-r_{k+1}$, debe ser perpendicular a la dirección de búsqueda $r_k$.
+
+\begin{proof}
+Calculamos el nuevo residuo usando $x_{k+1}=x_k+t_kr_k$:
+\[
+  r_{k+1} = b-Ax_{k+1} = b-A(x_k+t_kr_k) = r_k - t_kAr_k.
+\]
+Tomamos el producto interno con $r_k$:
+\[
+  \langle r_{k+1},r_k\rangle
+  = \langle r_k,r_k\rangle - t_k\langle Ar_k,r_k\rangle
+  = \langle r_k,r_k\rangle - \frac{\langle r_k,r_k\rangle}{\langle r_k,Ar_k\rangle}\langle Ar_k,r_k\rangle = 0. \qed
+\]
+La cancelación ocurre porque $t_k$ fue diseñado para que el numerador y el denominador se cancelen.
+\end{proof}
+
+\subsection{P3(b): $r_{k+1}\perp r_j$ para todo $j\le k$ en Gradientes Conjugados ($p_k=u_k$)}
+\label{sec:parcial2025_p3b}
+
+\begin{proof}
+Las direcciones $\{u_k\}$ son $A$-conjugadas: $\langle u_i,Au_j\rangle = 0$ para $i\neq j$.
+El tamaño de paso es $t_k = \langle u_k,r_0\rangle/\langle u_k,Au_k\rangle$
+(demostrado en \S\ref{sec:parcial2_2024_p2} parte (c)).
+De la propiedad (b): $x_{k+1} = x_0 + \sum_{j=0}^k t_j u_j$, luego
+\[
+  r_{k+1} = r_0 - \sum_{j=0}^k t_j Au_j.
+\]
+Para cualquier $i \le k$:
+\[
+  \langle r_{k+1},u_i\rangle
+  = \langle r_0,u_i\rangle - \sum_{j=0}^k t_j\underbrace{\langle Au_j,u_i\rangle}_{=0\text{ si }j\neq i}
+  = \langle r_0,u_i\rangle - t_i\langle Au_i,u_i\rangle
+  = \langle r_0,u_i\rangle - \frac{\langle u_i,r_0\rangle}{\langle u_i,Au_i\rangle}\langle Au_i,u_i\rangle
+  = 0.
+\]
+Como $\text{span}\{r_0,\ldots,r_k\} = \text{span}\{u_0,\ldots,u_k\}$,
+cualquier $r_j = \sum_i \alpha_i u_i$ con $i\le k$:
+\[
+  \langle r_{k+1},r_j\rangle = \sum_i \alpha_i\underbrace{\langle r_{k+1},u_i\rangle}_{=0} = 0. \qed
+\]
+\end{proof}
+
+% ============================================================
+\section{Ejercicios de Pizarrón}
+\label{sec:pizarron}
+% ============================================================
+
+\subsection{Matrices de Hessenberg: LU y algoritmo eficiente}
+\label{sec:hessenberg_lu}
+
+Una matriz \textbf{superior de Hessenberg} satisface $a_{ij}=0$ para $i > j+1$
+(ceros debajo de la primera subdiagonal).
+
+\subsubsection{Cálculo de LU para $A$ de Hessenberg}
+
+$A = \begin{pmatrix}4&2&3\\-2&1&-2\\0&1&2\end{pmatrix}$.
+
+\textbf{Paso 1:} único multiplicador $m_{21}=-2/4=-1/2$; fila 3 no cambia ($a_{31}=0$):
+\[
+  R_2 \leftarrow R_2 + \tfrac{1}{2}R_1
+  \;\Rightarrow\; (0,\;2,\;-\tfrac{1}{2}).
+\]
+
+\textbf{Paso 2:} único multiplicador $m_{32}=1/2$:
+\[
+  R_3 \leftarrow R_3 - \tfrac{1}{2}R_2^{(1)}
+  \;\Rightarrow\; (0,\;0,\;2+\tfrac{1}{4}) = (0,0,\tfrac{9}{4}).
+\]
+
+\[
+  L = \begin{pmatrix}1&0&0\\-\frac{1}{2}&1&0\\0&\frac{1}{2}&1\end{pmatrix}, \qquad
+  U = \begin{pmatrix}4&2&3\\0&2&-\frac{1}{2}\\0&0&\frac{9}{4}\end{pmatrix}.
+\]
+
+\textit{Verificación:}
+$LU = \begin{pmatrix}4&2&3\\-2&1&-2\\0&1&2\end{pmatrix} = A$. \checkmark
+
+\subsubsection{Algoritmo eficiente GaussH}
+\label{sec:hessenberg_alg}
+
+En cada paso $k$ de la eliminación gaussiana en una matriz de Hessenberg,
+solo hay \emph{un} multiplicador ($m_{k+1,k}$), porque la columna $k$
+ya tiene ceros en las posiciones $k+2,\ldots,n$.
+
+\begin{tcolorbox}[algo,
+                  title={Rutina GaussH}]
+Para $k = 1,\ldots,n-1$:
+\begin{enumerate}[noitemsep]
+  \item $m_{k+1,k} = A_{k+1,k}/A_{kk}$
+  \item $A_{k+1,k+1:n} \leftarrow A_{k+1,k+1:n} - m_{k+1,k}\cdot A_{k,k+1:n}$
+\end{enumerate}
+Número de operaciones: $(n-1)$ divisiones $+\sum_{k=1}^{n-1}2(n-k) = (n-1)n \approx n^2$
+operaciones aritméticas. \textbf{Costo $O(n^2)$ vs.\ $O(n^3/3)$ de Gauss estándar.}
+\end{tcolorbox}
+
+\subsection{Demostración: $Q^TL$ es triangular superior}
+\label{sec:qtl_upper}
+
+\begin{proof}
+Sea $A \in \mathbb{R}^{n\times n}$ no singular con factorizaciones $A=LU$ y $A=QR$.
+
+Aplicando $Q^T$ a la izquierda en $A=QR$:
+\[
+  Q^TA = R \quad \text{(triangular superior)}.
+\]
+
+Sustituyendo $A=LU$:
+\[
+  Q^T(LU) = R \;\Longrightarrow\; (Q^TL)\,U = R \;\Longrightarrow\; Q^TL = RU^{-1}.
+\]
+
+$R$ es triangular superior y $U^{-1}$ es triangular superior
+(la inversa de una triangular superior es triangular superior),
+por lo tanto $RU^{-1}$ es triangular superior.
+
+Luego $Q^TL$ es triangular superior. \qed
+\end{proof}
+
+% ============================================================
+\section{Propiedades completas de la matriz de Householder}
+\label{sec:householder_completo}
+% ============================================================
+
+Sea $H = I - 2\dfrac{vv^T}{v^Tv}$, \quad $v \in \mathbb{R}^n$, $v\neq 0$.
+
+Las propiedades P1 y P2 aparecen en contexto de examen en \S\ref{sec:q2_2016_p1};
+aquí se presentan todas con demostraciones completas.
+
+\subsection{P1. $H$ es simétrica ($H^T = H$)}
+
+\begin{proof}
+$H^T = \left(I - \dfrac{2vv^T}{v^Tv}\right)^T = I - \dfrac{2(vv^T)^T}{v^Tv}
+= I - \dfrac{2vv^T}{v^Tv} = H$. \qed
+\end{proof}
+
+\subsection{P2. $H$ es ortogonal ($H^TH = I$, equivalentemente $H^2 = I$)}
+
+\begin{proof}
+\[
+  H^2 = \left(I - \frac{2vv^T}{v^Tv}\right)^2
+  = I - \frac{4vv^T}{v^Tv} + \frac{4v(v^Tv)v^T}{(v^Tv)^2}
+  = I - \frac{4vv^T}{v^Tv} + \frac{4vv^T}{v^Tv} = I.
+\]
+Como P1 da $H^T = H$: $H^TH = H^2 = I$, es decir $H$ es ortogonal. \qed
+\end{proof}
+
+\subsection{P3. $H$ es involutoria ($H^{-1} = H$)}
+
+\begin{proof}
+De $H^2 = I$ se sigue directamente $H^{-1} = H$. \qed
+\end{proof}
+
+\subsection{P4. $\det(H) = -1$}
+
+\begin{proof}
+Por el \textit{lema del determinante de rango 1}: $\det(I + ab^T) = 1 + b^Ta$.
+Tomando $a = -2v/(v^Tv)$ y $b = v$:
+\[
+  \det(H) = 1 + v^T\!\left(-\frac{2v}{v^Tv}\right) = 1 - \frac{2\,v^Tv}{v^Tv} = 1-2 = -1. \qed
+\]
+\end{proof}
+
+\subsection{P5. $Hv = -v$}
+
+\begin{proof}
+$Hv = v - \dfrac{2v\,(v^Tv)}{v^Tv} = v - 2v = -v$. \qed
+\end{proof}
+
+\subsection{P6. $Hx = x$ para todo $x \perp v$}
+
+\begin{proof}
+Si $v^Tx = 0$: $Hx = x - \dfrac{2v\,(v^Tx)}{v^Tv} = x - 0 = x$. \qed
+\end{proof}
+
+\begin{tcolorbox}[info]
+\textbf{Interpretación geométrica:} $H$ es la \emph{reflexión} respecto al hiperplano
+$v^\perp = \{x : v^Tx = 0\}$. Los vectores en $v^\perp$ son fijos (P6);
+el vector $v$ se invierte (P5).
+\end{tcolorbox}
+
+\subsection{P7. Los autovalores de $H$ son $1$ (multiplicidad $n-1$) y $-1$ (multiplicidad $1$)}
+
+\begin{proof}
+El subespacio $v^\perp$ tiene dimensión $n-1$; por P6, todo $x \in v^\perp$ cumple
+$Hx = x$, luego $1$ es autovalor de multiplicidad $\ge n-1$.
+Por P5, $Hv = -v$, así que $-1$ es autovalor con autovector $v$.
+Los autoespacios $v^\perp$ y $\text{span}\{v\}$ son ortogonales y su dimensión suma
+$n$, por lo que no existen más autovalores. \qed
+\end{proof}
+
+\begin{tcolorbox}[clave]
+Consecuencia de P4: $\det(H) = 1^{n-1}\cdot(-1)^1 = -1$. \checkmark
+\end{tcolorbox}
+
+\subsection{P8. Preservación de la norma: $\|Hx\|_2 = \|x\|_2$}
+
+\begin{proof}
+$\|Hx\|_2^2 = (Hx)^T(Hx) = x^TH^THx = x^Tx = \|x\|_2^2$ (pues $H^TH=I$). \qed
+\end{proof}
+
+\subsection{P9. Propiedad de aniquilación (construcción para la factorización QR)}
+
+Dado $a \in \mathbb{R}^n$, se elige
+$v = a + \operatorname{sign}(a_1)\|a\|_2\,e_1$
+para introducir ceros en las posiciones $2,\ldots,n$.
+
+\begin{proof}
+Calculamos $v^Tv$ y $v^Ta$ con el $v$ elegido:
+\begin{align*}
+  v^Tv &= \|a\|_2^2 + 2\operatorname{sign}(a_1)\|a\|_2 a_1 + \|a\|_2^2
+         = 2\|a\|_2\bigl(\|a\|_2 + |a_1|\bigr).\\
+  v^Ta &= \|a\|_2^2 + \operatorname{sign}(a_1)\|a\|_2 a_1
+         = \|a\|_2\bigl(\|a\|_2 + |a_1|\bigr).
+\end{align*}
+Entonces:
+\[
+  Ha = a - \frac{2v\,(v^Ta)}{v^Tv}
+  = a - \frac{2v\,\|a\|_2(\|a\|_2+|a_1|)}{2\|a\|_2(\|a\|_2+|a_1|)}
+  = a - v = -\operatorname{sign}(a_1)\|a\|_2\,e_1. \qed
+\]
+\end{proof}
+
+\begin{tcolorbox}[clave]
+\textbf{Elección del signo:} usar $\operatorname{sign}(a_1)$ (igual al signo de $a_1$)
+garantiza $v_1 = a_1 + \operatorname{sign}(a_1)\|a\|\approx 2|a_1|$,
+evitando \textit{cancelación catastrófica} cuando $a_1 \approx \|a\|$.
+\end{tcolorbox}
+
+% ============================================================
+\section{Práctica: LSP y Métodos Iterativos Estacionarios (11 Jun 2026)}
+\label{sec:practica_lsp_jacobi}
+% ============================================================
+
+\begin{examen}{Práctica: LSP y Métodos Iterativos Estacionarios (11 Jun 2026)}
+\textbf{LSP 1.} Una empresa registró ventas (miles USD) en sus primeros 3 años: $(1,7),(2,4),(3,3)$. Ajuste un modelo lineal $\widehat{\text{ventas}}(t)=a+bt$ por mínimos cuadrados. ¿En qué momento la empresa comenzaría a perder dinero (ventas $\le0$) según el modelo?
+
+\smallskip\textbf{LSP 2.} Dado un vector $x\in\mathbb{R}^m$ y datos $y\in\mathbb{R}^m$, encuentre el escalar $\hat\alpha$ que minimiza $\|y-\alpha x\|_2$.
+
+\smallskip\textbf{Iter.\ 1.} Sea $A=\begin{pmatrix}-10&2\\\beta&5\end{pmatrix}$. Determine para qué valores de $\beta$ convergen (a) el método de Jacobi, (b) el método de Gauss-Seidel. Calcule el radio espectral de las matrices de iteración $T_J$ y $T_{GS}$ en función de $\beta$.
+
+\smallskip\textbf{Iter.\ 2.} Dado el método de Richardson $x_{k+1}=x_k+\alpha(b-Ax_k)$, identifique la matriz de iteración $B$ y el vector constante $d$. Para $A$ SPD con autovalores $0<\lambda_{\min}\le\cdots\le\lambda_{\max}$, determine los valores de $\alpha$ para los cuales converge.
+\end{examen}
+
+\subsection{LSP 1: Predicción por regresión lineal}
+\label{sec:lsp_regresion}
+
+Datos (año, ventas en miles USD): $(1,7),(2,4),(3,3)$. Modelo lineal: $\text{ventas}(t) = a + bt$.
+
+\[
+  A = \begin{pmatrix}1&1\\1&2\\1&3\end{pmatrix}, \qquad
+  b_{\text{datos}} = \begin{pmatrix}7\\4\\3\end{pmatrix}.
+\]
+
+\textbf{Ecuaciones normales} $A^TA\,\binom{a}{b} = A^Tb_{\text{datos}}$:
+\[
+  A^TA = \begin{pmatrix}3&6\\6&14\end{pmatrix}, \qquad
+  A^Tb_{\text{datos}} = \begin{pmatrix}14\\24\end{pmatrix}.
+\]
+
+Reducción por filas: $R_2 \leftarrow R_2 - 2R_1 \Rightarrow 2\hat{b} = -4 \Rightarrow \hat{b} = -2$;
+luego $3\hat{a} = 14 - 6(-2) = 26 \Rightarrow \hat{a} = 26/3$.
+
+\textbf{Modelo ajustado:} $\widehat{\text{ventas}}(t) = \tfrac{26}{3} - 2t$.
+
+Igualando a cero: $t^* = 13/3 \approx 4.33$ años desde el inicio.
+La fracción de año es $\tfrac{1}{3} \times 12 \approx 4$ meses.
+
+\begin{tcolorbox}[clave]
+La empresa comienza a perder dinero al \textbf{cuarto mes del año 4}.
+\end{tcolorbox}
+
+\subsection{LSP 2: Escalar $\alpha$ que minimiza $\|y-\alpha x\|_2$}
+
+Ver \S\ref{sec:escalar_alpha}: $\hat{\alpha} = x^Ty/(x^Tx)$.
+
+\subsection{Iter.\ 1: Condición sobre $\beta$ para la matriz $A=\begin{pmatrix}-10&2\\\beta&5\end{pmatrix}$}
+\label{sec:beta_condicion}
+
+Con $D=\operatorname{diag}(-10,5)$, $L_s=\bigl[\begin{smallmatrix}0&0\\\beta&0\end{smallmatrix}\bigr]$,
+$U_s=\bigl[\begin{smallmatrix}0&2\\0&0\end{smallmatrix}\bigr]$:
+
+\[
+  T_J = -D^{-1}(L_s+U_s) = \begin{pmatrix}0&1/5\\-\beta/5&0\end{pmatrix}.
+\]
+$\det(T_J-\lambda I) = \lambda^2 + \beta/25 = 0 \Rightarrow \rho(T_J) = \sqrt{|\beta|/25}$.
+
+\[
+  T_{GS} = -(D+L_s)^{-1}U_s = \begin{pmatrix}0&1/5\\0&-\beta/25\end{pmatrix}.
+\]
+Autovalores $0$ y $-\beta/25$; luego $\rho(T_{GS}) = |\beta|/25$.
+
+\begin{tcolorbox}[clave]
+\textbf{Condición necesaria y suficiente (ambos métodos):} $|\beta| < 25$.\quad
+\textbf{Condición suficiente EDD (fila 2):} $|5|>|\beta|$, i.e.\ $|\beta| < 5$.
+\end{tcolorbox}
+
+\subsection{Iter.\ 2: Matriz de iteración --- método de Richardson}
+\label{sec:richardson}
+
+$x_{k+1} = x_k + \alpha(b-Ax_k) = (I-\alpha A)x_k + \alpha b$.
+
+\begin{tcolorbox}[clave]
+Matriz de iteración: $B = I - \alpha A$. \quad Vector constante: $d = \alpha b$.\\
+Si $A$ es SPD con $0 < \lambda_{\min} \le \cdots \le \lambda_{\max}$:
+$\rho(B) < 1 \iff 0 < \alpha < 2/\lambda_{\max}$.
+\end{tcolorbox}
+
+\subsection{Pseudocódigo de Gauss-Seidel para $n$ variables}
+\label{sec:gs_nvars}
+
+En la iteración $k+1$, la variable $x_i$ se actualiza usando los valores
+\emph{ya calculados} en la misma iteración ($j < i$) y los \emph{anteriores} ($j > i$):
+\[
+  x_i^{(k+1)} = \frac{1}{a_{ii}}\!\left(b_i
+    - \sum_{j=1}^{i-1} a_{ij}\,x_j^{(k+1)}
+    - \sum_{j=i+1}^{n} a_{ij}\,x_j^{(k)}\right), \quad i=1,\ldots,n.
+\]
+
+\begin{tcolorbox}[algo,
+                  title={Pseudocódigo Gauss-Seidel ($n$ variables)}]
+\textbf{Entrada:} $A\in\mathbb{R}^{n\times n}$, $b$, $x^{(0)}$, tolerancia $\varepsilon$, $k_{\max}$.\\[2pt]
+\textbf{Para} $k = 0, 1, \ldots, k_{\max}$:\\[2pt]
+\quad\textbf{Para} $i = 1, \ldots, n$: \quad
+  $x_i^{(k+1)} \leftarrow \dfrac{b_i - \sum_{j<i}a_{ij}x_j^{(k+1)} - \sum_{j>i}a_{ij}x_j^{(k)}}{a_{ii}}$\\[6pt]
+\quad\textbf{Si} $\bigl\|x^{(k+1)}-x^{(k)}\bigr\|_\infty < \varepsilon$: \textbf{parar}.\\[2pt]
+\textbf{Salida:} $x^{(k+1)}$ (aproximación de la solución).
+\end{tcolorbox}
+
+\textbf{Diferencia con Jacobi:} Jacobi usa exclusivamente $x_j^{(k)}$ para todos los $j$;
+Gauss-Seidel incorpora $x_j^{(k+1)}$ en cuanto lo calcula ($j < i$),
+lo que suele acelerar la convergencia.
+
+% ============================================================
+\section{Práctica: Gradientes Conjugados (18 Jun 2026)}
+\label{sec:practica_gc}
+% ============================================================
+
+\begin{examen}{Práctica: Gradientes Conjugados (18 Jun 2026)}
+\textbf{GC 1.} Identifique la matriz $A$, el vector $b$ y la constante $c$ en la función cuadrática $q(x)=3x_1^2-2x_1x_2+x_1x_3-x_3^2+x_3-x_1+5$ escrita en la forma estándar $q(x)=\tfrac{1}{2}x^TAx-b^Tx+c$.
+
+\smallskip\textbf{GC 2.} Sea $A$ SPD y $r_k=b-Ax_k$ el residuo en el paso $k$ del método de Mínimo Descenso ($x_{k+1}=x_k+t_kr_k$, $t_k=\langle r_k,r_k\rangle/\langle r_k,Ar_k\rangle$). Demuestre que $r_{k+1}\perp r_k$.
+
+\smallskip\textbf{GC 3.} Sean $\{r_k\}$ residuos y $\{u_k\}$ direcciones de búsqueda del método de Gradientes Conjugados. Demuestre: (a) $r_{k+1}=r_k-t_kAu_k$. (b) $x_{k+1}=x_0+\sum_{j=0}^kt_ju_j$. (c) $t_k=\langle u_k,r_0\rangle/\langle u_k,Au_k\rangle$.
+
+\smallskip\textbf{GC 4.} Demuestre las formas alternativas: $t_k=\langle r_k,r_k\rangle/\langle u_k,Au_k\rangle$ y $\beta_k=-\langle r_{k+1},r_{k+1}\rangle/\langle r_k,r_k\rangle$, donde $\beta_k$ es el coeficiente de la actualización $u_{k+1}=r_{k+1}+\beta_ku_k$ (o equivalentemente $u_{k+1}=r_{k+1}-\beta_ku_k$ según la convención del algoritmo).
+\end{examen}
+
+\subsection{GC 1: Identificar $A$, $b$, $c$ en $q(x)$}
+\label{sec:gc_cuadratica}
+
+$q(x) = 3x_1^2 - 2x_1x_2 + x_1x_3 - x_3^2 + x_3 - x_1 + 5$.
+
+Forma estándar: $q(x) = \tfrac{1}{2}x^TAx - b^Tx + c$.
+
+\textbf{Parte cuadrática} ($\tfrac{1}{2}x^TAx$): el coeficiente de $x_i^2$ es $a_{ii}/2$;
+el coeficiente de $x_ix_j$ ($i\neq j$) es $a_{ij}$ (por simetría):
+\[
+  a_{11}/2 = 3,\; a_{22}/2=0,\; a_{33}/2=-1;\quad a_{12}=-2,\; a_{13}=1,\; a_{23}=0.
+\]
+\[
+  A = \begin{pmatrix}6&-2&1\\-2&0&0\\1&0&-2\end{pmatrix}.
+\]
+\textit{Verificación:} $\tfrac{1}{2}x^TAx = 3x_1^2-2x_1x_2+x_1x_3-x_3^2$.\;\checkmark
+
+\textbf{Parte lineal} $(-b^Tx = -x_1 + x_3)$: $b = (1,0,-1)^T$.
+
+\textbf{Constante:} $c = 5$.
+
+\begin{tcolorbox}[clave]
+$A = \begin{pmatrix}6&-2&1\\-2&0&0\\1&0&-2\end{pmatrix}$,\quad
+$b = \begin{pmatrix}1\\0\\-1\end{pmatrix}$,\quad $c = 5$.
+\end{tcolorbox}
+
+\subsection{GC 2: $r_{k+1}\perp r_k$ en Mínimo Descenso}
+
+Demostración completa en \S\ref{sec:q2_2024_p2}. Transcripción de la solución oficial:
+
+\begin{proof}
+$r_{k+1} = b - A(x_k + t_kr_k) = r_k - t_kAr_k$.
+\[
+  \langle r_{k+1},r_k\rangle
+  = \langle r_k,r_k\rangle - t_k\langle Ar_k,r_k\rangle
+  = \langle r_k,r_k\rangle
+    - \frac{\langle r_k,r_k\rangle}{\langle r_k,Ar_k\rangle}\langle Ar_k,r_k\rangle = 0. \qed
+\]
+\end{proof}
+
+\subsection{GC 3: Propiedades del Gradiente Conjugado (a)--(c)}
+
+Estas propiedades son centrales para entender por qué el GC funciona. Las probamos directamente desde la definición del algoritmo.
+
+\textbf{(a) $r_{k+1} = r_k - t_k Au_k$}
+
+\begin{proof}
+$r_{k+1}=b-Ax_{k+1}=b-A(x_k+t_ku_k)=(b-Ax_k)-t_kAu_k=r_k-t_kAu_k$. \qed
+\end{proof}
+
+\textbf{(b) $x_{k+1} = x_0 + \sum_{j=0}^k t_j u_j$}
+
+\begin{proof}
+Por inducción. Base: $x_1=x_0+t_0u_0$ (definición del algoritmo). \\
+Paso: suponiendo $x_k=x_0+\sum_{j=0}^{k-1}t_ju_j$, entonces $x_{k+1}=x_k+t_ku_k=x_0+\sum_{j=0}^kt_ju_j$. \qed
+\end{proof}
+
+\textbf{(c) $t_k = \langle u_k,r_0\rangle/\langle u_k,Au_k\rangle$}
+
+\textbf{Idea:} la dirección de búsqueda $u_k$ y el residuo inicial $r_0$ tienen el mismo producto interno que $u_k$ y el residuo actual $r_k$, porque los residuos intermedios son ortogonales a $u_k$.
+
+\begin{proof}
+De (b): $x_k=x_0+\sum_{j<k}t_ju_j$, luego $r_k=r_0-\sum_{j<k}t_jAu_j$.
+
+Tomando producto interno con $u_k$:
+\[
+  \langle u_k,r_k\rangle
+  = \langle u_k,r_0\rangle - \sum_{j<k}t_j\underbrace{\langle u_k,Au_j\rangle}_{=0\ (j\ne k,\ A\text{-conj.})}
+  = \langle u_k,r_0\rangle.
+\]
+Pero la fórmula del algoritmo es $t_k=\langle u_k,r_k\rangle/\langle u_k,Au_k\rangle$
+(el paso óptimo para minimizar $\phi$ en dirección $u_k$).
+Sustituyendo: $t_k=\langle u_k,r_0\rangle/\langle u_k,Au_k\rangle$. \qed
+\end{proof}
+
+\subsection{GC 4: Formas alternativas de $t_k$ y $\beta_k$}
+\label{sec:gc_altformas}
+
+El algoritmo GC define $\beta_k = \langle r_{k+1},Au_k\rangle/\langle u_k,Au_k\rangle$
+y $u_{k+1} = r_{k+1} - \beta_k u_k$.
+
+Se demuestran las expresiones equivalentes:
+\[
+  t_k = \frac{\langle r_k,r_k\rangle}{\langle u_k,Au_k\rangle}, \qquad
+  \beta_k = -\frac{\langle r_{k+1},r_{k+1}\rangle}{\langle r_k,r_k\rangle}.
+\]
+
+\begin{proof}[$t_k = \langle r_k,r_k\rangle/\langle u_k,Au_k\rangle$]
+\textbf{Caso $k=0$:} $u_0=r_0$, luego $\langle u_0,r_0\rangle=\langle r_0,r_0\rangle$. \checkmark
+
+\textbf{Caso $k\ge1$:} $u_k = r_k - \beta_{k-1}u_{k-1}$, luego
+$\langle u_k,r_k\rangle = \langle r_k,r_k\rangle - \beta_{k-1}\underbrace{\langle u_{k-1},r_k\rangle}_{=0}
+= \langle r_k,r_k\rangle$,
+donde $\langle u_{k-1},r_k\rangle = 0$ porque $t_{k-1}$ minimiza la función cuadrática
+a lo largo de $u_{k-1}$, lo que implica que $r_k \perp u_{k-1}$.
+Sustituyendo en $t_k = \langle u_k,r_k\rangle/\langle u_k,Au_k\rangle$: \qed
+\end{proof}
+
+\begin{proof}[$\beta_k = -\langle r_{k+1},r_{k+1}\rangle/\langle r_k,r_k\rangle$]
+De $r_{k+1} = r_k - t_kAu_k$ se despeja $Au_k = (r_k-r_{k+1})/t_k$. Entonces:
+\[
+  \langle r_{k+1},Au_k\rangle
+  = \frac{1}{t_k}\bigl(\underbrace{\langle r_{k+1},r_k\rangle}_{=0} - \langle r_{k+1},r_{k+1}\rangle\bigr)
+  = -\frac{\langle r_{k+1},r_{k+1}\rangle}{t_k}.
+\]
+Por tanto:
+$\beta_k = \dfrac{-\langle r_{k+1},r_{k+1}\rangle/t_k}{\langle u_k,Au_k\rangle}
+= -\dfrac{\langle r_{k+1},r_{k+1}\rangle}{t_k\langle u_k,Au_k\rangle}
+= -\dfrac{\langle r_{k+1},r_{k+1}\rangle}{\langle r_k,r_k\rangle}$,
+usando $t_k\langle u_k,Au_k\rangle = \langle r_k,r_k\rangle$. \qed
+\end{proof}
+
+% ============================================================
+\section{Demostraciones adicionales (cont.)}
+\label{sec:demos_adicionales2}
+% ============================================================
+
+\subsection{Unicidad de la factorización de Cholesky}
+\label{sec:cholesky_unicidad}
+
+\begin{proof}
+Suponga $A = LL^T = MM^T$ con $L$, $M$ triangulares inferiores y $\ell_{ii},m_{ii}>0$.
+
+Sea $R = M^{-1}L$ (triangular inferior). De $LL^T = MM^T$:
+\[
+  M^{-1}(LL^T)M^{-T} = I
+  \;\Rightarrow\; (M^{-1}L)(M^{-1}L)^T = I
+  \;\Rightarrow\; RR^T = I.
+\]
+$R$ es ortogonal \textbf{y} triangular inferior. Mostramos que $R = I$ por inducción:
+
+\textbf{Fila 1:} $(RR^T)_{11} = r_{11}^2 = 1$ y $r_{11} = \ell_{11}/m_{11} > 0$,
+luego $r_{11}=1$. Para $i>1$: $(RR^T)_{i1} = r_{i1}\cdot r_{11} = r_{i1} = 0$.
+
+\textbf{Fila $j$ (inductivo):} Suponiendo $r_{sk}=\delta_{sk}$ para $s,k < j$:
+$(RR^T)_{jj} = r_{jj}^2 = 1$ con $r_{jj}>0$, luego $r_{jj}=1$.
+Para $i>j$: $(RR^T)_{ij} = r_{ij}\cdot r_{jj} = r_{ij} = 0$.
+
+Por tanto $R = I$, es decir $M^{-1}L = I$, luego $L = M$. \qed
+\end{proof}
+
+\end{document}

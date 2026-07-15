@@ -1,0 +1,17 @@
+# Artefactos de compilación LaTeX
+*.aux
+*.log
+*.toc
+*.out
+*.synctex.gz
+*.fls
+*.fdb_latexmk
+*.blg
+*.bbl
+
+# Libros de texto (demasiado grandes para git)
+libros/
+
+# Archivos temporales del sistema
+Thumbs.db
+.DS_Store

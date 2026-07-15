@@ -1,0 +1,620 @@
+\documentclass[12pt,a4paper]{article}
+\usepackage[utf8]{inputenc}
+\usepackage[spanish]{babel}
+\AtBeginDocument{\shorthandoff{<>}}
+\usepackage{amsmath, amssymb, amsthm}
+\usepackage[dvipsnames,x11names]{xcolor}
+\usepackage{geometry}
+\geometry{margin=2.2cm, top=2.8cm, bottom=2.6cm}
+\usepackage{hyperref}
+\usepackage{enumitem}
+\usepackage{tcolorbox}
+\usepackage{booktabs}
+\tcbuselibrary{theorems, skins, breakable}
+\usepackage{fancyhdr}
+\usepackage{titlesec}
+\usepackage[expansion=false]{microtype}
+
+% ------ Paleta de colores ----------------------------------------
+\definecolor{azulUCV}{RGB}{0,60,130}
+\definecolor{azulMedio}{RGB}{120,170,220}
+\definecolor{azulClaro}{RGB}{232,242,255}
+\definecolor{verdeTcb}{RGB}{0,110,65}
+\definecolor{verdeClaro}{RGB}{222,246,232}
+\definecolor{rojoAcc}{RGB}{185,30,30}
+\definecolor{rojoClaro}{RGB}{255,235,235}
+\definecolor{amarilloAcc}{RGB}{200,160,0}
+\definecolor{amarilloClaro}{RGB}{255,251,218}
+\definecolor{grisTexto}{RGB}{38,38,55}
+
+% ------ Encabezado/pie de pagina ---------------------------------
+\pagestyle{fancy}
+\fancyhf{}
+\fancyhead[L]{\small\textit{\color{grisTexto}Calculo Cientifico~$\cdot$~Resumen Parcial 2 (I-2026)}}
+\fancyhead[R]{\small\color{grisTexto}\textbf{\thepage}}
+\fancyfoot[L]{\footnotesize\color{gray}Luisdavid Colina~$\cdot$~24.766.381~$\cdot$~UCV}
+\fancyfoot[R]{\footnotesize\hyperref[pgindice]{\color{azulUCV}$\uparrow$\,\textbf{\'Indice}}}
+\renewcommand{\headrulewidth}{0.5pt}
+\renewcommand{\footrulewidth}{0.2pt}
+
+% ------ Formato de secciones -------------------------------------
+\titleformat{\section}
+  {\Large\bfseries\color{azulUCV}}
+  {\thesection.}{0.6em}{}
+  [\vspace{-3pt}\color{azulMedio}\rule{\linewidth}{1.5pt}\vspace{2pt}]
+\titlespacing*{\section}{0pt}{2.2ex}{0.8ex}
+
+\titleformat{\subsection}
+  {\large\bfseries\color{grisTexto}}
+  {\thesubsection.}{0.5em}{}
+\titlespacing*{\subsection}{0pt}{1.2ex}{0.4ex}
+
+\titleformat{\subsubsection}
+  {\normalsize\bfseries\itshape\color{grisTexto}}
+  {\thesubsubsection.}{0.5em}{}
+\titlespacing*{\subsubsection}{0pt}{0.8ex}{0.2ex}
+
+% ------ Cajas de contenido --------------------------------------
+\newtcolorbox{resultado}{
+  enhanced,
+  colback=azulClaro, colframe=azulUCV,
+  colbacktitle=azulUCV, coltitle=white,
+  fonttitle=\bfseries, title=Resultado Clave,
+  boxrule=0.7pt, arc=4pt, leftrule=0pt,
+  top=5pt, bottom=5pt, left=8pt, right=8pt
+}
+\newtcolorbox{alerta}{
+  enhanced,
+  colback=rojoClaro, colframe=rojoAcc,
+  colbacktitle=rojoAcc, coltitle=white,
+  fonttitle=\bfseries, title=Cuidado,
+  boxrule=0.7pt, arc=4pt, leftrule=0pt,
+  top=5pt, bottom=5pt, left=8pt, right=8pt
+}
+\newtcolorbox{algoritmo}{
+  enhanced,
+  colback=verdeClaro, colframe=verdeTcb,
+  colbacktitle=verdeTcb, coltitle=white,
+  fonttitle=\bfseries,
+  boxrule=0.7pt, arc=4pt, leftrule=0pt,
+  top=5pt, bottom=5pt, left=8pt, right=8pt
+}
+
+\setlength{\parskip}{4pt}
+\setlength{\parindent}{0pt}
+
+\title{\textbf{Cálculo Científico: Resumen Completo para el Parcial 2}\\
+\large Temas 3 y 4: Factorizaciones Matriciales y Sistemas Lineales Numéricos}
+\author{Luisdavid Colina — 24.766.381}
+\date{UCV, Escuela de Computación, I-2026}
+
+\begin{document}
+\phantomsection\label{pgindice}
+\maketitle
+\newpage
+
+% ============================================================
+\section{Matrices Ortogonales y Householder}
+% ============================================================
+
+\subsection{Matrices ortogonales}
+
+$Q\in\mathbb{R}^{n\times n}$ es ortogonal si $Q^TQ=QQ^T=I$, i.e., $Q^{-1}=Q^T$.
+
+\textbf{Propiedades:} $\|Qx\|_2=\|x\|_2$ (preserva norma); $\det(Q)=\pm1$; $Q_1Q_2$ es ortogonal.
+
+\begin{resultado}
+\textbf{Prueba: producto de ortogonales es ortogonal} (telescópico).
+\[
+  (Q_1\cdots Q_n)^T(Q_1\cdots Q_n)=Q_n^T\cdots\underbrace{Q_1^TQ_1}_{=I}\cdots Q_n=\cdots=Q_n^TQ_n=I.\quad\qed
+\]
+\end{resultado}
+
+\subsection{Matrices de Householder}
+
+\[
+  H = I - \frac{2}{v^Tv}\,vv^T = I-2\rho\,vv^T,\qquad \rho=\frac{1}{v^Tv},\quad v\ne0.
+\]
+
+\begin{resultado}
+\textbf{9 propiedades con demostración:}
+\begin{enumerate}[noitemsep, label=P\arabic*.]
+  \item \textbf{Simétrica:} $(vv^T)^T=vv^T$ y $\rho$ es escalar, luego $H^T=H$.
+  \item \textbf{Ortogonal} ($H^2=I$): $(I-2\rho vv^T)^2=I-4\rho vv^T+4\rho^2v\underbrace{(v^Tv)}_{1/\rho}v^T=I$.
+  \item \textbf{Involutoria} ($H^{-1}=H$): de $H^2=I$, multiplicar $H^{-1}H^2=H^{-1} \Rightarrow H=H^{-1}$.
+  \item \textbf{$\det(H)=-1$:} lema matricial $\det(I-2\rho vv^T)=1-2\rho\,v^Tv=1-2=-1$.
+  \item \textbf{$Hv=-v$:} $Hv=v-2\rho(v^Tv)v=v-2v=-v$.
+  \item \textbf{$Hx=x$ si $x\perp v$:} $Hx=x-2\rho\underbrace{(v^Tx)}_{=0}v=x$.
+  \item \textbf{Autovalores:} $-1$ (mult. 1, autovect. $v$) y $+1$ (mult. $n-1$, $v^\perp$).
+  \item \textbf{$\|Hx\|=\|x\|$:} $H$ es ortogonal, preserva norma.
+  \item \textbf{Aniquilación:} construir $v=a+\operatorname{sgn}(a_1)\|a\|e_1 \Rightarrow Ha=-\operatorname{sgn}(a_1)\|a\|e_1$.
+\end{enumerate}
+\end{resultado}
+
+\textbf{Por qué sumar (no restar) en P9.}
+Si $a_1>0$ y restáramos: $v_1=a_1-\|a\|\approx0$ (cancelación catastrófica).
+Sumando: $v_1=a_1+\|a\|>0$ (estable).
+
+\textbf{Ejemplo numérico:} $a=(1,2,-2)^T$, $\|a\|=3$, $\operatorname{sgn}(a_1)=+1$.
+$v=(4,2,-2)^T$, $v^Tv=24$, $\rho=1/12$.
+$H=I-\tfrac{1}{12}vv^T=\tfrac{1}{3}\bigl[\begin{smallmatrix}-1&-2&2\\-2&2&1\\2&1&2\end{smallmatrix}\bigr]$.
+$Ha=(-3,0,0)^T=-3e_1=-\|a\|e_1$. \checkmark
+
+% ============================================================
+\section{Factorización LU}
+% ============================================================
+
+\textbf{Forma:} $A=LU$, $L$ triangular inferior unitaria (1s en diagonal), $U$ triangular superior.
+
+\textbf{Existencia sin pivoteo:} $\Leftrightarrow$ todos los menores principales $M_k=\det(A_{1:k,1:k})\ne0$.
+
+\begin{algoritmo}[title={Eliminación Gaussiana: $A=LU$}]
+Para $j=1,\ldots,n-1$ (columna pivote):
+\begin{enumerate}[noitemsep]
+  \item Para $i=j+1,\ldots,n$: $\ell_{ij}=a_{ij}/a_{jj}$ \quad(multiplicador; guarda en $L$)
+  \item Para $i=j+1,\ldots,n$: $A_{i,j:n}\leftarrow A_{i,j:n}-\ell_{ij}\cdot A_{j,j:n}$ \quad(actualizar fila)
+\end{enumerate}
+$L=$ triangular inferior con los $\ell_{ij}$ y unos en diagonal; $U=A$ resultante.\\
+\textbf{Resolver $Ax=b$:} $Ly=b$ (adelante $O(n^2)$), $Ux=y$ (atrás $O(n^2)$). Costo total $n^3/3+2n^2$.
+\end{algoritmo}
+
+\textbf{Ejemplo $3\times3$:} $A=\bigl[\begin{smallmatrix}2&1&1\\4&3&3\\8&7&9\end{smallmatrix}\bigr]$.
+Col 1 (pivot=2): $\ell_{21}=2,\ R_2\to(0,1,1)$;\ $\ell_{31}=4,\ R_3\to(0,3,5)$.
+Col 2 (pivot=1): $\ell_{32}=3,\ R_3\to(0,0,2)$.
+\[
+  L=\begin{pmatrix}1&0&0\\2&1&0\\4&3&1\end{pmatrix},\quad U=\begin{pmatrix}2&1&1\\0&1&1\\0&0&2\end{pmatrix}.\quad LU=A.\ \checkmark
+\]
+
+\textbf{Pivoteo parcial $PA=LU$:} intercambiar con el mayor pivote $\Rightarrow |\ell_{ij}|\le1$. Resolver: $Ly=Pb$ (adelante), $Ux=y$ (atrás).
+
+\begin{alerta}
+No existe LU (sin pivoteo) si algún $M_k=0$. Detectar: calcular $M_1,M_2,\ldots$ hasta el primero nulo.
+\end{alerta}
+
+\textbf{Tridiagonal:} $\pi_1=\beta_1$, $\pi_{k+1}=\beta_{k+1}-\alpha_k\gamma_k/\pi_k$. Costo $O(n)$.
+
+\begin{resultado}
+\textbf{Unicidad:} de $L_1U_1=L_2U_2 \Rightarrow L_2^{-1}L_1=U_2U_1^{-1}$. Izquierda: triangular inferior. Derecha: triangular superior. $\Rightarrow$ ambas diagonales. Los unos de $L_i$ fuerzan $L_2^{-1}L_1=I$, luego $L_1=L_2$, $U_1=U_2$. \qed
+\end{resultado}
+
+% ============================================================
+\section{Factorización de Cholesky}
+% ============================================================
+
+\textbf{Hipótesis:} $A$ simétrica y definida positiva (SPD). $\exists!\,L$ triangular inferior con $\ell_{ii}>0$: $A=LL^T$. Costo $\sim n^3/6$; no requiere pivoteo.
+
+\begin{algoritmo}[title={Factorización de Cholesky: $A=LL^T$}]
+Para $j=1,\ldots,n$ (columna):
+\begin{enumerate}[noitemsep]
+  \item $\ell_{jj}=\sqrt{a_{jj}-\sum_{k=1}^{j-1}\ell_{jk}^2}$ \quad(diagonal; falla si $A$ no SPD)
+  \item Para $i=j+1,\ldots,n$: $\ell_{ij}=\bigl(a_{ij}-\sum_{k=1}^{j-1}\ell_{ik}\ell_{jk}\bigr)/\ell_{jj}$
+\end{enumerate}
+\textbf{Resolver $Ax=b$:} $Ly=b$ (adelante), $L^Tx=y$ (atrás). Costo $n^3/6+n^2$.
+\end{algoritmo}
+
+\textbf{Ejemplo $2\times2$:} $A=\bigl[\begin{smallmatrix}4&2\\2&3\end{smallmatrix}\bigr]$.
+$\ell_{11}=2$; $\ell_{21}=1$; $\ell_{22}=\sqrt{3-1}=\sqrt{2}$.
+$L=\bigl[\begin{smallmatrix}2&0\\1&\sqrt{2}\end{smallmatrix}\bigr]$, $LL^T=A$. \checkmark
+
+\textbf{Test SPD:} el algoritmo falla (raíz de negativo) $\Leftrightarrow$ $A$ no es SPD.
+
+\begin{resultado}
+\textbf{Unicidad:} sea $R=M^{-1}L$ (triangular inferior). De $A=LL^T=MM^T$: $RR^T=I$, i.e., $R$ ortogonal $+$ triangular inferior. Por inducción $r_{11}^2=1,r_{11}>0\Rightarrow r_{11}=1$; el resto cae por inducción. Luego $R=I$, es decir $L=M$. \qed
+\end{resultado}
+
+\textbf{Por bloques.} $B=\bigl[\begin{smallmatrix}A&a\\a^T&\alpha\end{smallmatrix}\bigr]$ SPD, $A=LL^T$:
+$L_B=\bigl[\begin{smallmatrix}L&0\\\ell^T&\beta\end{smallmatrix}\bigr]$ con $L\ell=a$ y $\beta=\sqrt{\alpha-\ell^T\ell}$.
+
+% ============================================================
+\section{Factorización QR}
+% ============================================================
+
+\textbf{Forma:} $A\in\mathbb{R}^{m\times n}$ ($m\ge n$) $\Rightarrow$ $A=QR$, $Q$ ortogonal, $R$ triangular superior.
+
+\subsection{Gram-Schmidt}
+
+\begin{algoritmo}[title={QR por Gram-Schmidt (Clásico)}]
+Para $j=1,\ldots,n$:
+\begin{enumerate}[noitemsep]
+  \item Para $i=1,\ldots,j-1$: $r_{ij}=\langle q_i,a_j\rangle$ \quad(proyecciones)
+  \item $\hat q_j = a_j - \sum_{i<j}r_{ij}q_i$ \quad(ortogonalizar)
+  \item $r_{jj}=\|\hat q_j\|$;\quad $q_j=\hat q_j/r_{jj}$ \quad(normalizar)
+\end{enumerate}
+$Q=[q_1|\cdots|q_n]$, $R=(r_{ij})$ triangular superior. Costo: $\sim2mn^2$.\\
+\textbf{G-S Modificado:} en el paso 2, actualizar $a_j\leftarrow a_j-r_{ij}q_i$ uno a la vez (más estable).
+\end{algoritmo}
+
+\[
+  \hat{q}_j = a_j - \sum_{i<j}\underbrace{\langle q_i,a_j\rangle}_{r_{ij}}q_i
+  = (I-Q_{j-1}Q_{j-1}^T)a_j,\qquad q_j=\hat{q}_j/\|\hat{q}_j\|,\quad r_{jj}=\|\hat{q}_j\|.
+\]
+
+\textbf{Ejemplo:} $A=\bigl[\begin{smallmatrix}1&3\\1&-3\\1&4\\1&-4\end{smallmatrix}\bigr]$.
+$q_1=\tfrac{1}{2}(1,1,1,1)^T$, $r_{11}=2$.
+$r_{12}=q_1^Ta_2=0$ ($a_1\perp a_2$, no hay proyección que restar).
+$q_2=(3,-3,4,-4)^T/(5\sqrt{2})$, $r_{22}=5\sqrt{2}$.
+$R=\bigl[\begin{smallmatrix}2&0\\0&5\sqrt{2}\end{smallmatrix}\bigr]$.
+
+\begin{alerta}
+Gram-Schmidt clásico pierde ortogonalidad en aritmética de pocos dígitos. La versión \textbf{Modificada} (actualiza proyecciones sobre la marcha) es más estable.
+\end{alerta}
+
+\subsection{Householder}
+
+\begin{algoritmo}[title={QR por Householder}]
+Para $k=1,\ldots,\min(m-1,n)$:
+\begin{enumerate}[noitemsep]
+  \item $a=A_{k:m,k}$ (subcolumna activa).
+  \item $v=a+\operatorname{sgn}(a_1)\|a\|e_1$ (vector de Householder).
+  \item $\rho=2/(v^Tv)$.
+  \item $A_{k:m,k:n}\leftarrow A_{k:m,k:n}-\rho\,v(v^TA_{k:m,k:n})$ (aplicar $H_k$).
+\end{enumerate}
+$R=H_p\cdots H_1A$, $Q=H_1\cdots H_p$.
+\end{algoritmo}
+
+\textbf{Ejemplo:} $A=\bigl[\begin{smallmatrix}1&3&5\\2&3&1\\-2&0&-1\end{smallmatrix}\bigr]$.
+
+\textit{Paso 1:} $a=(1,2,-2)^T$, $\|a\|=3$; $v=(4,2,-2)^T$, $\rho=1/12$.
+$H_1=\tfrac{1}{3}\bigl[\begin{smallmatrix}-1&-2&2\\-2&2&1\\2&1&2\end{smallmatrix}\bigr]$,
+$A_1=H_1A=\bigl[\begin{smallmatrix}-3&-3&-3\\0&0&-3\\0&3&3\end{smallmatrix}\bigr]$.
+
+\textit{Paso 2:} subvec $(0,3)^T$; $v=(3,3)^T$, $H_2=\operatorname{diag}(1,\bigl[\begin{smallmatrix}0&-1\\-1&0\end{smallmatrix}\bigr])$.
+$R=\bigl[\begin{smallmatrix}-3&-3&-3\\0&-3&-3\\0&0&3\end{smallmatrix}\bigr]$,
+$Q=\tfrac{1}{3}\bigl[\begin{smallmatrix}-1&-2&2\\-2&-1&-2\\2&-2&-1\end{smallmatrix}\bigr]$. \checkmark
+
+\textbf{Prop.:} $\|A\|_F=\|R\|_F$ (transformaciones ortogonales preservan norma Frobenius).
+
+\textbf{QR $\leftrightarrow$ Cholesky:} $A^TA=R^TR=LL^T\Rightarrow R=L^T$ (si diagonal de $R$ positiva).
+
+% ============================================================
+\section{SVD --- Descomposición en Valores Singulares}
+% ============================================================
+
+Toda $A\in\mathbb{R}^{m\times n}$: $A=U\Sigma V^T$, $U\in\mathbb{R}^{m\times m}$, $V\in\mathbb{R}^{n\times n}$ ortogonales; $\Sigma$ diagonal con $\sigma_1\ge\cdots\ge\sigma_r>0$.
+
+\begin{algoritmo}[title={Algoritmo SVD}]
+\begin{enumerate}[noitemsep]
+  \item Formar $C=A^TA$ (simétrica, semidefinida positiva).
+  \item Calcular autovalores $\lambda_i\ge0$ de $C$.
+  \item $\sigma_i=\sqrt{\lambda_i}$; armar $\Sigma$.
+  \item Autovectores ortonormales $v_i$ de $C$ $\Rightarrow$ armar $V$.
+  \item $u_i=Av_i/\sigma_i$ para $\sigma_i>0$; completar a base ortonormal $\Rightarrow$ $U$.
+  \item Verificar $A=U\Sigma V^T$.
+\end{enumerate}
+\textbf{Por qué $u_i$ son ortonormales:}
+$\langle u_i,u_j\rangle=\tfrac{v_i^TA^TAv_j}{\sigma_i\sigma_j}=\tfrac{\lambda_j\,v_i^Tv_j}{\sigma_i\sigma_j}=\delta_{ij}$.
+\end{algoritmo}
+
+\begin{resultado}
+\textbf{Propiedades útiles:}\ $\operatorname{rango}(A)=r$;\ $\|A\|_2=\sigma_1$;\ $\|A\|_F^2=\sum\sigma_i^2$;\ $\kappa_2(A)=\sigma_1/\sigma_n$.\\
+\textbf{Control numérico:} $\sum\lambda_i=\operatorname{tr}(C)=\|A\|_F^2$ (verificar eigenvalores).\\
+\textbf{Mejor aprox. rango $k$:} $A_k=\sum_{i=1}^k\sigma_iu_iv_i^T$.
+\end{resultado}
+
+% ============================================================
+\section{Mínimos Cuadrados}
+% ============================================================
+
+Dado $Ax=b$ sobredeterminado ($m>n$): minimizar $\|b-Ax\|_2$.
+
+\textbf{Ecuaciones normales:} $A^TA\hat x=A^Tb$. Si cols. de $A$ son LI: $\hat x=(A^TA)^{-1}A^Tb$.
+
+\begin{resultado}
+\textbf{Prueba (residuo $\perp$ columnas):} $f(x)=\|b-Ax\|^2$, $\nabla f=-2A^T(b-Ax)=0\Rightarrow A^T(b-A\hat x)=0$, i.e., residuo $\perp$ cada columna de $A$.
+
+\textbf{$A^TA$ es SPD si cols. LI:} $x^T(A^TA)x=\|Ax\|^2\ge0$; $=0\Leftrightarrow x=0$ (con cols. LI). \qed
+\end{resultado}
+
+\textbf{Via QR (recomendado):} $A=Q\bigl[\begin{smallmatrix}R_1\\0\end{smallmatrix}\bigr]$, $Q^Tb=\bigl[\begin{smallmatrix}c_1\\c_2\end{smallmatrix}\bigr]$.
+Resolver $R_1\hat x=c_1$. Residuo mínimo $=\|c_2\|$.
+\textit{Ventaja:} $\kappa(R_1)=\kappa(A)\ll\kappa(A^TA)=\kappa(A)^2$.
+
+\textbf{Casos especiales:}
+\begin{itemize}[noitemsep]
+  \item Escalar óptimo: $\hat\alpha=a^Tb/(a^Ta)$.
+  \item Constante óptima: $\hat C=\tfrac{1}{n}\sum y_i$ (media).
+  \item \textbf{Regresión lineal} $\hat y=a+bt$: con $A=[\mathbf{1},\mathbf{t}]$, resolver $A^TA\binom{a}{b}=A^T\mathbf{y}$.
+\end{itemize}
+
+\textbf{Ejemplo de regresión:} datos $(1,7),(2,4),(3,3)$.
+$A^TA=\bigl[\begin{smallmatrix}3&6\\6&14\end{smallmatrix}\bigr]$, $A^Ty=\bigl[\begin{smallmatrix}14\\24\end{smallmatrix}\bigr]$.
+$\hat b=-2$, $\hat a=26/3$. Modelo: $\hat y=26/3-2t$.
+Pérdida cuando $\hat y=0$: $t=13/3$, es decir mes 4 del año 4.
+
+% ============================================================
+\section{Métodos Iterativos Estacionarios}
+% ============================================================
+
+\textbf{Descomposición:} $A=D+L_s+U_s$. Esquema: $x^{(k+1)}=Tx^{(k)}+c$.
+Error: $e^{(k)}=x^{(k)}-x^*=T^ke^{(0)}$.
+
+\begin{resultado}
+\textbf{Convergencia} $\forall x^{(0)}$ $\Leftrightarrow$ $\rho(T)<1$. Condición suficiente: $\|T\|<1$.
+Prueba: $\|e^{(k)}\|\le\|T\|^k\|e^{(0)}\|\to0$. Nota: $\rho(T)\le\|T\|$, así que $\|T\|<1$ implica $\rho(T)<1$, pero no al revés.
+\end{resultado}
+
+\subsection{Jacobi}
+
+\begin{algoritmo}[title={Método de Jacobi}]
+Dado $x^{(0)}$. Para $k=0,1,\ldots$ hasta convergencia:
+\begin{enumerate}[noitemsep]
+  \item Para $i=1,\ldots,n$: $x_i^{(k+1)}=\dfrac{1}{a_{ii}}\Bigl(b_i-\displaystyle\sum_{j\ne i}a_{ij}x_j^{(k)}\Bigr)$
+  \item Parar si $\|x^{(k+1)}-x^{(k)}\|<\varepsilon$.
+\end{enumerate}
+$T_J=-D^{-1}(L_s+U_s)$, $c_J=D^{-1}b$. Costo/iter: $O(n^2)$ (matriz densa) o $O(\text{nnz})$ (sparse).\\
+\textbf{Paralelizable:} todos los $x_i^{(k+1)}$ se calculan simultáneamente (no dependen entre sí).
+\end{algoritmo}
+
+$T_J=-D^{-1}(L_s+U_s)$,\quad $x_i^{(k+1)}=\tfrac{1}{a_{ii}}\bigl(b_i-\sum_{j\ne i}a_{ij}x_j^{(k)}\bigr)$.
+
+\begin{resultado}
+\textbf{Jacobi converge si $A$ es EDD} ($|a_{ii}|>\sum_{j\ne i}|a_{ij}|\ \forall i$).
+$(T_J)_{ij}=-a_{ij}/a_{ii}$ ($j\ne i$), cero en diagonal.
+$\|T_J\|_\infty=\max_i\sum_{j\ne i}|a_{ij}/a_{ii}|\overset{\text{EDD}}{<}1$. \qed
+\end{resultado}
+
+\textbf{Convergencia para $A=\bigl[\begin{smallmatrix}2&\alpha\\\alpha&1\end{smallmatrix}\bigr]$:}
+$T_J=\bigl[\begin{smallmatrix}0&-\alpha/2\\-\alpha&0\end{smallmatrix}\bigr]$,
+$\rho(T_J)=|\alpha|/\sqrt{2}$.
+Converge $\Leftrightarrow |\alpha|<\sqrt{2}$.
+
+\textbf{Ejemplo iteración:} $A=\bigl[\begin{smallmatrix}4&1\\1&3\end{smallmatrix}\bigr]$, $b=(9,5)^T$, $x^*=(2,1)^T$, $x^{(0)}=(0,0)^T$.
+$x_1^{(1)}=9/4=2.25$,\ $x_2^{(1)}=5/3\approx1.67$.
+$x_1^{(2)}=(9-5/3)/4=11/6\approx1.83$,\ $x_2^{(2)}=(5-9/4)/3=11/12\approx0.92$. (Converge a $(2,1)$.)
+
+\subsection{Gauss-Seidel}
+
+\begin{algoritmo}[title={Método de Gauss-Seidel}]
+Dado $x^{(0)}$. Para $k=0,1,\ldots$ hasta convergencia:
+\begin{enumerate}[noitemsep]
+  \item Para $i=1,\ldots,n$: $x_i^{(k+1)}=\dfrac{1}{a_{ii}}\Bigl(b_i-\displaystyle\sum_{j<i}a_{ij}\,x_j^{(k+1)}-\sum_{j>i}a_{ij}\,x_j^{(k)}\Bigr)$
+  \item Parar si $\|x^{(k+1)}-x^{(k)}\|<\varepsilon$.
+\end{enumerate}
+$T_{GS}=-(D+L_s)^{-1}U_s$. Usa los valores más recientes ($x_j^{(k+1)}$ para $j<i$).\\
+\textbf{Secuencial:} no paralelizable directamente; compensado por mayor velocidad de convergencia.
+\end{algoritmo}
+
+$T_{GS}=-(D+L_s)^{-1}U_s$. Usa valores recién calculados inmediatamente:
+\[
+  x_i^{(k+1)}=\frac{1}{a_{ii}}\Bigl(b_i-\sum_{j<i}a_{ij}x_j^{(k+1)}-\sum_{j>i}a_{ij}x_j^{(k)}\Bigr).
+\]
+
+\textbf{Mismo ejemplo:} $x_1^{(1)}=9/4=2.25$;\ $x_2^{(1)}=(5-2.25)/3=0.917$ (usa $x_1^{(1)}$ ya actualizado).
+$x_1^{(2)}=(9-0.917)/4=2.02$. Converge más rápido que Jacobi.
+
+\textbf{Condición $|\beta|<25$ (frecuente en exámenes):}
+$A=\bigl[\begin{smallmatrix}-10&2\\\beta&5\end{smallmatrix}\bigr]$:
+$\rho(T_J)=\sqrt{|\beta|/25}$, $\rho(T_{GS})=|\beta|/25$.
+Ambos convergen $\Leftrightarrow |\beta|<25$. EDD (fila 2) $\Rightarrow|\beta|<5$ (suficiente).
+
+\subsection{Richardson}
+
+\begin{algoritmo}[title={Método de Richardson}]
+Elegir $\alpha>0$. Dado $x^{(0)}$. Para $k=0,1,\ldots$:
+\[x_{k+1}=x_k+\alpha\underbrace{(b-Ax_k)}_{r_k}=(I-\alpha A)x_k+\alpha b.\]
+Matriz de iteración: $B=I-\alpha A$, $d=\alpha b$. Converge si $\rho(I-\alpha A)<1$.\\
+Para $A$ SPD: converge $\Leftrightarrow 0<\alpha<2/\lambda_{\max}$. Óptimo: $\alpha^*=\frac{2}{\lambda_{\min}+\lambda_{\max}}$,\ $\rho_{\min}=\frac{\kappa-1}{\kappa+1}$.
+\end{algoritmo}
+
+% ============================================================
+\section{Métodos No Estacionarios (SPD)}
+% ============================================================
+
+Para $A$ SPD, minimizar $\phi(x)=\tfrac{1}{2}x^TAx-b^Tx$ (su mínimo es la solución de $Ax=b$).
+
+\subsection{Mínimo Descenso}
+
+\textbf{Idea:} moverse en dirección del residuo $r_k=b-Ax_k$ (gradiente negativo de $\phi$). El paso $t_k$ minimiza $\phi$ a lo largo de $r_k$.
+
+\begin{algoritmo}[title={Mínimo Descenso}]
+$r_0=b-Ax_0$. Para $k=0,1,\ldots$:
+$t_k=\langle r_k,r_k\rangle/\langle r_k,Ar_k\rangle$;\quad
+$x_{k+1}=x_k+t_kr_k$;\quad $r_{k+1}=r_k-t_kAr_k$.
+\end{algoritmo}
+
+\begin{resultado}
+\textbf{Prueba: $r_{k+1}\perp r_k$.}
+$\langle r_{k+1},r_k\rangle=\langle r_k,r_k\rangle-t_k\langle Ar_k,r_k\rangle
+=\langle r_k,r_k\rangle-\tfrac{\langle r_k,r_k\rangle}{\langle r_k,Ar_k\rangle}\langle Ar_k,r_k\rangle=0$.\quad\qed
+
+\textbf{Consecuencia:} trayectoria en zigzag; lento para $\kappa(A)\gg1$.
+\end{resultado}
+
+\subsection{Gradientes Conjugados (GC)}
+
+\textbf{Idea:} elegir direcciones $A$-conjugadas ($\langle u_i,Au_j\rangle=0$ para $i\ne j$). Convergencia en $\le n$ pasos exactos.
+
+\begin{algoritmo}[title={Gradientes Conjugados}]
+$r_0=b-Ax_0$, $u_0=r_0$, $c=\langle r_0,r_0\rangle$. Para $k=1,2,\ldots$:
+\begin{enumerate}[noitemsep]
+  \item $z=Au_{k-1}$;\quad $t_k=c/\langle u_{k-1},z\rangle$
+  \item $x_k=x_{k-1}+t_ku_{k-1}$;\quad $r_k=r_{k-1}-t_kz$
+  \item Si $\langle r_k,r_k\rangle<\varepsilon$, salir.
+  \item $u_k=r_k+({\langle r_k,r_k\rangle}/{c})\,u_{k-1}$;\quad $c=\langle r_k,r_k\rangle$
+\end{enumerate}
+\end{algoritmo}
+
+\begin{resultado}
+\textbf{Propiedades clave (frecuentes en exámenes):}
+\begin{itemize}[noitemsep]
+  \item $r_{k+1}=r_k-t_kAu_k$.
+  \item $x_{k+1}=x_0+\sum_{j=0}^kt_ju_j$.
+  \item $t_k=\langle u_k,r_0\rangle/\langle u_k,Au_k\rangle$ (por $A$-conjugacidad y $r_k\perp u_j$ para $j<k$).
+  \item $r_{k+1}\perp r_j$ para todo $j\le k$ (pues $\operatorname{span}\{r_j\}=\operatorname{span}\{u_j\}$ y $r_{k+1}\perp u_j$).
+\end{itemize}
+
+\textbf{Fórmulas alternativas:}
+\[
+  t_k=\frac{\langle r_k,r_k\rangle}{\langle u_k,Au_k\rangle},\qquad
+  \beta_k=-\frac{\langle r_{k+1},r_{k+1}\rangle}{\langle r_k,r_k\rangle}.
+\]
+Prueba de $t_k$: $\langle u_k,r_k\rangle=\langle r_k,r_k\rangle$ (pues $\langle u_{k-1},r_k\rangle=0$).
+Prueba de $\beta_k$: de $Au_k=(r_k-r_{k+1})/t_k$ y $\langle r_{k+1},r_k\rangle=0$.
+\end{resultado}
+
+\textbf{Identificar $A,b,c$ en $q(x)=\tfrac{1}{2}x^TAx-b^Tx+c$:}
+coef. de $x_i^2$ es $a_{ii}/2$; coef. de $x_ix_j$ ($i\ne j$) es $a_{ij}$; coef. de $x_i$ lineal es $-b_i$.
+
+\textit{Ejemplo:} $q=3x_1^2-2x_1x_2+x_1x_3-x_3^2+x_3-x_1+5$.
+$A=\bigl[\begin{smallmatrix}6&-2&1\\-2&0&0\\1&0&-2\end{smallmatrix}\bigr]$, $b=(1,0,-1)^T$, $c=5$.
+
+% ============================================================
+\section{Número de Condición y Hessenberg}
+% ============================================================
+
+$\kappa(A)=\|A\|\,\|A^{-1}\|$. Con SVD: $\kappa_2(A)=\sigma_1/\sigma_n$.
+
+\begin{resultado}
+$\dfrac{\|\delta x\|}{\|x\|}\le\kappa(A)\dfrac{\|\delta b\|}{\|b\|}$.
+$A$ mal condicionada si $\kappa(A)>10^{d-p}$. Regla: $\kappa(A)\approx10^k\Rightarrow$ se pierden $\approx k$ dígitos.
+\end{resultado}
+
+\textbf{LU para matrices de Hessenberg} ($a_{ij}=0$ para $i>j+1$): cada paso crea un solo multiplicador, sin relleno. Costo $O(n^2)$ en lugar de $O(n^3/3)$.
+
+\textit{Ejemplo:} $A=\bigl[\begin{smallmatrix}4&2&3\\-2&1&-2\\0&1&2\end{smallmatrix}\bigr]$.
+$\ell_{21}=-1/2$: $R_2\to(0,2,-1/2)$;\ $\ell_{32}=1/2$: $R_3\to(0,0,9/4)$.
+$L=\bigl[\begin{smallmatrix}1&0&0\\-1/2&1&0\\0&1/2&1\end{smallmatrix}\bigr]$,
+$U=\bigl[\begin{smallmatrix}4&2&3\\0&2&-1/2\\0&0&9/4\end{smallmatrix}\bigr]$.
+
+% ============================================================
+\section{Análisis Computacional: ¿Cuándo Usar Qué?}
+% ============================================================
+
+\subsection{Métodos directos vs.\ iterativos}
+
+\begin{resultado}
+\textbf{Usa un método directo} (LU, Cholesky, QR) cuando $n$ es pequeño-mediano ($n\lesssim10^4$), la matriz es densa, necesitas resolver muchos sistemas con la misma $A$ (factoriza una vez, resuelve varias), o necesitas solución exacta.
+
+\textbf{Usa un método iterativo} (Jacobi, GS, GC) cuando $n$ es grande ($n\gtrsim10^5$), la matriz es \emph{sparse} (muchos ceros), y una aproximación buena basta. La iteración explota la estructura: $Ax$ cuesta $O(\text{nnz})$ en lugar de $O(n^2)$.
+\end{resultado}
+
+\subsection{Comparación de factorizaciones directas}
+
+\begin{center}
+\renewcommand{\arraystretch}{1.4}
+\begin{tabular}{p{2.4cm}p{2.0cm}p{2.4cm}p{2.4cm}p{4cm}}
+\toprule
+\textbf{Método} & \textbf{Costo} & \textbf{Hipótesis} & \textbf{Estabilidad} & \textbf{Cuándo es la mejor opción} \\
+\midrule
+LU sin pivoteo & $n^3/3$ & Menores $\ne0$ & Puede fallar & Matrices con estructura especial que garantiza estabilidad \\
+LU con pivoteo ($PA=LU$) & $n^3/3$ & $A$ no singular & Buena & Caso general; uso estándar en \texttt{lu()} de Matlab \\
+Cholesky ($LL^T$) & $n^3/6$ & $A$ SPD & Excelente (sin pivoteo) & $A$ SPD: 2× más rápido y más estable que LU \\
+QR Gram-Schmidt & $2mn^2$ & Cols.\ LI & Regular & Mínimos cuadrados, matrices pequeñas \\
+QR Householder & $2mn^2$ & Cualquier $A$ & Excelente & Mínimos cuadrados, preferible siempre a G-S \\
+SVD & $O(mn^2)$ & Cualquier $A$ & Perfecta & Rango, cond., comp.\ de imágenes; muy costosa \\
+Hessenberg LU & $O(n^2)$ & Estructura Hess. & Buena & Matrices de Hessenberg (muy rápido) \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\textbf{Ventaja de Cholesky sobre LU para SPD:}
+\begin{itemize}[noitemsep]
+  \item La mitad de operaciones: $n^3/6$ vs.\ $n^3/3$.
+  \item No requiere pivoteo: la SPD garantiza pivotes positivos.
+  \item \textbf{Test de SPD gratis}: si el algoritmo falla ($\sqrt{\text{negativo}}$), la matriz no es SPD.
+  \item $L$ tiene la misma sparsity que $A$: ventajoso en problemas sparse.
+\end{itemize}
+
+\textbf{Ventaja de QR Householder sobre Gram-Schmidt:}
+\begin{itemize}[noitemsep]
+  \item G-S clásico acumula errores de redondeo: las columnas de $Q$ pierden ortogonalidad.
+  \item G-S modificado mejora, pero Householder es \emph{numéricamente óptimo}.
+  \item Householder duplica el costo de GS-clásico pero con estabilidad comprobada.
+  \item Para MC: resolver $R_1\hat x=c_1$ tiene $\kappa(R_1)=\kappa(A)$; las ecuaciones normales tienen $\kappa(A^TA)=\kappa(A)^2$ --- se pierde el doble de dígitos.
+\end{itemize}
+
+\textbf{Desventajas de SVD:}
+\begin{itemize}[noitemsep]
+  \item Costo $O(mn^2)$ muy superior a QR; solo se justifica cuando se necesitan valores singulares o compresión de rango.
+  \item Implementación compleja (requiere iteraciones para los autovalores de $A^TA$).
+\end{itemize}
+
+\subsection{Comparación de métodos iterativos estacionarios}
+
+\begin{center}
+\renewcommand{\arraystretch}{1.3}
+\begin{tabular}{lllp{6cm}}
+\toprule
+\textbf{Método} & \textbf{$T$} & \textbf{Ventaja} & \textbf{Desventaja} \\
+\midrule
+Jacobi & $-D^{-1}(L_s+U_s)$ & Paralelizable & Más lento que GS; puede divergir donde GS converge \\
+Gauss-Seidel & $-(D+L_s)^{-1}U_s$ & ~2× más rápido que Jacobi & Secuencial (no paralelizable) \\
+Richardson & $I-\alpha A$ & Muy simple & Necesita conocer $\lambda_{\max}$ para elegir $\alpha$ óptimo \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\textbf{¿Cuándo converge cada uno?}
+\begin{itemize}[noitemsep]
+  \item \textbf{EDD} $\Rightarrow$ Jacobi y GS convergen (condición suficiente, no necesaria).
+  \item \textbf{SPD} $\Rightarrow$ GS converge (Teorema de Ostrowski-Reich).
+  \item GS tiene $\rho(T_{GS})=\rho(T_J)^2$ para muchas matrices (converge en mitad de iteraciones).
+  \item Richardson SPD: óptimo con $\alpha^*=2/(\lambda_{\min}+\lambda_{\max})$, $\rho=(\kappa-1)/(\kappa+1)$.
+\end{itemize}
+
+\subsection{Mínimo Descenso vs. Gradientes Conjugados (SPD)}
+
+\begin{center}
+\renewcommand{\arraystretch}{1.3}
+\begin{tabular}{lll}
+\toprule
+ & \textbf{Mínimo Descenso} & \textbf{Gradientes Conjugados} \\
+\midrule
+Dirección & $r_k$ (residuo) & $u_k$ ($A$-conjugada a $u_0,\ldots,u_{k-1}$) \\
+Paso & $t_k=\|r_k\|^2/r_k^TAr_k$ & $t_k=\|r_k\|^2/u_k^TAu_k$ \\
+Convergencia & $O(\kappa)$ iteraciones & $\le n$ exactas; $O(\sqrt{\kappa})$ práctica \\
+Trayectoria & Zigzag (residuos consecutivos $\perp$) & Suave; minimiza en subespacio de Krylov \\
+Desventaja & Lento para $\kappa\gg1$ & Más complejo; necesita actualizar $u_k$ \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\begin{alerta}
+\textbf{Resumen de la jerarquía para $Ax=b$ SPD:}
+GC $\gg$ MD $>$ GS $>$ Jacobi (en velocidad de convergencia para sistemas grandes).
+Para sistemas pequeños densos: Cholesky directo siempre gana.
+\end{alerta}
+
+\textbf{Precondicionamiento (GC precondicionado):} aplicar GC a $\tilde A\tilde x=\tilde b$ donde $\tilde A=M^{-1/2}AM^{-1/2}\approx I$. El número de condición efectivo baja de $\kappa(A)$ a $\kappa(M^{-1}A)\ll\kappa(A)$. Opciones comunes: diagonal (Jacobi), Cholesky incompleto (ILU), multigrid.
+
+% ============================================================
+\section{Tabla Resumen y Patrón de Examen}
+% ============================================================
+
+\begin{center}
+\renewcommand{\arraystretch}{1.3}
+\begin{tabular}{p{2.8cm}p{2.5cm}p{2.3cm}p{5cm}}
+\toprule
+\textbf{Método} & \textbf{Hipótesis} & \textbf{Costo} & \textbf{Uso principal} \\
+\midrule
+$A=LU$ & Menores $\ne0$ & $n^3/3$ & Resolver $Ax=b$, múltiples $b$ \\
+$PA=LU$ & $A$ no singular & $n^3/3$ & Siempre existe con pivoteo \\
+$A=LL^T$ Cholesky & $A$ SPD & $n^3/6$ & SPD: más rápido, sin pivoteo \\
+$A=QR$ (G-S) & Cols. LI & $2mn^2$ & MC estable \\
+$A=QR$ (Householder) & Cualquier $A$ & $2mn^2$ & MC, más estable que G-S \\
+$A=U\Sigma V^T$ SVD & Cualquier $A$ & $O(mn^2)$ & Rango, $\kappa$, compresión \\
+Hessenberg LU & Estructura & $O(n^2)$ & Rápido por estructura \\
+Jacobi / GS & Conv.: $\rho(T)<1$ & por iter. $O(n^2)$ & Sistemas grandes \\
+Mínimo Descenso & $A$ SPD & por iter. $O(n^2)$ & SPD, convergencia lenta \\
+Grad. Conjugados & $A$ SPD & $\le n$ iters. & SPD, convergencia rápida \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\begin{resultado}
+\textbf{Top 10 preguntas de examen (patrón I-2016 a I-2026):}
+\begin{enumerate}[noitemsep]
+  \item Demostrar propiedades de Householder: simétrica, ortogonal ($H^2=I$), $\det(H)=-1$, $Hv=-v$, aniquilación.
+  \item Demostrar $b-A\hat x\perp a_i$ (residuo MC ortogonal a columnas de $A$).
+  \item SVD: algoritmo 6 pasos + calcular para una $3\times2$.
+  \item Convergencia Jacobi para $A=\bigl[\begin{smallmatrix}2&\alpha\\\alpha&1\end{smallmatrix}\bigr]$: $|\alpha|<\sqrt2$.
+  \item Identificar $B$ y $d$ de un método iterativo dado como pseudocódigo ($\Rightarrow$ Gauss-Seidel).
+  \item Probar $r_{k+1}\perp r_k$ en Mínimo Descenso.
+  \item GC: probar $r_{k+1}\perp r_j$ para todo $j\le k$.
+  \item Fórmulas alternativas GC: $t_k=\|r_k\|^2/\langle u_k,Au_k\rangle$, $\beta_k=-\|r_{k+1}\|^2/\|r_k\|^2$.
+  \item GS para $n$ variables: pseudocódigo + fórmula con suma parcial actualizada.
+  \item Unicidad de Cholesky: $R=M^{-1}L$ ortogonal + triangular inferior $\Rightarrow R=I$.
+\end{enumerate}
+\end{resultado}
+
+\end{document}
