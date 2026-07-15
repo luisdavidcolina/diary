@@ -75,10 +75,14 @@ export const deleteAccount = (id) => deleteDoc(doc(db, "accounts", id));
 // =============================
 // HABITOS Y TAREAS (Lifestyle)
 // =============================
-export const addHabitOrTask = async (title, category = 'task') => {
-  const docRef = await addDoc(collection(db, "lifestyle"), {
+export const addHabitOrTask = async (title, category = 'task', reminderDate = null, reminderTime = null) => {
+  const payload = {
     userId: uid(), title, category, isCompleted: false, createdAt: new Date().toISOString()
-  });
+  };
+  if (reminderDate) payload.reminderDate = reminderDate;
+  if (reminderTime) payload.reminderTime = reminderTime;
+
+  const docRef = await addDoc(collection(db, "lifestyle"), payload);
   return docRef.id;
 };
 

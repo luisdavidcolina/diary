@@ -26,6 +26,8 @@ const Lifestyle = () => {
   const [logs, setLogs] = useState([]);
   const [title, setTitle] = useState('');
   const [category, setCategory] = useState('task');
+  const [reminderDate, setReminderDate] = useState('');
+  const [reminderTime, setReminderTime] = useState('');
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -52,12 +54,34 @@ const Lifestyle = () => {
     }
   };
 
+  const scheduleExactReminder = async (id, title, date, time) => {
+    try {
+      await fetch('/api/schedule-exact-reminder', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id, title, date, time })
+      });
+    } catch (error) {
+      console.error("Error scheduling exact reminder:", error);
+    }
+  };
+
   const handleAddItem = async (e) => {
     e.preventDefault();
     if (!title.trim()) return;
     try {
-      await addHabitOrTask(title, category);
+      const dateVal = category === 'task' ? reminderDate : null;
+      const timeVal = category === 'task' ? reminderTime : null;
+      
+      const newId = await addHabitOrTask(title, category, dateVal, timeVal);
+      
+      if (dateVal && timeVal) {
+        await scheduleExactReminder(newId, title, dateVal, timeVal);
+      }
+      
       setTitle('');
+      setReminderDate('');
+      setReminderTime('');
       loadItems();
     } catch (e) {
       console.error(e);
@@ -122,6 +146,11 @@ const Lifestyle = () => {
       />
       <span style={{ fontSize: '1.1rem', flex: 1, textDecoration: it.isCompleted ? 'line-through' : 'none' }}>
         {it.title}
+        {it.reminderDate && (
+          <span style={{ display: 'block', fontSize: '0.85rem', color: 'var(--text-secondary)', marginTop: '0.25rem' }}>
+            🔔 {it.reminderDate} {it.reminderTime ? `a las ${it.reminderTime}` : ''}
+          </span>
+        )}
       </span>
       <button
         onClick={() => handleDelete(it.id)}
@@ -154,24 +183,42 @@ const Lifestyle = () => {
       {/* Captura Rápida (Inbox) */}
       <div className="glass-panel" style={{ marginBottom: '2rem', padding: '1.5rem' }}>
         <h2>Captura Rápida (Inbox)</h2>
-        <form onSubmit={handleAddItem} style={{ display: 'flex', gap: '1rem', marginTop: '1rem', flexWrap: 'wrap' }}>
-          <select
-            value={category}
-            onChange={(e) => setCategory(e.target.value)}
-            style={{ padding: '0.75rem', borderRadius: '8px', background: 'rgba(0,0,0,0.3)', border: '1px solid var(--glass-border)', color: 'white' }}
-          >
-            <option value="task">Pendiente Único</option>
-            <option value="habit">Hábito Diario</option>
-          </select>
-          <input
-            type="text"
-            placeholder="¿Qué tienes en mente?"
-            value={title}
-            onChange={(e) => setTitle(e.target.value)}
-            required
-            style={{ flex: 1, minWidth: '180px', padding: '0.75rem', borderRadius: '8px', background: 'rgba(0,0,0,0.3)', border: '1px solid var(--glass-border)', color: 'white' }}
-          />
-          <button type="submit" style={{ background: 'var(--accent-color)', color: 'white', border: 'none', padding: '0.75rem 1.5rem', borderRadius: '8px', fontWeight: 'bold', cursor: 'pointer' }}>
+        <form onSubmit={handleAddItem} style={{ display: 'flex', flexDirection: 'column', gap: '1rem', marginTop: '1rem' }}>
+          <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap' }}>
+            <select
+              value={category}
+              onChange={(e) => setCategory(e.target.value)}
+              style={{ padding: '0.75rem', borderRadius: '8px', background: 'rgba(0,0,0,0.3)', border: '1px solid var(--glass-border)', color: 'white' }}
+            >
+              <option value="task">Pendiente Único</option>
+              <option value="habit">Hábito Diario</option>
+            </select>
+            <input
+              type="text"
+              placeholder="¿Qué tienes en mente?"
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+              required
+              style={{ flex: 1, minWidth: '180px', padding: '0.75rem', borderRadius: '8px', background: 'rgba(0,0,0,0.3)', border: '1px solid var(--glass-border)', color: 'white' }}
+            />
+          </div>
+          {category === 'task' && (
+            <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap' }}>
+              <input
+                type="date"
+                value={reminderDate}
+                onChange={(e) => setReminderDate(e.target.value)}
+                style={{ padding: '0.75rem', borderRadius: '8px', background: 'rgba(0,0,0,0.3)', border: '1px solid var(--glass-border)', color: 'white' }}
+              />
+              <input
+                type="time"
+                value={reminderTime}
+                onChange={(e) => setReminderTime(e.target.value)}
+                style={{ padding: '0.75rem', borderRadius: '8px', background: 'rgba(0,0,0,0.3)', border: '1px solid var(--glass-border)', color: 'white' }}
+              />
+            </div>
+          )}
+          <button type="submit" style={{ background: 'var(--accent-color)', color: 'white', border: 'none', padding: '0.75rem 1.5rem', borderRadius: '8px', fontWeight: 'bold', cursor: 'pointer', alignSelf: 'flex-start' }}>
             Guardar
           </button>
         </form>
