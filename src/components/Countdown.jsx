@@ -1,32 +1,42 @@
 import React, { useState, useEffect } from 'react';
 
-const Countdown = () => {
-  const [daysLeft, setDaysLeft] = useState(60);
+// Cuenta regresiva a una fecha real (por defecto, reanudación en septiembre).
+const Countdown = ({ targetDate }) => {
+  const [now, setNow] = useState(() => Date.now());
 
   useEffect(() => {
-    // Para simplificar, asumimos que septiembre empieza en aprox 45-60 días.
-    // Esto se puede reemplazar por un cálculo exacto a una fecha: new Date('2024-09-01')
-    const timer = setInterval(() => {
-      setDaysLeft((prev) => (prev > 0 ? prev - 1 : 0));
-    }, 86400000); 
-    
+    const timer = setInterval(() => setNow(Date.now()), 60000);
     return () => clearInterval(timer);
   }, []);
 
+  const target = new Date(`${targetDate}T00:00:00`).getTime();
+  const diff = Math.max(0, target - now);
+
+  const totalDays = Math.floor(diff / 86400000);
+  const months = Math.floor(totalDays / 30);
+  const days = totalDays % 30;
+  const hours = Math.floor((diff % 86400000) / 3600000);
+
+  const boxes = [
+    { value: months, label: 'Meses' },
+    { value: days, label: 'Días' },
+    { value: hours, label: 'Horas', urgent: true }
+  ];
+
   return (
     <div className="countdown-container">
-      <div className="countdown-box glass-panel">
-        <span className="countdown-number">{Math.floor(daysLeft / 30)}</span>
-        <span className="countdown-label">Meses</span>
-      </div>
-      <div className="countdown-box glass-panel">
-        <span className="countdown-number">{daysLeft % 30}</span>
-        <span className="countdown-label">Días</span>
-      </div>
-      <div className="countdown-box glass-panel" style={{ '--accent-color': '#ef4444', '--accent-glow': 'rgba(239, 68, 68, 0.5)' }}>
-        <span className="countdown-number" style={{ color: '#ef4444' }}>00</span>
-        <span className="countdown-label">Horas</span>
-      </div>
+      {boxes.map((b) => (
+        <div
+          key={b.label}
+          className="countdown-box glass-panel"
+          style={b.urgent ? { '--accent-color': '#ef4444', '--accent-glow': 'rgba(239, 68, 68, 0.5)' } : undefined}
+        >
+          <span className="countdown-number" style={b.urgent ? { color: '#ef4444' } : undefined}>
+            {String(b.value).padStart(2, '0')}
+          </span>
+          <span className="countdown-label">{b.label}</span>
+        </div>
+      ))}
     </div>
   );
 };
