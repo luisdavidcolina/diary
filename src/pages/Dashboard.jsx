@@ -2,6 +2,7 @@ import React, { useMemo, useState } from 'react';
 import Countdown from '../components/Countdown';
 import SubjectCard from '../components/SubjectCard';
 import TodayPlan from '../components/TodayPlan';
+import ItemWorkspace from '../components/ItemWorkspace';
 import { SUBJECTS, SUBJECT_ORDER, ITEMS } from '../data/syllabus';
 import { buildPlan, progressBySubject } from '../services/planner';
 import { getConfig, getDoneMap, saveConfig, toggleDone } from '../services/store';
@@ -10,6 +11,7 @@ const Dashboard = () => {
   const [doneMap, setDoneMap] = useState(() => getDoneMap());
   const [config, setConfig] = useState(() => getConfig());
   const [showSettings, setShowSettings] = useState(false);
+  const [openItem, setOpenItem] = useState(null);
 
   const plan = useMemo(() => buildPlan(ITEMS, doneMap, config), [doneMap, config]);
   const progress = useMemo(() => progressBySubject(ITEMS, doneMap), [doneMap]);
@@ -53,13 +55,22 @@ const Dashboard = () => {
         )}
       </header>
 
-      <TodayPlan plan={plan} doneMap={doneMap} onToggle={handleToggle} />
+      <TodayPlan plan={plan} doneMap={doneMap} onToggle={handleToggle} onOpen={setOpenItem} />
 
       <div className="grid" style={{ marginTop: '2rem' }}>
         {SUBJECT_ORDER.map((sid) => (
           <SubjectCard key={sid} subject={SUBJECTS[sid]} progress={progress[sid]} />
         ))}
       </div>
+
+      {openItem && (
+        <ItemWorkspace
+          item={openItem}
+          done={Boolean(doneMap[openItem.id])}
+          onToggleDone={handleToggle}
+          onClose={() => setOpenItem(null)}
+        />
+      )}
     </>
   );
 };

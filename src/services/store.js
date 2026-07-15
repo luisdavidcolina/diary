@@ -6,6 +6,7 @@
 
 const KEY_DONE = 'diary.progress.v1';
 const KEY_CFG = 'diary.plan.v1';
+const KEY_ITEMS = 'diary.items.v1';
 
 export const DEFAULT_CONFIG = {
   // Fecha tentativa de reanudación de clases tras el terremoto.
@@ -49,4 +50,37 @@ export function saveConfig(patch) {
   const next = { ...getConfig(), ...patch };
   localStorage.setItem(KEY_CFG, JSON.stringify(next));
   return next;
+}
+
+// ─────────── Contenido de estudio por item ───────────
+// { [itemId]: { notes, cards: [{id,q,a}], exercises: [{id,text,done}] } }
+
+const EMPTY_ITEM = { notes: '', cards: [], exercises: [] };
+
+function getAllItemData() {
+  try {
+    return JSON.parse(localStorage.getItem(KEY_ITEMS)) || {};
+  } catch {
+    return {};
+  }
+}
+
+export function getItemData(itemId) {
+  const all = getAllItemData();
+  return { ...EMPTY_ITEM, ...(all[itemId] || {}) };
+}
+
+export function saveItemData(itemId, patch) {
+  const all = getAllItemData();
+  const next = { ...EMPTY_ITEM, ...(all[itemId] || {}), ...patch };
+  all[itemId] = next;
+  localStorage.setItem(KEY_ITEMS, JSON.stringify(all));
+  return next;
+}
+
+// ¿El item tiene algo de contenido guardado? (para mostrar indicador)
+export function itemHasContent(itemId) {
+  const d = getAllItemData()[itemId];
+  if (!d) return false;
+  return Boolean(d.notes?.trim()) || (d.cards?.length ?? 0) > 0 || (d.exercises?.length ?? 0) > 0;
 }

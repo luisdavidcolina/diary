@@ -8,28 +8,32 @@ export const SUBJECTS = {
     title: 'Inglés (Suficiencia)',
     icon: '🇬🇧',
     color: 'var(--color-english)',
-    goal: 'Dominar el modelo de examen y resolver variantes (nivel A2 → eximir)'
+    goal: 'Dominar el modelo de examen y resolver variantes (nivel A2 → eximir)',
+    material: 'docs/ingles/ — examen resuelto + guía estratégica'
   },
   calculus: {
     id: 'calculus',
     title: 'Cálculo Científico',
     icon: '🧮',
     color: 'var(--color-calculus)',
-    goal: 'Temas 3–7 (Parciales 2 y 3): factorizaciones, iterativos, interpolación, ceros'
+    goal: 'Temas 3–7 (Parciales 2 y 3): factorizaciones, iterativos, interpolación, ceros',
+    material: 'docs/calculo/ — resúmenes, modelos y prácticas'
   },
   security: {
     id: 'security',
     title: 'Seguridad en Redes',
     icon: '🛡️',
     color: 'var(--color-security)',
-    goal: 'Las 6 unidades en orden (1 → 6)'
+    goal: 'Las 6 unidades en orden (1 → 6)',
+    material: 'docs/seguridad/ — programa + tareas 1–7'
   },
   cloud: {
     id: 'cloud',
     title: 'Computación en la Nube',
     icon: '☁️',
     color: 'var(--color-cloud)',
-    goal: 'AWS SAA-C03 hasta antes de bases de datos (incluye S3 y EFS)'
+    goal: 'AWS SAA-C03 hasta antes de bases de datos (incluye S3 y EFS)',
+    material: 'docs/nube/ — guía SAA + slides oficiales'
   }
 };
 

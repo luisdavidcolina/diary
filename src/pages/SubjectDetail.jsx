@@ -5,6 +5,7 @@ import { SUBJECTS, ITEMS_BY_SUBJECT } from '../data/syllabus';
 import { getDoneMap, toggleDone } from '../services/store';
 import { progressBySubject } from '../services/planner';
 import SyllabusChecklist from '../components/SyllabusChecklist';
+import ItemWorkspace from '../components/ItemWorkspace';
 
 const SubjectDetail = () => {
   const { id } = useParams();
@@ -12,6 +13,7 @@ const SubjectDetail = () => {
   const items = ITEMS_BY_SUBJECT[id] || [];
 
   const [doneMap, setDoneMap] = useState(() => getDoneMap());
+  const [openItem, setOpenItem] = useState(null);
   const [notes, setNotes] = useState([]);
   const [newNote, setNewNote] = useState('');
   const [loading, setLoading] = useState(true);
@@ -80,7 +82,7 @@ const SubjectDetail = () => {
       <div className="grid">
         <div className="glass-panel">
           <h2>Temario</h2>
-          <SyllabusChecklist items={items} doneMap={doneMap} onToggle={handleToggle} />
+          <SyllabusChecklist items={items} doneMap={doneMap} onToggle={handleToggle} onOpen={setOpenItem} />
         </div>
 
         <div className="glass-panel">

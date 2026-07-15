@@ -5,6 +5,8 @@ import Dashboard from './pages/Dashboard';
 import SubjectDetail from './pages/SubjectDetail';
 import Login from './pages/Login';
 import ProtectedRoute from './components/ProtectedRoute';
+import Finance from './pages/Finance';
+import Lifestyle from './pages/Lifestyle';
 
 function App() {
   return (
@@ -16,6 +18,8 @@ function App() {
         <Route path="/" element={<MainLayout />}>
           <Route index element={<Dashboard />} />
           <Route path="subject/:id" element={<SubjectDetail />} />
+          <Route path="finance" element={<Finance />} />
+          <Route path="lifestyle" element={<Lifestyle />} />
         </Route>
       </Route>
     </Routes>

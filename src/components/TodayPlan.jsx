@@ -2,7 +2,7 @@ import React from 'react';
 import SyllabusChecklist from './SyllabusChecklist';
 
 // Panel "Plan de Hoy": la meta diaria autoajustada + los items de hoy.
-const TodayPlan = ({ plan, doneMap, onToggle }) => {
+const TodayPlan = ({ plan, doneMap, onToggle, onOpen }) => {
   const { perDay, daysLeft, remaining, doneToday, todayItems, finished } = plan;
 
   if (finished) {
@@ -43,6 +43,7 @@ const TodayPlan = ({ plan, doneMap, onToggle }) => {
         items={todayItems}
         doneMap={doneMap}
         onToggle={onToggle}
+        onOpen={onOpen}
         showSubject
         emptyLabel="Sin tareas para hoy."
       />
