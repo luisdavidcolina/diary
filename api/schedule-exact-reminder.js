@@ -16,7 +16,8 @@ export default async function handler(req, res) {
   // QStash usa notBefore en segundos (UNIX timestamp)
   const notBefore = Math.floor(targetDate.getTime() / 1000);
 
-  const qstashUrl = `https://qstash.upstash.io/v2/publish/${appUrl}/api/send-exact-reminder`;
+  const baseUrl = process.env.QSTASH_URL || 'https://qstash.upstash.io';
+  const qstashUrl = `${baseUrl}/v2/publish/${appUrl}/api/send-exact-reminder`;
 
   try {
     const response = await fetch(qstashUrl, {
