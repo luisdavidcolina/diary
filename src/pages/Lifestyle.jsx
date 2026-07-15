@@ -37,6 +37,7 @@ const Lifestyle = () => {
   const [loading, setLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [errorMsg, setErrorMsg] = useState(null);
+  const [warningMsg, setWarningMsg] = useState(null);
   const [dbError, setDbError] = useState(null);
 
   useEffect(() => {
@@ -91,6 +92,7 @@ const Lifestyle = () => {
     
     setIsSaving(true);
     setErrorMsg(null);
+    setWarningMsg(null);
     
     try {
       const dateVal = category === 'task' ? reminderDate : null;
@@ -99,7 +101,12 @@ const Lifestyle = () => {
       const newId = await addHabitOrTask(title, category, dateVal, timeVal);
       
       if (dateVal && timeVal) {
-        await scheduleExactReminder(newId, title, dateVal, timeVal);
+        try {
+          await scheduleExactReminder(newId, title, dateVal, timeVal);
+        } catch (schedErr) {
+          console.warn("Error al programar recordatorio:", schedErr);
+          setWarningMsg("Tarea guardada en BD, pero falló la notificación de Telegram (" + schedErr.message + ").");
+        }
       }
       
       setTitle('');
@@ -336,9 +343,14 @@ const Lifestyle = () => {
           )}
           
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            {errorMsg && (
-              <span style={{ color: '#ef4444', fontSize: '0.85rem', maxWidth: '300px' }}>⚠️ {errorMsg}</span>
-            )}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+              {errorMsg && (
+                <span style={{ color: '#ef4444', fontSize: '0.85rem', maxWidth: '300px' }}>❌ {errorMsg}</span>
+              )}
+              {warningMsg && (
+                <span style={{ color: '#eab308', fontSize: '0.85rem', maxWidth: '300px' }}>⚠️ {warningMsg}</span>
+              )}
+            </div>
             <button 
               type="submit" 
               disabled={isSaving}
