@@ -53,12 +53,21 @@ Planificador adaptativo, taller por tema (Aprender/Repasar/Ejercicios/Test), Pom
 
 ---
 
-## Orden propuesto
+## Orden propuesto y progreso
 
-- **P0 — Arreglar lo roto + fundamentos** *(recomendado empezar aquí)*
-  1. Hábitos: checkboxes funcionales + persistir completado + borrar.
-  2. Añadir **borrar** en todos los módulos.
-  3. **Scoping por `userId`** en Firestore (seguridad).
-- **P1 — Completar features existentes**: transacciones→saldo, editar/borrar cuentas, presupuesto 50/30/20; borrar/editar diario; highlights biblioteca.
-- **P2 — Nuevas de productividad**: heatmap hábitos, XP global, rutinas, Eisenhower, revisión semanal.
-- **P3 — Último**: IA + Telegram.
+- **P0 — Arreglar lo roto + fundamentos** ✅ HECHO
+  1. ✅ Hábitos: checkboxes funcionales + persistir completado + borrar.
+  2. ✅ Borrar en todos los módulos (transacciones, cuentas, diario, biblioteca, notas).
+  3. ✅ Scoping por `userId` en Firestore.
+- **P1 — Completar features existentes** — 🟡 en curso
+  - ✅ Finanzas: presupuesto 50/30/20, resumen mensual, categorías de gasto, editar cuentas.
+  - ⚪ Highlights en biblioteca; editar diario.
+- **P2 — Nuevas de productividad** — 🟡 en curso
+  - ✅ Heatmap de hábitos estilo GitHub + racha.
+  - ⚪ XP/nivel global, rutinas mañana/noche, Eisenhower, revisión semanal.
+- **P3 — Último**: IA (variantes inglés, flashcards auto, sentimiento) + bot de Telegram.
+
+## Pendiente por confirmar (fuera del código)
+- Reglas de seguridad de Firestore: deben exigir `request.auth.uid == resource.data.userId`.
+  El scoping por `userId` en el cliente evita mezclar datos, pero **sin reglas** un usuario
+  podría leer datos de otros vía API directa.
