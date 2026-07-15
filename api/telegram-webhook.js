@@ -89,7 +89,60 @@ export default async function handler(req, res) {
 
       let responseText = "✅ Guardado en Captura Rápida";
 
-      if (text.startsWith('/gasto ')) {
+      if (text.startsWith('/start') || text.startsWith('/help')) {
+        responseText = `🤖 *Guía Rápida de Comandos:*
+
+*📝 Captura Rápida:*
+Escribe cualquier mensaje normal (sin la barra /) para agregarlo como una tarea pendiente.
+
+*⏰ Recordatorios:*
+\`/recordar HH:MM [texto]\`
+Ejemplo: \`/recordar 15:30 Llamar al banco\`
+
+*💸 Finanzas:*
+\`/gasto [monto] [concepto]\` - Ej: \`/gasto 10 Cine\`
+\`/ingreso [monto] [concepto]\` - Ej: \`/ingreso 500 Sueldo\`
+
+*📖 Diario:*
+\`/diario [texto]\` - Ej: \`/diario Hoy fue un gran día...\``;
+      }
+      else if (text.startsWith('/recordar ')) {
+        const parts = text.replace('/recordar ', '').split(' ');
+        const time = parts[0]; 
+        const title = parts.slice(1).join(' ') || 'Recordatorio Telegram';
+        
+        const docRef = await addDoc(collection(dbNode, "lifestyle"), {
+          title: title,
+          category: 'task',
+          isCompleted: false,
+          createdAt: serverTimestamp()
+        });
+
+        const appUrl = `https://${req.headers.host}`;
+        const nowUtc4 = new Date(new Date().getTime() - (4 * 60 * 60 * 1000));
+        const dateStr = nowUtc4.toISOString().split('T')[0];
+
+        try {
+          const schedRes = await fetch(`${appUrl}/api/schedule-exact-reminder`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ id: docRef.id, title: title, date: dateStr, time: time })
+          });
+          
+          if (schedRes.ok) {
+            const schedData = await schedRes.json();
+            if (schedData.messageId) {
+              await updateDoc(doc(dbNode, "lifestyle", docRef.id), { reminderId: schedData.messageId });
+            }
+            responseText = `⏰ Recordatorio "${title}" programado para las ${time}.`;
+          } else {
+            responseText = `⚠️ Tarea guardada, pero la hora falló. Revisa el formato (ej. 15:30).`;
+          }
+        } catch (e) {
+          responseText = `⚠️ Tarea guardada, pero hubo un error de conexión al programar.`;
+        }
+      }
+      else if (text.startsWith('/gasto ')) {
         const parts = text.replace('/gasto ', '').split(' ');
         const amount = parseFloat(parts[0]);
         const title = parts.slice(1).join(' ');
@@ -131,7 +184,7 @@ export default async function handler(req, res) {
       }
       else {
         // Captura rápida: Tarea
-        const title = text.replace('/tarea ', '');
+        const title = text.startsWith('/tarea ') ? text.replace('/tarea ', '') : text;
         await addDoc(collection(dbNode, "lifestyle"), {
           title: title,
           category: 'task',
