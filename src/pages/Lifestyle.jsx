@@ -181,46 +181,70 @@ const Lifestyle = () => {
       </div>
 
       {/* Captura Rápida (Inbox) */}
-      <div className="glass-panel" style={{ marginBottom: '2rem', padding: '1.5rem' }}>
-        <h2>Captura Rápida (Inbox)</h2>
-        <form onSubmit={handleAddItem} style={{ display: 'flex', flexDirection: 'column', gap: '1rem', marginTop: '1rem' }}>
-          <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap' }}>
-            <select
-              value={category}
-              onChange={(e) => setCategory(e.target.value)}
-              style={{ padding: '0.75rem', borderRadius: '8px', background: 'rgba(0,0,0,0.3)', border: '1px solid var(--glass-border)', color: 'white' }}
-            >
-              <option value="task">Pendiente Único</option>
-              <option value="habit">Hábito Diario</option>
-            </select>
+      <div className="glass-panel" style={{ marginBottom: '2rem', padding: '2rem', position: 'relative', overflow: 'hidden' }}>
+        <div style={{ position: 'absolute', top: '-50%', right: '-10%', width: '300px', height: '300px', background: 'var(--accent-glow)', filter: 'blur(100px)', borderRadius: '50%', opacity: 0.5, pointerEvents: 'none' }}></div>
+        
+        <h2 style={{ marginBottom: '1.5rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+          <span style={{ color: 'var(--accent-color)' }}>⚡</span> Captura Rápida
+        </h2>
+        
+        <form onSubmit={handleAddItem} style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem', position: 'relative', zIndex: 1 }}>
+          
+          <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap', alignItems: 'center' }}>
+            <div style={{ flex: '0 0 auto', background: 'rgba(0,0,0,0.4)', borderRadius: '12px', padding: '0.25rem', border: '1px solid var(--glass-border)' }}>
+              <select
+                value={category}
+                onChange={(e) => setCategory(e.target.value)}
+                style={{ padding: '0.6rem 1rem', borderRadius: '8px', background: 'transparent', border: 'none', color: 'white', outline: 'none', cursor: 'pointer', fontWeight: '600' }}
+              >
+                <option value="task" style={{ background: 'var(--bg-color)' }}>📌 Pendiente</option>
+                <option value="habit" style={{ background: 'var(--bg-color)' }}>🔄 Hábito</option>
+              </select>
+            </div>
+            
             <input
               type="text"
-              placeholder="¿Qué tienes en mente?"
+              placeholder="¿Qué quieres recordar u organizar?"
               value={title}
               onChange={(e) => setTitle(e.target.value)}
               required
-              style={{ flex: 1, minWidth: '180px', padding: '0.75rem', borderRadius: '8px', background: 'rgba(0,0,0,0.3)', border: '1px solid var(--glass-border)', color: 'white' }}
+              style={{ flex: 1, minWidth: '250px', padding: '0.85rem 1.25rem', borderRadius: '12px', background: 'rgba(0,0,0,0.4)', border: '1px solid var(--glass-border)', color: 'white', fontSize: '1rem', outline: 'none', transition: 'border-color 0.2s' }}
+              onFocus={(e) => e.target.style.borderColor = 'var(--accent-color)'}
+              onBlur={(e) => e.target.style.borderColor = 'var(--glass-border)'}
             />
           </div>
+
           {category === 'task' && (
-            <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap' }}>
-              <input
-                type="date"
-                value={reminderDate}
-                onChange={(e) => setReminderDate(e.target.value)}
-                style={{ padding: '0.75rem', borderRadius: '8px', background: 'rgba(0,0,0,0.3)', border: '1px solid var(--glass-border)', color: 'white' }}
-              />
-              <input
-                type="time"
-                value={reminderTime}
-                onChange={(e) => setReminderTime(e.target.value)}
-                style={{ padding: '0.75rem', borderRadius: '8px', background: 'rgba(0,0,0,0.3)', border: '1px solid var(--glass-border)', color: 'white' }}
-              />
+            <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap', background: 'rgba(255,255,255,0.03)', padding: '1rem', borderRadius: '12px', border: '1px dashed var(--glass-border)' }}>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem', flex: 1, minWidth: '150px' }}>
+                <label style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', fontWeight: '600', textTransform: 'uppercase', letterSpacing: '0.05em' }}>🗓️ Fecha (Opcional)</label>
+                <input
+                  type="date"
+                  value={reminderDate}
+                  onChange={(e) => setReminderDate(e.target.value)}
+                  style={{ padding: '0.75rem', borderRadius: '8px', background: 'rgba(0,0,0,0.3)', border: '1px solid var(--glass-border)', color: 'white', outline: 'none', colorScheme: 'dark' }}
+                />
+              </div>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem', flex: 1, minWidth: '150px' }}>
+                <label style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', fontWeight: '600', textTransform: 'uppercase', letterSpacing: '0.05em' }}>⏰ Hora (Opcional)</label>
+                <input
+                  type="time"
+                  value={reminderTime}
+                  onChange={(e) => setReminderTime(e.target.value)}
+                  style={{ padding: '0.75rem', borderRadius: '8px', background: 'rgba(0,0,0,0.3)', border: '1px solid var(--glass-border)', color: 'white', outline: 'none', colorScheme: 'dark' }}
+                />
+              </div>
             </div>
           )}
-          <button type="submit" style={{ background: 'var(--accent-color)', color: 'white', border: 'none', padding: '0.75rem 1.5rem', borderRadius: '8px', fontWeight: 'bold', cursor: 'pointer', alignSelf: 'flex-start' }}>
-            Guardar
-          </button>
+          
+          <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
+            <button type="submit" style={{ background: 'linear-gradient(135deg, var(--accent-color) 0%, #a5b4fc 100%)', color: 'white', border: 'none', padding: '0.85rem 2rem', borderRadius: '12px', fontWeight: 'bold', cursor: 'pointer', boxShadow: '0 4px 15px var(--accent-glow)', transition: 'transform 0.2s, box-shadow 0.2s' }}
+              onMouseOver={(e) => { e.target.style.transform = 'translateY(-2px)'; e.target.style.boxShadow = '0 6px 20px var(--accent-glow)'; }}
+              onMouseOut={(e) => { e.target.style.transform = 'translateY(0)'; e.target.style.boxShadow = '0 4px 15px var(--accent-glow)'; }}
+            >
+              Guardar Tarea
+            </button>
+          </div>
         </form>
       </div>
 

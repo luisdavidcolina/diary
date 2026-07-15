@@ -37,7 +37,7 @@ const MainLayout = () => {
             textDecoration: 'none',
             fontWeight: isActive ? 'bold' : 'normal',
             transition: 'color 0.2s'
-          })}>🧘 Hábitos</NavLink>
+          })}>🧘 Organización</NavLink>
 
           <NavLink to="/journal" style={({ isActive }) => ({
             color: isActive ? 'var(--accent-color)' : 'var(--text-primary)',
