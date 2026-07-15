@@ -28,7 +28,10 @@ export default async function handler(req, res) {
     const q = query(collection(db, "lifestyle"), where("isCompleted", "==", false));
     const snap = await getDocs(q);
     
-    const today = new Date().toISOString().split('T')[0];
+    // Ajuste a zona horaria de Venezuela (UTC-4) para el cron diario
+    const now = new Date();
+    now.setHours(now.getHours() - 4);
+    const today = now.toISOString().split('T')[0];
     
     let pendingTasks = [];
     snap.forEach((doc) => {

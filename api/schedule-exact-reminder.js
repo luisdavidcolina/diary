@@ -11,8 +11,8 @@ export default async function handler(req, res) {
     return res.status(200).json({ success: true, message: "Ignorado (sin QStash)" });
   }
 
-  // Parseamos la fecha y hora objetivo (ej. 2026-07-20T15:30:00)
-  const targetDate = new Date(`${date}T${time}:00`);
+  // Parseamos la fecha y hora objetivo (ej. 2026-07-20T15:30:00) en zona horaria de Venezuela (UTC-4)
+  const targetDate = new Date(`${date}T${time}:00-04:00`);
   // QStash usa notBefore en segundos (UNIX timestamp)
   const notBefore = Math.floor(targetDate.getTime() / 1000);
 
