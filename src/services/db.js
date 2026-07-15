@@ -41,9 +41,10 @@ export const deleteNote = (id) => deleteDoc(doc(db, "notes", id));
 // =============================
 // FINANZAS (Transacciones)
 // =============================
-export const addTransaction = async (amount, description, type = 'expense') => {
+export const addTransaction = async (amount, description, type = 'expense', category = null) => {
   const docRef = await addDoc(collection(db, "transactions"), {
-    userId: uid(), amount: parseFloat(amount), description, type, createdAt: new Date().toISOString()
+    userId: uid(), amount: parseFloat(amount), description, type, category,
+    createdAt: new Date().toISOString()
   });
   return docRef.id;
 };
