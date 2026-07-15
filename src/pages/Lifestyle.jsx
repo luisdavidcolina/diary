@@ -10,6 +10,12 @@ const todayISO = () => {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
 };
 
+const defaultTimePlus5 = () => {
+  const d = new Date();
+  d.setMinutes(d.getMinutes() + 5);
+  return `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
+};
+
 // Racha: días consecutivos (terminando hoy o ayer) con al menos un completado.
 const computeStreak = (daysSet) => {
   const has = (d) => daysSet.has(`${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`);
@@ -26,8 +32,8 @@ const Lifestyle = () => {
   const [logs, setLogs] = useState([]);
   const [title, setTitle] = useState('');
   const [category, setCategory] = useState('task');
-  const [reminderDate, setReminderDate] = useState('');
-  const [reminderTime, setReminderTime] = useState('');
+  const [reminderDate, setReminderDate] = useState(todayISO());
+  const [reminderTime, setReminderTime] = useState(defaultTimePlus5());
   const [loading, setLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [errorMsg, setErrorMsg] = useState(null);
@@ -97,8 +103,8 @@ const Lifestyle = () => {
       }
       
       setTitle('');
-      setReminderDate('');
-      setReminderTime('');
+      setReminderDate(todayISO());
+      setReminderTime(defaultTimePlus5());
       loadItems();
     } catch (e) {
       console.error(e);
