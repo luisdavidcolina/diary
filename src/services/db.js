@@ -41,17 +41,41 @@ export const deleteNote = (id) => deleteDoc(doc(db, "notes", id));
 // =============================
 // FINANZAS (Transacciones)
 // =============================
-export const addTransaction = async (amount, description, type = 'expense', category = null) => {
-  const docRef = await addDoc(collection(db, "transactions"), {
+export const addTransaction = async (amount, description, type = 'expense', category = null, telegramFileId = null) => {
+  const payload = {
     userId: uid(), amount: parseFloat(amount), description, type, category,
     createdAt: new Date().toISOString()
-  });
+  };
+  if (telegramFileId) payload.telegramFileId = telegramFileId;
+  const docRef = await addDoc(collection(db, "transactions"), payload);
   return docRef.id;
 };
 
 export const getTransactions = () => fetchMine("transactions");
 
 export const deleteTransaction = (id) => deleteDoc(doc(db, "transactions", id));
+
+export const uploadReceiptImage = async (file) => {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.readAsDataURL(file);
+    reader.onload = async () => {
+      try {
+        const res = await fetch('/api/upload-telegram', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ imageBase64: reader.result })
+        });
+        const json = await res.json();
+        if (json.success) resolve(json.fileId);
+        else reject(json.error);
+      } catch (e) {
+        reject(e);
+      }
+    };
+    reader.onerror = error => reject(error);
+  });
+};
 
 export const getFinanceLimits = async () => {
   const q = query(collection(db, "finance_limits"), where("userId", "==", uid()));

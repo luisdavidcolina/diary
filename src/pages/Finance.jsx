@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import {
   addTransaction, getTransactions, addOrUpdateAccount, getAccounts,
-  deleteTransaction, deleteAccount, getFinanceLimits, saveFinanceLimits
+  deleteTransaction, deleteAccount, getFinanceLimits, saveFinanceLimits, uploadReceiptImage
 } from '../services/db';
 
 const inputStyle = { padding: '0.75rem', borderRadius: '8px', background: 'rgba(0,0,0,0.3)', border: '1px solid var(--glass-border)', color: 'white' };
@@ -32,6 +32,8 @@ const Finance = () => {
   const [desc, setDesc] = useState('');
   const [type, setType] = useState('expense');
   const [category, setCategory] = useState('house');
+  const [isProcessingReceipt, setIsProcessingReceipt] = useState(false);
+  const [receiptUrl, setReceiptUrl] = useState(null);
 
   // Cuentas (con edición)
   const [accName, setAccName] = useState('');
@@ -93,10 +95,57 @@ const Finance = () => {
     e.preventDefault();
     if (!amount || !desc) return;
     try {
-      await addTransaction(amount, desc, type, type === 'expense' ? category : null);
-      setAmount(''); setDesc('');
+      await addTransaction(amount, desc, type, type === 'expense' ? category : null, receiptUrl);
+      setAmount(''); setDesc(''); setReceiptUrl(null);
       loadTransactions();
     } catch (e) { console.error(e); }
+  };
+
+  const handleFileUpload = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    setIsProcessingReceipt(true);
+    try {
+      const base64 = await new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.readAsDataURL(file);
+        reader.onload = () => resolve(reader.result);
+        reader.onerror = reject;
+      });
+
+      // 1. Subir a Telegram
+      const uploadRes = await fetch('/api/upload-telegram', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ imageBase64: base64 })
+      });
+      const uploadJson = await uploadRes.json();
+      if (!uploadJson.success) throw new Error(uploadJson.error);
+      
+      setReceiptUrl(uploadJson.fileId); // Aquí guardamos el fileId
+      
+      // 2. Extraer datos con IA
+      const res = await fetch('/api/process-receipt', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ imageUrl: base64 })
+      });
+      const json = await res.json();
+      if (json.success) {
+        setAmount(String(json.data.amount));
+        setDesc(json.data.description);
+        if (json.data.type === 'income' || json.data.type === 'expense') {
+          setType(json.data.type);
+        }
+      } else {
+        alert("Error de IA: " + json.error);
+      }
+    } catch (err) {
+      console.error(err);
+      alert("Error procesando imagen: " + err.message);
+    } finally {
+      setIsProcessingReceipt(false);
+    }
   };
 
   const startEdit = (acc) => {
@@ -272,6 +321,14 @@ const Finance = () => {
         <div className="glass-panel" style={{ padding: '1.5rem' }}>
           <h2>Registrar Transacción</h2>
           <form onSubmit={handleAddTransaction} style={{ display: 'flex', flexDirection: 'column', gap: '1rem', marginTop: '1rem' }}>
+            <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
+              <label style={{ cursor: 'pointer', background: 'rgba(255,255,255,0.1)', padding: '0.75rem', borderRadius: '8px', fontSize: '0.9rem', color: 'var(--text-secondary)', display: 'flex', alignItems: 'center', gap: '0.5rem', transition: 'background 0.2s' }} onMouseOver={e=>e.currentTarget.style.background='rgba(255,255,255,0.2)'} onMouseOut={e=>e.currentTarget.style.background='rgba(255,255,255,0.1)'}>
+                {isProcessingReceipt ? '⏳ Analizando...' : '📷 Escanear Comprobante (IA)'}
+                <input type="file" accept="image/*" onChange={handleFileUpload} style={{ display: 'none' }} disabled={isProcessingReceipt} />
+              </label>
+              {receiptUrl && !isProcessingReceipt && <span style={{ color: '#10b981', fontSize: '0.8rem' }}>✅ Listo</span>}
+            </div>
+            
             <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap' }}>
               <select value={type} onChange={(e) => setType(e.target.value)} style={inputStyle}>
                 <option value="expense">Gasto (-)</option>
@@ -303,6 +360,11 @@ const Finance = () => {
                     <span style={{ fontSize: '0.7rem', color: 'var(--text-secondary)', marginLeft: '0.5rem' }}>
                       · {FINANCE_CATEGORIES.find(c => c.id === t.category)?.label || t.category}
                     </span>
+                  )}
+                  {t.telegramFileId && (
+                    <a href={`/api/telegram-image?id=${t.telegramFileId}`} target="_blank" rel="noreferrer" style={{ fontSize: '0.7rem', marginLeft: '0.5rem', color: 'var(--accent-color)', textDecoration: 'none' }}>
+                      📷 Ver
+                    </a>
                   )}
                 </span>
                 <span style={{ fontWeight: 'bold', color: t.type === 'expense' ? '#ef4444' : '#10b981' }}>

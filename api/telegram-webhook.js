@@ -82,7 +82,7 @@ export default async function handler(req, res) {
       return res.status(200).send('OK');
     }
 
-    // 2. Manejar Mensajes de Texto (Comandos)
+    // 2. Manejar Mensajes de Texto o Fotos
     if (update.message) {
       const chatId = update.message.chat.id;
 
@@ -91,8 +91,52 @@ export default async function handler(req, res) {
         return res.status(200).send('OK');
       }
 
+      // Procesar Fotos (Comprobantes)
+      if (update.message.photo) {
+        await sendTelegramMessage(chatId, "⏳ Procesando comprobante con IA...");
+        const photos = update.message.photo;
+        const fileId = photos[photos.length - 1].file_id; 
+        
+        try {
+          const tgFileRes = await fetch(`https://api.telegram.org/bot${TELEGRAM_TOKEN}/getFile?file_id=${fileId}`);
+          const tgFileData = await tgFileRes.json();
+          if (!tgFileData.ok) throw new Error("Telegram API error");
+          
+          const filePath = tgFileData.result.file_path;
+          const tgFileUrl = `https://api.telegram.org/file/bot${TELEGRAM_TOKEN}/${filePath}`;
+          
+          const appUrl = `https://${req.headers.host}`;
+          const ocrRes = await fetch(`${appUrl}/api/process-receipt`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ imageUrl: tgFileUrl })
+          });
+          
+          const ocrData = await ocrRes.json();
+          if (ocrData.success) {
+            const { amount, date, description, type } = ocrData.data;
+            await addDoc(collection(dbNode, "finance"), {
+              type: type || 'expense',
+              amount: parseFloat(amount) || 0,
+              title: description || 'Gasto de comprobante',
+              category: 'other',
+              date: date || new Date().toISOString().split('T')[0],
+              telegramFileId: fileId,
+              createdAt: serverTimestamp()
+            });
+            await sendTelegramMessage(chatId, `✅ *Comprobante procesado:*\nMonto: $${amount}\\nConcepto: ${description}\\nGuardado en Finanzas.`);
+          } else {
+            await sendTelegramMessage(chatId, `⚠️ Error en IA: ${ocrData.error}`);
+          }
+        } catch (e) {
+          console.error(e);
+          await sendTelegramMessage(chatId, `⚠️ Hubo un problema procesando la imagen.`);
+        }
+        return res.status(200).send('OK');
+      }
+
       if (!update.message.text) {
-        await sendTelegramMessage(chatId, "⚠️ Todavía no tengo oídos ni ojos, por favor escríbeme en texto.");
+        await sendTelegramMessage(chatId, "⚠️ Todavía no tengo oídos, por favor escríbeme en texto o envíame una foto de comprobante.");
         return res.status(200).send('OK');
       }
 
