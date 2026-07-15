@@ -137,3 +137,35 @@ export const getLifestyleItems = async () => {
     throw e;
   }
 };
+
+// =============================
+// DIARIO PERSONAL (Journaling)
+// =============================
+export const addJournalEntry = async (content, mood) => {
+  try {
+    const docRef = await addDoc(collection(db, "journal_entries"), {
+      content,
+      mood,
+      createdAt: new Date().toISOString()
+    });
+    return docRef.id;
+  } catch (e) {
+    console.error("Error adding journal entry: ", e);
+    throw e;
+  }
+};
+
+export const getJournalEntries = async () => {
+  try {
+    const q = query(collection(db, "journal_entries"), orderBy("createdAt", "desc"));
+    const querySnapshot = await getDocs(q);
+    const entries = [];
+    querySnapshot.forEach((doc) => {
+      entries.push({ id: doc.id, ...doc.data() });
+    });
+    return entries;
+  } catch (e) {
+    console.error("Error getting journal entries: ", e);
+    throw e;
+  }
+};

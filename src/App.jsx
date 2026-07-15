@@ -7,6 +7,7 @@ import Login from './pages/Login';
 import ProtectedRoute from './components/ProtectedRoute';
 import Finance from './pages/Finance';
 import Lifestyle from './pages/Lifestyle';
+import Journal from './pages/Journal';
 
 function App() {
   return (
@@ -20,6 +21,7 @@ function App() {
           <Route path="subject/:id" element={<SubjectDetail />} />
           <Route path="finance" element={<Finance />} />
           <Route path="lifestyle" element={<Lifestyle />} />
+          <Route path="journal" element={<Journal />} />
         </Route>
       </Route>
     </Routes>

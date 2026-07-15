@@ -13,11 +13,11 @@ const Dashboard = () => {
   const [config, setConfig] = useState(() => getConfig());
   const [showSettings, setShowSettings] = useState(false);
   const [openItem, setOpenItem] = useState(null);
-  const [pomoTick, setPomoTick] = useState(0);
+  const [pomoMap, setPomoMap] = useState(() => getPomodoros());
 
   const plan = useMemo(() => buildPlan(ITEMS, doneMap, config), [doneMap, config]);
   const progress = useMemo(() => progressBySubject(ITEMS, doneMap), [doneMap]);
-  const streak = useMemo(() => studyStreak(doneMap, getPomodoros()), [doneMap, pomoTick]);
+  const streak = useMemo(() => studyStreak(doneMap, pomoMap), [doneMap, pomoMap]);
 
   const handleToggle = (id) => setDoneMap({ ...toggleDone(id) });
 
@@ -65,7 +65,7 @@ const Dashboard = () => {
         <div className="dash-main">
           <TodayPlan plan={plan} doneMap={doneMap} onToggle={handleToggle} onOpen={setOpenItem} />
         </div>
-        <Pomodoro onComplete={() => setPomoTick((t) => t + 1)} />
+        <Pomodoro onComplete={() => setPomoMap({ ...getPomodoros() })} />
       </div>
 
       <div className="grid" style={{ marginTop: '2rem' }}>

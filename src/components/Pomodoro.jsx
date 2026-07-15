@@ -28,7 +28,7 @@ const Pomodoro = ({ onComplete }) => {
     if (mode === 'work') {
       addPomodoro();
       setCount(pomodorosToday());
-      onComplete && onComplete();
+      if (onComplete) onComplete();
       setMode('break');
       setSeconds(BREAK);
     } else {

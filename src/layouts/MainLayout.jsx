@@ -38,6 +38,13 @@ const MainLayout = () => {
             fontWeight: isActive ? 'bold' : 'normal',
             transition: 'color 0.2s'
           })}>🧘 Hábitos</NavLink>
+
+          <NavLink to="/journal" style={({ isActive }) => ({
+            color: isActive ? 'var(--accent-color)' : 'var(--text-primary)',
+            textDecoration: 'none',
+            fontWeight: isActive ? 'bold' : 'normal',
+            transition: 'color 0.2s'
+          })}>📝 Diario</NavLink>
         </div>
         
         <button 
