@@ -91,6 +91,9 @@ export const getLifestyleItems = () => fetchMine("lifestyle");
 export const setLifestyleCompleted = (id, isCompleted) =>
   updateDoc(doc(db, "lifestyle", id), { isCompleted });
 
+export const updateLifestyleReminderId = (id, reminderId, isRecurring = false) =>
+  updateDoc(doc(db, "lifestyle", id), { reminderId, isRecurring });
+
 export const deleteLifestyleItem = (id) => deleteDoc(doc(db, "lifestyle", id));
 
 // Registro de actividad diaria (para heatmap y racha). Un doc por completado.

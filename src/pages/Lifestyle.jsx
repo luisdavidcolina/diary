@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import {
   addHabitOrTask, getLifestyleItems, setLifestyleCompleted, deleteLifestyleItem,
-  logHabitCompletion, getHabitLogs
+  logHabitCompletion, getHabitLogs, updateLifestyleReminderId
 } from '../services/db';
 import Heatmap from '../components/Heatmap';
 
@@ -34,6 +34,7 @@ const Lifestyle = () => {
   const [category, setCategory] = useState('task');
   const [reminderDate, setReminderDate] = useState(todayISO());
   const [reminderTime, setReminderTime] = useState(defaultTimePlus5());
+  const [isRecurring, setIsRecurring] = useState(false);
   const [loading, setLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [errorMsg, setErrorMsg] = useState(null);
@@ -84,6 +85,7 @@ const Lifestyle = () => {
     if (!data.success) {
       throw new Error(JSON.stringify(data.error) || 'Fallo en la API de QStash/Vercel');
     }
+    return data;
   };
 
   const handleAddItem = async (e) => {
@@ -102,7 +104,19 @@ const Lifestyle = () => {
       
       if (dateVal && timeVal) {
         try {
-          await scheduleExactReminder(newId, title, dateVal, timeVal);
+          if (isRecurring) {
+            const res = await fetch('/api/schedule-recurring-reminder', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ id: newId, title, time: timeVal })
+            });
+            const data = await res.json();
+            if (!data.success) throw new Error(data.error || 'Fallo en API');
+            await updateLifestyleReminderId(newId, data.scheduleId, true);
+          } else {
+            const data = await scheduleExactReminder(newId, title, dateVal, timeVal);
+            await updateLifestyleReminderId(newId, data.messageId, false);
+          }
         } catch (schedErr) {
           console.warn("Error al programar recordatorio:", schedErr);
           setWarningMsg("Tarea guardada en BD, pero falló la notificación de Telegram (" + schedErr.message + ").");
@@ -142,10 +156,25 @@ const Lifestyle = () => {
     }
   };
 
-  const handleDelete = async (id) => {
-    setItems((prev) => prev.filter((i) => i.id !== id));
+  const cancelReminderAPI = async (reminderId, isRecur) => {
     try {
-      await deleteLifestyleItem(id);
+      await fetch('/api/cancel-reminder', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ reminderId, isRecurring: isRecur })
+      });
+    } catch(e) {
+      console.warn("Fallo cancelando recordatorio en Upstash", e);
+    }
+  };
+
+  const handleDelete = async (item) => {
+    setItems((prev) => prev.filter((i) => i.id !== item.id));
+    try {
+      if (item.reminderId) {
+        await cancelReminderAPI(item.reminderId, item.isRecurring);
+      }
+      await deleteLifestyleItem(item.id);
     } catch (e) {
       console.error(e);
       loadItems();
@@ -205,7 +234,7 @@ const Lifestyle = () => {
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
         <h4 style={{ margin: 0, fontSize: '1.05rem', textDecoration: it.isCompleted ? 'line-through' : 'none', color: it.isCompleted ? 'var(--text-secondary)' : 'var(--text-primary)' }}>{it.title}</h4>
         <button
-          onClick={() => handleDelete(it.id)}
+          onClick={() => handleDelete(it)}
           style={{ background: 'transparent', border: 'none', color: 'var(--text-secondary)', cursor: 'pointer', padding: '0.2rem', fontSize: '1.1rem' }}
           title="Eliminar"
         >
@@ -220,7 +249,7 @@ const Lifestyle = () => {
         )}
         {it.reminderTime && (
           <span style={{ fontSize: '0.75rem', background: 'rgba(234, 179, 8, 0.15)', color: '#fde047', padding: '0.25rem 0.6rem', borderRadius: '6px', border: '1px solid rgba(234, 179, 8, 0.3)' }}>
-            ⏰ {it.reminderTime}
+            ⏰ {it.reminderTime} {it.isRecurring ? '(Diario)' : ''}
           </span>
         )}
       </div>
@@ -258,7 +287,7 @@ const Lifestyle = () => {
         )}
       </span>
       <button
-        onClick={() => handleDelete(it.id)}
+        onClick={() => handleDelete(it)}
         title="Eliminar"
         style={{ background: 'transparent', border: 'none', color: 'var(--text-secondary)', cursor: 'pointer', fontSize: '1rem' }}
       >
@@ -342,6 +371,18 @@ const Lifestyle = () => {
             </div>
           )}
           
+          {reminderTime && category === 'task' && (
+            <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer', color: 'var(--text-secondary)' }}>
+              <input 
+                type="checkbox" 
+                checked={isRecurring} 
+                onChange={(e) => setIsRecurring(e.target.checked)}
+                style={{ width: '18px', height: '18px', accentColor: 'var(--accent-color)' }}
+              />
+              🔄 Repetir todos los días a esta hora
+            </label>
+          )}
+
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
               {errorMsg && (
