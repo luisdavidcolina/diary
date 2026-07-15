@@ -266,6 +266,7 @@ h1, h2, h3 {
 
 /* Checklist */
 .checklist { list-style: none; display: flex; flex-direction: column; gap: 0.25rem; }
+.checklist-row { list-style: none; }
 .checklist-item {
   display: flex;
   align-items: center;
@@ -274,6 +275,26 @@ h1, h2, h3 {
   transition: background 0.15s;
 }
 .checklist-item:hover { background: rgba(255, 255, 255, 0.04); }
+.checklist-details {
+  list-style: none;
+  margin: 0.1rem 0 0.5rem 2.4rem;
+  padding-left: 0.9rem;
+  border-left: 1px solid var(--glass-border);
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+}
+.checklist-details li {
+  position: relative;
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+  padding-left: 0.8rem;
+}
+.checklist-details li::before {
+  content: '–';
+  position: absolute;
+  left: 0;
+}
 .checklist-check {
   display: flex;
   align-items: center;
@@ -290,7 +311,7 @@ h1, h2, h3 {
   position: relative;
   transition: all 0.15s;
 }
-.checklist-item.is-done .checklist-box::after {
+.checklist-row.is-done .checklist-box::after {
   content: '✓';
   position: absolute;
   inset: 0;
@@ -318,7 +339,7 @@ h1, h2, h3 {
 }
 .checklist-text:disabled { cursor: default; }
 .checklist-text:not(:disabled):hover span:last-child { color: var(--accent-color); }
-.checklist-item.is-done .checklist-text { color: var(--text-secondary); text-decoration: line-through; }
+.checklist-row.is-done .checklist-text { color: var(--text-secondary); text-decoration: line-through; }
 .checklist-unit {
   font-size: 0.7rem;
   text-transform: uppercase;
@@ -393,6 +414,33 @@ h1, h2, h3 {
 }
 .tab.is-active { color: var(--text-primary); border-bottom-color: var(--accent-color); }
 .modal-body { min-height: 220px; }
+
+/* Desglose del tema (Aprender) */
+.topic-outline {
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid var(--glass-border);
+  border-radius: 12px;
+  padding: 0.9rem 1rem;
+  margin-bottom: 1rem;
+}
+.topic-outline-title {
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--text-secondary);
+}
+.topic-outline ul { list-style: none; margin-top: 0.5rem; display: flex; flex-direction: column; gap: 0.3rem; }
+.topic-outline li {
+  position: relative;
+  padding-left: 1.1rem;
+  font-size: 0.88rem;
+}
+.topic-outline li::before {
+  content: '▸';
+  position: absolute;
+  left: 0;
+  color: var(--accent-color);
+}
 
 /* Formularios pequeños */
 .card-form { display: flex; gap: 0.5rem; margin-bottom: 1rem; flex-wrap: wrap; }

@@ -58,7 +58,7 @@ const ItemWorkspace = ({ item, done, onToggleDone, onClose }) => {
         </nav>
 
         <div className="modal-body">
-          {tab === 'aprender' && <LearnTab subject={subject} data={data} patch={patch} />}
+          {tab === 'aprender' && <LearnTab subject={subject} item={item} data={data} patch={patch} />}
           {tab === 'repasar' && <ReviewTab color={subject.color} data={data} patch={patch} />}
           {tab === 'ejercicios' && <ExercisesTab color={subject.color} data={data} patch={patch} />}
           {tab === 'test' && quiz && <QuizTab color={subject.color} quiz={quiz} />}
@@ -68,9 +68,17 @@ const ItemWorkspace = ({ item, done, onToggleDone, onClose }) => {
   );
 };
 
-// ── Aprender: apuntes + referencia al material ──
-const LearnTab = ({ subject, data, patch }) => (
+// ── Aprender: desglose del tema + apuntes + referencia al material ──
+const LearnTab = ({ subject, item, data, patch }) => (
   <div>
+    {item.details?.length > 0 && (
+      <div className="topic-outline">
+        <span className="topic-outline-title">Qué cubre este tema</span>
+        <ul>
+          {item.details.map((d, i) => <li key={i}>{d}</li>)}
+        </ul>
+      </div>
+    )}
     <p className="muted" style={{ marginBottom: '0.75rem' }}>📂 Material: {subject.material}</p>
     <textarea
       className="note-input"

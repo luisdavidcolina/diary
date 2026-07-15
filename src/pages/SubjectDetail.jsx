@@ -82,7 +82,7 @@ const SubjectDetail = () => {
       <div className="grid">
         <div className="glass-panel">
           <h2>Temario</h2>
-          <SyllabusChecklist items={items} doneMap={doneMap} onToggle={handleToggle} onOpen={setOpenItem} />
+          <SyllabusChecklist items={items} doneMap={doneMap} onToggle={handleToggle} onOpen={setOpenItem} showDetails />
         </div>
 
         <div className="glass-panel">
