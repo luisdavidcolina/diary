@@ -1,6 +1,7 @@
 import React, { useEffect, useRef } from 'react';
 import { Outlet, NavLink } from 'react-router-dom';
 import { logout } from '../services/auth';
+import AssistantChat from '../components/AssistantChat';
 
 const MainLayout = () => {
   const timeoutRef = useRef(null);
@@ -89,6 +90,8 @@ const MainLayout = () => {
       <main className="main-content">
         <Outlet />
       </main>
+
+      <AssistantChat />
     </>
   );
 };
