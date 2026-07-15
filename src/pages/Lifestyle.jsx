@@ -121,6 +121,78 @@ const Lifestyle = () => {
 
   const tasks = items.filter((i) => i.category === 'task');
   const habits = items.filter((i) => i.category === 'habit');
+  
+  const genericTasks = tasks.filter((t) => !t.reminderDate && !t.reminderTime);
+  const reminders = tasks.filter((t) => t.reminderDate || t.reminderTime);
+  
+  const handleDragStart = (e, id) => {
+    e.dataTransfer.setData('taskId', id);
+  };
+  
+  const handleDragOver = (e) => {
+    e.preventDefault();
+  };
+  
+  const handleDrop = async (e, targetStatus) => {
+    e.preventDefault();
+    const id = e.dataTransfer.getData('taskId');
+    if (id) {
+      const item = items.find(i => i.id === id);
+      if (item && Boolean(item.isCompleted) !== targetStatus) {
+        await handleToggle(item);
+      }
+    }
+  };
+
+  const renderCard = (it) => (
+    <div 
+      key={it.id}
+      draggable
+      onDragStart={(e) => {
+        handleDragStart(e, it.id);
+        e.currentTarget.style.opacity = '0.5';
+      }}
+      onDragEnd={(e) => e.currentTarget.style.opacity = it.isCompleted ? '0.6' : '1'}
+      style={{
+        background: 'rgba(0,0,0,0.3)',
+        border: '1px solid var(--glass-border)',
+        borderRadius: '12px',
+        padding: '1rem',
+        cursor: 'grab',
+        boxShadow: '0 4px 6px rgba(0,0,0,0.1)',
+        display: 'flex',
+        flexDirection: 'column',
+        gap: '0.75rem',
+        transition: 'transform 0.2s',
+        opacity: it.isCompleted ? 0.6 : 1
+      }}
+      onMouseOver={(e) => e.currentTarget.style.transform = 'translateY(-2px)'}
+      onMouseOut={(e) => e.currentTarget.style.transform = 'translateY(0)'}
+    >
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+        <h4 style={{ margin: 0, fontSize: '1.05rem', textDecoration: it.isCompleted ? 'line-through' : 'none', color: it.isCompleted ? 'var(--text-secondary)' : 'var(--text-primary)' }}>{it.title}</h4>
+        <button
+          onClick={() => handleDelete(it.id)}
+          style={{ background: 'transparent', border: 'none', color: 'var(--text-secondary)', cursor: 'pointer', padding: '0.2rem', fontSize: '1.1rem' }}
+          title="Eliminar"
+        >
+          🗑
+        </button>
+      </div>
+      <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
+        {it.reminderDate && (
+          <span style={{ fontSize: '0.75rem', background: 'rgba(99, 102, 241, 0.15)', color: '#a5b4fc', padding: '0.25rem 0.6rem', borderRadius: '6px', border: '1px solid rgba(99, 102, 241, 0.3)' }}>
+            🗓️ {it.reminderDate}
+          </span>
+        )}
+        {it.reminderTime && (
+          <span style={{ fontSize: '0.75rem', background: 'rgba(234, 179, 8, 0.15)', color: '#fde047', padding: '0.25rem 0.6rem', borderRadius: '6px', border: '1px solid rgba(234, 179, 8, 0.3)' }}>
+            ⏰ {it.reminderTime}
+          </span>
+        )}
+      </div>
+    </div>
+  );
 
   // Datos del heatmap: conteo de completados por día + racha.
   const counts = logs.reduce((acc, l) => {
@@ -261,15 +333,70 @@ const Lifestyle = () => {
             </div>
           </div>
 
-          {/* Tareas (Pendientes) */}
+          {/* Tareas (Pendientes Genéricos) */}
           <div className="glass-panel" style={{ padding: '1.5rem' }}>
-            <h2 style={{ color: 'var(--color-english)' }}>Pendientes (To-Dos)</h2>
+            <h2 style={{ color: 'var(--color-english)' }}>Pendientes</h2>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', marginTop: '1rem' }}>
-              {tasks.length === 0 && <p style={{ color: 'var(--text-secondary)' }}>Inbox limpio. ¡Buen trabajo!</p>}
-              {tasks.map((t) => renderItem(t, 'var(--color-english)'))}
+              {genericTasks.length === 0 && <p style={{ color: 'var(--text-secondary)' }}>No hay tareas pendientes.</p>}
+              {genericTasks.map((t) => renderItem(t, 'var(--color-english)'))}
             </div>
           </div>
         </div>
+
+        {/* Tablero Kanban para Recordatorios Programados */}
+        {reminders.length > 0 && (
+          <div style={{ marginTop: '3rem', animation: 'fadeInUp 0.8s ease' }}>
+            <h2 style={{ marginBottom: '1.5rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+              <span style={{ color: 'var(--color-security)' }}>📌</span> Tablero de Recordatorios
+            </h2>
+            
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '2rem' }}>
+              
+              {/* Columna Por Hacer */}
+              <div 
+                className="glass-panel" 
+                style={{ padding: '1.5rem', minHeight: '300px', background: 'rgba(255,255,255,0.02)' }}
+                onDragOver={handleDragOver}
+                onDrop={(e) => handleDrop(e, false)}
+              >
+                <h3 style={{ marginBottom: '1.25rem', color: 'var(--color-security)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  Por Hacer
+                  <span style={{ fontSize: '0.8rem', background: 'rgba(255,255,255,0.1)', padding: '0.2rem 0.6rem', borderRadius: '12px', color: 'white' }}>
+                    {reminders.filter(r => !r.isCompleted).length}
+                  </span>
+                </h3>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                  {reminders.filter(r => !r.isCompleted).map(renderCard)}
+                  {reminders.filter(r => !r.isCompleted).length === 0 && (
+                     <div style={{ border: '1px dashed var(--glass-border)', padding: '2rem', textAlign: 'center', color: 'var(--text-secondary)', borderRadius: '12px' }}>Arrastra tarjetas aquí</div>
+                  )}
+                </div>
+              </div>
+
+              {/* Columna Completados */}
+              <div 
+                className="glass-panel" 
+                style={{ padding: '1.5rem', minHeight: '300px', background: 'rgba(255,255,255,0.02)' }}
+                onDragOver={handleDragOver}
+                onDrop={(e) => handleDrop(e, true)}
+              >
+                <h3 style={{ marginBottom: '1.25rem', color: 'var(--color-cloud)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  Completados
+                  <span style={{ fontSize: '0.8rem', background: 'rgba(255,255,255,0.1)', padding: '0.2rem 0.6rem', borderRadius: '12px', color: 'white' }}>
+                    {reminders.filter(r => r.isCompleted).length}
+                  </span>
+                </h3>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                  {reminders.filter(r => r.isCompleted).map(renderCard)}
+                  {reminders.filter(r => r.isCompleted).length === 0 && (
+                     <div style={{ border: '1px dashed var(--glass-border)', padding: '2rem', textAlign: 'center', color: 'var(--text-secondary)', borderRadius: '12px' }}>Arrastra tarjetas aquí</div>
+                  )}
+                </div>
+              </div>
+              
+            </div>
+          </div>
+        )}
       )}
     </div>
   );
