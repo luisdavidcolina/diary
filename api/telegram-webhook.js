@@ -33,6 +33,11 @@ async function editMessageText(chatId, messageId, text) {
 export default async function handler(req, res) {
   if (req.method !== 'POST') return res.status(200).send('OK');
 
+  const secret = process.env.TELEGRAM_WEBHOOK_SECRET || "diary_secret_2026";
+  if (req.headers['x-telegram-bot-api-secret-token'] !== secret) {
+    return res.status(403).send('Forbidden');
+  }
+
   const update = req.body;
 
   try {
@@ -78,14 +83,20 @@ export default async function handler(req, res) {
     }
 
     // 2. Manejar Mensajes de Texto (Comandos)
-    if (update.message && update.message.text) {
+    if (update.message) {
       const chatId = update.message.chat.id;
-      const text = update.message.text;
-      
+
       // Asegurar que solo el dueño puede interactuar
       if (chatId.toString() !== process.env.TELEGRAM_CHAT_ID) {
         return res.status(200).send('OK');
       }
+
+      if (!update.message.text) {
+        await sendTelegramMessage(chatId, "⚠️ Todavía no tengo oídos ni ojos, por favor escríbeme en texto.");
+        return res.status(200).send('OK');
+      }
+
+      const text = update.message.text;
 
       let responseText = "✅ Guardado en Captura Rápida";
 
@@ -107,9 +118,44 @@ Ejemplo: \`/recordar 15:30 Llamar al banco\`
 \`/diario [texto]\` - Ej: \`/diario Hoy fue un gran día...\``;
       }
       else if (text.startsWith('/recordar ')) {
-        const parts = text.replace('/recordar ', '').split(' ');
-        const time = parts[0]; 
-        const title = parts.slice(1).join(' ') || 'Recordatorio Telegram';
+        const rawCommand = text.replace('/recordar ', '').trim();
+        const parts = rawCommand.split(' ');
+        
+        let dateStr, timeStr, titleStartIndex;
+        let isDaily = false;
+        
+        const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
+        const timeRegex = /^\d{1,2}:\d{2}$/;
+
+        if (parts[0].toLowerCase() === 'diario' && timeRegex.test(parts[1])) {
+          isDaily = true;
+          timeStr = parts[1];
+          titleStartIndex = 2;
+        } else if (dateRegex.test(parts[0]) && timeRegex.test(parts[1])) {
+          dateStr = parts[0];
+          timeStr = parts[1];
+          titleStartIndex = 2;
+        } else if (timeRegex.test(parts[0])) {
+          timeStr = parts[0];
+          titleStartIndex = 1;
+          
+          // Fecha inteligente (mañana si ya pasó)
+          const nowUtc4 = new Date(new Date().getTime() - (4 * 60 * 60 * 1000));
+          const [hours, minutes] = timeStr.split(':').map(Number);
+          const targetUtc4 = new Date(nowUtc4);
+          targetUtc4.setHours(hours, minutes, 0, 0);
+
+          if (targetUtc4 < nowUtc4) {
+            targetUtc4.setDate(targetUtc4.getDate() + 1); // Mañana
+          }
+          dateStr = targetUtc4.toISOString().split('T')[0];
+        } else {
+          await sendTelegramMessage(chatId, "⚠️ Formato inválido.\\nEjemplos:\\n`/recordar 15:30 Tarea`\\n`/recordar 2026-07-20 15:30 Tarea`\\n`/recordar diario 15:30 Tarea`");
+          return res.status(200).send('OK');
+        }
+
+        timeStr = timeStr.padStart(5, '0');
+        const title = parts.slice(titleStartIndex).join(' ') || 'Recordatorio Telegram';
         
         const docRef = await addDoc(collection(dbNode, "lifestyle"), {
           title: title,
@@ -119,22 +165,26 @@ Ejemplo: \`/recordar 15:30 Llamar al banco\`
         });
 
         const appUrl = `https://${req.headers.host}`;
-        const nowUtc4 = new Date(new Date().getTime() - (4 * 60 * 60 * 1000));
-        const dateStr = nowUtc4.toISOString().split('T')[0];
+        const endpoint = isDaily ? '/api/schedule-recurring-reminder' : '/api/schedule-exact-reminder';
+        const bodyPayload = isDaily 
+          ? { id: docRef.id, title: title, time: timeStr }
+          : { id: docRef.id, title: title, date: dateStr, time: timeStr };
 
         try {
-          const schedRes = await fetch(`${appUrl}/api/schedule-exact-reminder`, {
+          const schedRes = await fetch(`${appUrl}${endpoint}`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ id: docRef.id, title: title, date: dateStr, time: time })
+            body: JSON.stringify(bodyPayload)
           });
           
           if (schedRes.ok) {
             const schedData = await schedRes.json();
-            if (schedData.messageId) {
-              await updateDoc(doc(dbNode, "lifestyle", docRef.id), { reminderId: schedData.messageId });
+            const reminderId = isDaily ? schedData.scheduleId : schedData.messageId;
+            if (reminderId) {
+              await updateDoc(doc(dbNode, "lifestyle", docRef.id), { reminderId: reminderId, isRecurring: isDaily });
             }
-            responseText = `⏰ Recordatorio "${title}" programado para las ${time}.`;
+            const dateStrMsg = isDaily ? 'todos los días' : (dateStr ? `el ${dateStr}` : 'hoy/mañana');
+            responseText = `⏰ Recordatorio "${title}" programado para ${dateStrMsg} a las ${timeStr}.`;
           } else {
             responseText = `⚠️ Tarea guardada, pero la hora falló. Revisa el formato (ej. 15:30).`;
           }

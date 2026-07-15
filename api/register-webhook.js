@@ -4,8 +4,9 @@ export default async function handler(req, res) {
 
   const appUrl = `https://${req.headers.host}`; 
   const webhookUrl = `${appUrl}/api/telegram-webhook`;
+  const secret = process.env.TELEGRAM_WEBHOOK_SECRET || "diary_secret_2026";
 
-  const url = `https://api.telegram.org/bot${token}/setWebhook?url=${encodeURIComponent(webhookUrl)}`;
+  const url = `https://api.telegram.org/bot${token}/setWebhook?url=${encodeURIComponent(webhookUrl)}&secret_token=${secret}`;
 
   try {
     const response = await fetch(url);
