@@ -9,7 +9,7 @@ export default async function handler(req, res) {
     return res.status(500).json({ error: "Faltan credenciales de Telegram" });
   }
 
-  const message = `⏱️ *Recordatorio Programado*\n\n¡Es la hora! Tienes que: *${title}*`;
+  const message = `⏰ *${title}*`;
   const url = `https://api.telegram.org/bot${token}/sendMessage`;
 
   try {
