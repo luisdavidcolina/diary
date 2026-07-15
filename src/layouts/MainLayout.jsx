@@ -30,19 +30,8 @@ const MainLayout = () => {
 
   return (
     <>
-      <nav style={{
-        display: 'flex',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-        padding: '1rem 2rem',
-        background: 'var(--glass-bg)',
-        borderBottom: '1px solid var(--glass-border)',
-        backdropFilter: 'blur(10px)',
-        position: 'sticky',
-        top: 0,
-        zIndex: 100
-      }}>
-        <div style={{ display: 'flex', gap: '2rem' }}>
+      <nav className="top-nav">
+        <div className="nav-links">
           <NavLink to="/" style={({ isActive }) => ({
             color: isActive ? 'var(--accent-color)' : 'var(--text-primary)',
             textDecoration: 'none',
@@ -97,7 +86,7 @@ const MainLayout = () => {
         </button>
       </nav>
 
-      <main style={{ padding: '2rem' }}>
+      <main className="main-content">
         <Outlet />
       </main>
     </>

@@ -606,3 +606,69 @@ h1, h2, h3 {
   from { opacity: 0; transform: translateY(20px); }
   to { opacity: 1; transform: translateY(0); }
 }
+
+/* Responsive Navigation & Layout */
+.top-nav {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem 2rem;
+  background: var(--glass-bg);
+  border-bottom: 1px solid var(--glass-border);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+
+.nav-links {
+  display: flex;
+  gap: 2rem;
+  align-items: center;
+}
+
+.main-content {
+  padding: 2rem;
+}
+
+/* Mobile Adjustments */
+@media (max-width: 768px) {
+  #root {
+    padding: 1rem 0.5rem;
+  }
+  
+  .top-nav {
+    flex-direction: column;
+    padding: 1rem;
+    gap: 1rem;
+    position: relative; /* Quitar sticky en móviles para ahorrar espacio vertical si hay muchos links */
+  }
+  
+  .nav-links {
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 1rem;
+    font-size: 0.95rem;
+  }
+  
+  .main-content {
+    padding: 1.5rem 0.5rem;
+  }
+  
+  .header h1 {
+    font-size: 2.5rem;
+  }
+  
+  .countdown-box {
+    padding: 0.8rem 1rem;
+  }
+  
+  .countdown-number {
+    font-size: 1.8rem;
+  }
+  
+  .grid {
+    grid-template-columns: 1fr;
+  }
+}
