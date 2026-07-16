@@ -905,10 +905,11 @@ h1, h2, h3 {
   /* Expand Chat on mobile */
   .assistant-chat-window {
     width: calc(100% - 20px) !important;
-    height: calc(100vh - 110px) !important;
+    top: 10px !important;
     bottom: 80px !important;
     right: 10px !important;
     left: 10px !important;
+    height: auto !important;
     box-shadow: 4px 4px 0 #000 !important;
   }
   .assistant-chat-btn {
