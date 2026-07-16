@@ -66,6 +66,13 @@ export default function AssistantChat() {
         return data.content || data.error || "No se pudo leer el archivo";
       }
 
+      if (name === 'check_api_credits') {
+        const res = await fetch('/api/get-credits');
+        const data = await res.json();
+        if (data.error) return `Error al consultar saldo: ${data.error}`;
+        return `Has consumido $${data.usage} de la API.`;
+      }
+
       return "Error: Herramienta desconocida";
     } catch (e) {
       return `Error ejecutando herramienta: ${e.message}`;

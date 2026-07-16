@@ -82,6 +82,14 @@ export default async function handler(req, res) {
             required: ["filepath"]
           }
         }
+      },
+      {
+        type: "function",
+        function: {
+          name: "check_api_credits",
+          description: "Consulta el saldo o los créditos gastados en la API de Inteligencia Artificial (OpenRouter).",
+          parameters: { type: "object", properties: {} }
+        }
       }
     ];
 
@@ -93,6 +101,7 @@ REGLAS IMPORTANTES:
 - Si el usuario te pregunta por sus finanzas o saldo, usa get_finance_summary y luego explícale los datos.
 - Si el usuario te cuenta algo íntimo o del día a día y quiere que lo guardes, usa add_diary_entry.
 - Si el usuario pregunta por el contexto general de la app, sus materias, temarios o enlaces, usa get_docs_list para ver qué archivos existen y luego read_doc_file para leer el contenido que necesites antes de responder.
+- Si el usuario te pregunta por sus créditos, gastos de API o saldo de OpenRouter, usa check_api_credits.
 - Responde siempre de manera concisa, amigable y usando emojis.`;
 
     const formattedMessages = [

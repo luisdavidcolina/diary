@@ -406,6 +406,20 @@ Ejemplo: \`/recordar 15:30 Llamar al banco\`
         });
         responseText = `📖 Entrada de diario guardada.`;
       }
+      else if (text.startsWith('/creditos')) {
+        const appUrl = `https://${req.headers.host}`;
+        try {
+          const credRes = await fetch(`${appUrl}/api/get-credits`);
+          const credData = await credRes.json();
+          if (credData.error) {
+            responseText = `⚠️ Error leyendo créditos: ${credData.error}`;
+          } else {
+            responseText = `📊 *Consumo de API (IA):*\nHas gastado $${credData.usage}`;
+          }
+        } catch (e) {
+          responseText = `⚠️ Error de conexión al consultar saldo.`;
+        }
+      }
       else {
         // Enviar mensaje temporal y obtener su message_id
         const tempMsgRes = await fetch(`https://api.telegram.org/bot${TELEGRAM_TOKEN}/sendMessage`, {
