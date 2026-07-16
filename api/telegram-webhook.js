@@ -275,6 +275,8 @@ REGLAS OPERATIVAS (prioridad alta):
           properties: {
             filepath: { type: "string", description: "Ruta del archivo, ej. 'PLAN_ESTUDIO.md' o 'ingles/guia.pdf'" }
           },
+          required: ["filepath"]
+        }
       }
     },
     {
