@@ -34,13 +34,16 @@ export default async function handler(req, res) {
       ? `\nContexto que da el usuario (úsalo para desambiguar el monto, el tipo o el concepto): "${note.trim()}"\n`
       : '';
 
-    const promptText = `Analiza este comprobante de pago/transferencia o factura.${noteBlock}
+    const promptText = `Analiza este comprobante de pago/transferencia, factura o estado de cuenta bancario/pantallazo de saldo.${noteBlock}
 Extrae la siguiente información y devuélvela estrictamente en un objeto JSON con este formato exacto:
 {
-  "amount": número (el monto total transferido o pagado, usa punto decimal, sin separador de miles. Ej: 15.50),
-  "date": "YYYY-MM-DD" (fecha de la transacción, si no está usa la fecha de hoy),
+  "isBalanceUpdate": true/false (true si la imagen muestra el saldo actual/disponible de una cuenta o wallet en lugar de un comprobante de un pago/gasto/ingreso puntual),
+  "accountName": "nombre aproximado del banco o wallet, ej: Mercantil, BDV, BCP, Bancamiga, Binance" (solo si isBalanceUpdate es true),
+  "balance": número (el saldo total o disponible de la cuenta que se muestra, usa punto decimal, sin separador de miles. Ej: 324.29) (solo si isBalanceUpdate es true),
+  "amount": número (el monto total transferido o pagado, si es un comprobante de un pago/gasto/ingreso puntual. Ej: 15.50) (si isBalanceUpdate es false),
+  "date": "YYYY-MM-DD" (fecha de la transacción o de hoy),
   "description": "texto descriptivo breve del comercio, banco o persona receptora",
-  "type": "expense" (o "income" si es claramente un dinero recibido o saldo a favor)
+  "type": "expense" (o "income" si es claramente un dinero recibido, saldo a favor o ingreso)
 }
 No devuelvas NADA más que el JSON puro.`;
 

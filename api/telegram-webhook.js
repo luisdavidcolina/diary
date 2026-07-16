@@ -633,9 +633,61 @@ export default async function handler(req, res) {
 
           const ocrData = await ocrRes.json();
           if (ocrData.success) {
-            const { amount, description, type } = ocrData.data;
-            await saveTransaction({ amount, description: description || 'Gasto de comprobante', type: type || 'expense', receiptUrl: fileId });
-            await sendTelegramMessage(chatId, `✅ *Comprobante procesado:*\nMonto: $${amount}\nConcepto: ${description}\nGuardado en Finanzas.`);
+            if (ocrData.data.isBalanceUpdate) {
+              const { balance, accountName } = ocrData.data;
+              
+              // 1. Obtener todas las cuentas del usuario
+              const accountsSnap = await getDocs(query(collection(dbNode, "accounts"), where("userId", "==", OWNER_UID)));
+              const accounts = [];
+              accountsSnap.forEach(d => accounts.push({ id: d.id, ...d.data() }));
+
+              // 2. Buscar cuenta coincidente
+              const lowerName = (accountName || '').toLowerCase();
+              let matchedAcc = null;
+
+              matchedAcc = accounts.find(a => 
+                a.name.toLowerCase().includes(lowerName) || 
+                lowerName.includes(a.name.toLowerCase()) ||
+                (a.name.toLowerCase().includes('corriente amiga') && lowerName.includes('bancamiga')) ||
+                (a.name.toLowerCase().includes('bdv') && lowerName.includes('venezuela')) ||
+                (a.name.toLowerCase().includes('mercantil') && lowerName.includes('mercantil'))
+              );
+
+              if (matchedAcc) {
+                const prevBalance = parseFloat(matchedAcc.balance) || 0;
+                const newBalance = parseFloat(balance) || 0;
+                const diff = newBalance - prevBalance;
+
+                if (Math.abs(diff) > 0.01) {
+                  // Registrar transacción de ajuste
+                  await saveTransaction({
+                    amount: Math.abs(diff),
+                    description: `Ajuste de saldo (Foto: ${matchedAcc.name})`,
+                    type: diff > 0 ? 'income' : 'expense',
+                    category: 'other',
+                    currency: matchedAcc.currency,
+                    receiptUrl: fileId
+                  });
+
+                  // Actualizar saldo de la cuenta
+                  await updateDoc(doc(dbNode, "accounts", matchedAcc.id), {
+                    balance: newBalance,
+                    updatedAt: nowIso()
+                  });
+
+                  const sign = matchedAcc.currency === 'USD' ? '$' : matchedAcc.currency === 'PEN' ? 'S/' : 'Bs. ';
+                  await sendTelegramMessage(chatId, `✅ *Saldo de ${matchedAcc.name} actualizado:*\n• Anterior: ${sign}${prevBalance.toFixed(2)}\n• Nuevo: ${sign}${newBalance.toFixed(2)}\n• Ajuste registrado: ${diff > 0 ? '+' : '-'}${sign}${Math.abs(diff).toFixed(2)}`);
+                } else {
+                  await sendTelegramMessage(chatId, `ℹ️ El saldo de *${matchedAcc.name}* coincide con el que ya tenemos registrado (${matchedAcc.currency === 'USD' ? '$' : matchedAcc.currency === 'PEN' ? 'S/' : 'Bs. '}${newBalance.toFixed(2)}). No se requirieron ajustes.`);
+                }
+              } else {
+                await sendTelegramMessage(chatId, `⚠️ Encontré un saldo de *${balance}* para *"${accountName}"*, pero no logré asociarlo a ninguna de tus cuentas de Finanzas.`);
+              }
+            } else {
+              const { amount, description, type } = ocrData.data;
+              await saveTransaction({ amount, description: description || 'Gasto de comprobante', type: type || 'expense', receiptUrl: fileId });
+              await sendTelegramMessage(chatId, `✅ *Comprobante procesado:*\nMonto: $${amount}\nConcepto: ${description}\nGuardado en Finanzas.`);
+            }
           } else {
             await sendTelegramMessage(chatId, `⚠️ Error en IA: ${ocrData.error}`);
           }
