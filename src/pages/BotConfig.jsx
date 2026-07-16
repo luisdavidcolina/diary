@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import {
   getBotConfig, saveBotConfig, DEFAULT_BOT_CONFIG,
   queryCollection, createRecord, deleteRecord, updateRecord,
-  getChatMessages, getApiUsageLogs
+  getChatSessions, deleteChatSession, getApiUsageLogs
 } from '../services/db';
 import ReactMarkdown from 'react-markdown';
 
@@ -24,7 +24,7 @@ const BotConfig = () => {
   
   const [cfg, setCfg] = useState(DEFAULT_BOT_CONFIG);
   const [knowledge, setKnowledge] = useState([]);
-  const [chatHistory, setChatHistory] = useState([]);
+  const [chatSessions, setChatSessions] = useState([]);
   const [apiLogs, setApiLogs] = useState([]);
   
   const [loading, setLoading] = useState(true);
@@ -39,7 +39,7 @@ const BotConfig = () => {
       try {
         setCfg(await getBotConfig());
         setKnowledge(await queryCollection('bot_knowledge'));
-        setChatHistory(await getChatMessages());
+        setChatSessions(await getChatSessions());
         setApiLogs(await getApiUsageLogs());
       } catch (e) {
         console.error(e);
@@ -220,26 +220,38 @@ const BotConfig = () => {
       {activeTab === 'chats' && (
         <div className="glass-panel" style={{ padding: '1.5rem', marginBottom: '1.5rem', animation: 'fadeInUp 0.4s ease' }}>
           <h2 style={{ marginTop: 0 }}>Historial de Conversaciones</h2>
+          <p className="muted" style={{ marginBottom: '1rem', fontSize: '0.9rem' }}>Aquí puedes revisar, continuar o eliminar tus conversaciones anteriores.</p>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', marginTop: '1rem' }}>
-            {chatHistory.length === 0 ? <p className="muted">No hay mensajes guardados en el historial web.</p> : null}
-            {chatHistory.map((msg, i) => {
-              if (msg.role === 'function') return null;
-              const isUser = msg.role === 'user';
-              return (
-                <div key={i} style={{ display: 'flex', justifyContent: isUser ? 'flex-end' : 'flex-start' }}>
-                  <div style={{ 
-                    background: isUser ? 'var(--brutal-green)' : 'var(--brutal-white)',
-                    padding: '1rem', border: '3px solid #000', boxShadow: '4px 4px 0 #000',
-                    maxWidth: '80%', wordBreak: 'break-word', fontWeight: 600
-                  }}>
-                    <div style={{ fontSize: '0.75rem', color: '#000', marginBottom: '0.5rem', borderBottom: '2px solid #000', paddingBottom: '4px' }}>
-                      <strong>{isUser ? 'Tú' : 'Luisda Bot'}</strong> - {new Date(msg.createdAt).toLocaleString()}
-                    </div>
-                    {msg.type === 'proposal' ? `[Propuesta de Herramienta] ${msg.functionCall?.name}` : <ReactMarkdown>{msg.content}</ReactMarkdown>}
+            {chatSessions.length === 0 ? <p className="muted">No hay sesiones de chat guardadas.</p> : null}
+            {chatSessions.map((session) => (
+              <div key={session.id} style={{ 
+                background: 'var(--brutal-white)',
+                padding: '1rem', border: '3px solid #000', boxShadow: '4px 4px 0 #000',
+                display: 'flex', justifyContent: 'space-between', alignItems: 'center'
+              }}>
+                <div>
+                  <h3 style={{ margin: '0 0 0.5rem 0', fontSize: '1.1rem' }}>{session.title}</h3>
+                  <div style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>
+                    {new Date(session.createdAt).toLocaleString()}
                   </div>
                 </div>
-              );
-            })}
+                <div style={{ display: 'flex', gap: '0.5rem' }}>
+                  <button onClick={() => {
+                    window.dispatchEvent(new CustomEvent('chat_session_changed', { detail: session.id }));
+                  }} style={{ background: 'var(--brutal-yellow)', border: '2px solid #000', color: '#000', cursor: 'pointer', padding: '0.5rem 1rem', fontWeight: 900 }}>
+                    Continuar
+                  </button>
+                  <button onClick={async () => {
+                    if(confirm('¿Eliminar esta conversación por completo?')) {
+                      await deleteChatSession(session.id);
+                      setChatSessions(await getChatSessions());
+                    }
+                  }} style={{ background: 'var(--brutal-pink)', border: '2px solid #000', color: '#000', cursor: 'pointer', padding: '0.5rem 1rem', fontWeight: 900 }}>
+                    Borrar
+                  </button>
+                </div>
+              </div>
+            ))}
           </div>
         </div>
       )}

@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import ReactMarkdown from 'react-markdown';
-import { addTransaction, getTransactions, addJournalEntry, getJournalEntries, addHabitOrTask, getLifestyleItems, queryCollection, updateRecord, deleteRecord, addChatMessage, getChatMessages, getApiUsageLogs } from '../services/db';
+import { addTransaction, getTransactions, addJournalEntry, getJournalEntries, addHabitOrTask, getLifestyleItems, queryCollection, updateRecord, deleteRecord, addChatMessage, getChatMessages, getApiUsageLogs, createChatSession } from '../services/db';
 
 const txUSD = (t) => (t.amountUSD != null ? t.amountUSD : parseFloat(t.amount) || 0);
 const isThisMonth = (iso) => {
@@ -12,6 +12,7 @@ const isThisMonth = (iso) => {
 export default function AssistantChat() {
   const navigate = useNavigate();
   const [isOpen, setIsOpen] = useState(false);
+  const [currentSessionId, setCurrentSessionId] = useState(() => localStorage.getItem('activeChatSession'));
   const [messages, setMessages] = useState([]);
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -25,20 +26,12 @@ export default function AssistantChat() {
 
   useEffect(() => {
     if (isOpen) {
-      if (messages.length === 0) {
-        getChatMessages().then(msgs => {
-          if (msgs.length > 0) setMessages(msgs);
-        });
+      if (currentSessionId) {
+        getChatMessages(currentSessionId).then(msgs => setMessages(msgs));
+      } else {
+        setMessages([]);
       }
-      // Fetch daily cost info
-      fetch('/api/get-credits?type=daily')
-        .then(res => res.json())
-        .then(data => {
-          if (data && !data.error) setDailyCostInfo(data);
-        })
-        .catch(console.error);
-        
-      // Fetch daily cost info
+      
       fetch('/api/get-credits?type=daily')
         .then(res => res.json())
         .then(data => {
@@ -46,7 +39,32 @@ export default function AssistantChat() {
         })
         .catch(console.error);
     }
-  }, [isOpen]);
+  }, [isOpen, currentSessionId]);
+
+  useEffect(() => {
+    const handleSessionChange = (e) => {
+      const sessionId = e.detail;
+      setCurrentSessionId(sessionId);
+      if (sessionId) {
+        localStorage.setItem('activeChatSession', sessionId);
+      } else {
+        localStorage.removeItem('activeChatSession');
+      }
+      setIsOpen(true);
+    };
+    window.addEventListener('chat_session_changed', handleSessionChange);
+    return () => window.removeEventListener('chat_session_changed', handleSessionChange);
+  }, []);
+
+  const ensureSession = async (text) => {
+    let sid = currentSessionId;
+    if (!sid) {
+      sid = await createChatSession(text ? text.slice(0, 30) + (text.length > 30 ? '...' : '') : "Nuevo Chat");
+      setCurrentSessionId(sid);
+      localStorage.setItem('activeChatSession', sid);
+    }
+    return sid;
+  };
 
   useEffect(() => {
     scrollToBottom();
@@ -177,12 +195,14 @@ export default function AssistantChat() {
   const handleSend = async (text, history = messages) => {
     if (!text.trim() && !history.length) return;
     
+    const sid = await ensureSession(text);
+    
     let newMessages = history;
     if (text) {
       newMessages = [...history, { role: 'user', content: text }];
       setMessages(newMessages);
       setInput('');
-      addChatMessage('user', text);
+      addChatMessage(sid, 'user', text);
     }
     
     // Check if it's a direct command (bypass AI)
@@ -259,11 +279,11 @@ Si no usas la barra (/), la IA entiende tus mensajes naturalmente.`;
         }
         
         setMessages([...newMessages, { role: 'model', content: responseContent }]);
-        addChatMessage('model', responseContent);
+        addChatMessage(sid, 'model', responseContent);
       } catch (e) {
         const errMsg = `❌ Error procesando comando: ${e.message}`;
         setMessages([...newMessages, { role: 'model', content: errMsg }]);
-        addChatMessage('model', errMsg);
+        addChatMessage(sid, 'model', errMsg);
       } finally {
         setIsLoading(false);
       }
@@ -291,7 +311,7 @@ Si no usas la barra (/), la IA entiende tus mensajes naturalmente.`;
       
       if (data.type === 'text') {
         setMessages([...newMessages, { role: 'model', content: data.text }]);
-        addChatMessage('model', data.text);
+        addChatMessage(sid, 'model', data.text);
       } else if (data.type === 'function_call') {
         // En lugar de ejecutar de inmediato, lo mandamos a la bandeja de aprobación
         const proposalMsg = { 
@@ -302,7 +322,7 @@ Si no usas la barra (/), la IA entiende tus mensajes naturalmente.`;
           status: 'pending'
         };
         setMessages([...newMessages, proposalMsg]);
-        addChatMessage('model', proposalMsg.content, data.functionCall);
+        addChatMessage(sid, 'model', proposalMsg.content, data.functionCall);
       }
     } catch (e) {
       console.error(e);
@@ -328,7 +348,7 @@ Si no usas la barra (/), la IA entiende tus mensajes naturalmente.`;
     const historyWithFunc = [...updatedMessages, funcResponseMsg];
     
     setMessages(historyWithFunc);
-    addChatMessage('function', funcResult, null, { name: msg.functionCall.name, result: funcResult });
+    addChatMessage(currentSessionId, 'function', funcResult, null, { name: msg.functionCall.name, result: funcResult });
     
     // Informamos a la IA
     await handleSend('', historyWithFunc);
@@ -343,7 +363,7 @@ Si no usas la barra (/), la IA entiende tus mensajes naturalmente.`;
     const funcResponseMsg = { role: 'function', name: msg.functionCall.name, content: "El usuario rechazó la acción. Pregúntale si desea hacer algo más." };
     const historyWithFunc = [...updatedMessages, funcResponseMsg];
     setMessages(historyWithFunc);
-    addChatMessage('function', funcResponseMsg.content, null, { name: msg.functionCall.name, result: 'rejected' });
+    addChatMessage(currentSessionId, 'function', funcResponseMsg.content, null, { name: msg.functionCall.name, result: 'rejected' });
     
     handleSend('', historyWithFunc);
   };
@@ -390,7 +410,20 @@ Si no usas la barra (/), la IA entiende tus mensajes naturalmente.`;
                 </div>
               )}
             </div>
-            <button onClick={() => setIsOpen(false)} style={{ background: 'var(--brutal-white)', border: '2px solid #000', color: '#000', cursor: 'pointer', fontSize: '1.2rem', fontWeight: 900, width: '32px', height: '32px', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '2px 2px 0 #000' }}>X</button>
+            <div style={{ display: 'flex', gap: '0.5rem' }}>
+              <button 
+                title="Nuevo Chat"
+                onClick={() => {
+                  setCurrentSessionId(null);
+                  localStorage.removeItem('activeChatSession');
+                  setMessages([]);
+                }} 
+                style={{ background: 'var(--brutal-yellow)', border: '2px solid #000', color: '#000', cursor: 'pointer', fontSize: '1.2rem', fontWeight: 900, width: '32px', height: '32px', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '2px 2px 0 #000' }}
+              >
+                +
+              </button>
+              <button onClick={() => setIsOpen(false)} style={{ background: 'var(--brutal-white)', border: '2px solid #000', color: '#000', cursor: 'pointer', fontSize: '1.2rem', fontWeight: 900, width: '32px', height: '32px', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '2px 2px 0 #000' }}>X</button>
+            </div>
           </div>
               {/* Messages */}
               <div style={{ flex: 1, overflowY: 'auto', padding: '1rem', display: 'flex', flexDirection: 'column', gap: '1rem', background: '#fff' }}>

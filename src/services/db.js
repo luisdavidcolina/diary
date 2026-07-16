@@ -302,9 +302,35 @@ export const deleteLibraryItem = (id) => deleteDoc(doc(db, "library_items", id))
 // =============================
 // HISTORIAL DE CHAT (Asistente Web)
 // =============================
-export const addChatMessage = async (role, content, functionCall = null, toolResult = null) => {
+export const createChatSession = async (title = "Nuevo Chat") => {
+  const docRef = await addDoc(collection(db, "chat_sessions"), {
+    userId: uid(),
+    title,
+    createdAt: new Date().toISOString()
+  });
+  return docRef.id;
+};
+
+export const getChatSessions = () => fetchMine("chat_sessions");
+
+export const deleteChatSession = async (sessionId) => {
+  // Delete the session document
+  await deleteDoc(doc(db, "chat_sessions", sessionId));
+  
+  // Delete all messages associated with this session
+  const q = query(collection(db, "chat_history"), where("sessionId", "==", sessionId));
+  const snap = await getDocs(q);
+  const deletePromises = [];
+  snap.forEach(d => {
+    deletePromises.push(deleteDoc(doc(db, "chat_history", d.id)));
+  });
+  await Promise.all(deletePromises);
+};
+
+export const addChatMessage = async (sessionId, role, content, functionCall = null, toolResult = null) => {
   const payload = {
     userId: uid(),
+    sessionId,
     role,
     content,
     createdAt: new Date().toISOString()
@@ -316,8 +342,9 @@ export const addChatMessage = async (role, content, functionCall = null, toolRes
   return docRef.id;
 };
 
-export const getChatMessages = async () => {
-  const q = query(collection(db, "chat_history"), where("userId", "==", uid()));
+export const getChatMessages = async (sessionId) => {
+  if (!sessionId) return [];
+  const q = query(collection(db, "chat_history"), where("userId", "==", uid()), where("sessionId", "==", sessionId));
   const snap = await getDocs(q);
   const out = [];
   snap.forEach((d) => out.push({ id: d.id, ...d.data() }));
