@@ -39,10 +39,21 @@ const Finance = () => {
   const [accName, setAccName] = useState('');
   const [accCurrency, setAccCurrency] = useState('BS');
   const [accBalance, setAccBalance] = useState('');
+  const [accNumber, setAccNumber] = useState('');
   const [editingId, setEditingId] = useState(null);
   const [dbError, setDbError] = useState(null);
 
   useEffect(() => {
+    window.importMyAccounts = async () => {
+      await addOrUpdateAccount(null, 'Cuenta Corriente Amiga', 'BS', 112952.89, '01720116671165034610');
+      await addOrUpdateAccount(null, 'Bancamiga Cash USD', 'USD', 0, '01720116681165037787');
+      await addOrUpdateAccount(null, 'BCP Cuentas de Ahorro Soles', 'PEN', 1.22, '19493427507017');
+      await addOrUpdateAccount(null, 'BCP Corriente Soles', 'PEN', 1.00, '5159049815090');
+      await addOrUpdateAccount(null, 'BCP Cuentas de Ahorro USD', 'USD', 1.21, '19301908973153');
+      await addOrUpdateAccount(null, 'Mercantil Cta. Corriente', 'BS', 348.36, '01050020641020656670');
+      loadAccounts();
+      console.log('¡Cuentas importadas con éxito!');
+    };
     fetchRates();
     loadTransactions();
     loadAccounts();
@@ -153,15 +164,16 @@ const Finance = () => {
     setAccName(acc.name);
     setAccCurrency(acc.currency);
     setAccBalance(String(acc.balance));
+    setAccNumber(acc.accountNumber || '');
   };
   const cancelEdit = () => {
-    setEditingId(null); setAccName(''); setAccBalance('');
+    setEditingId(null); setAccName(''); setAccBalance(''); setAccNumber('');
   };
   const handleSaveAccount = async (e) => {
     e.preventDefault();
     if (!accName || !accBalance) return;
     try {
-      await addOrUpdateAccount(editingId, accName, accCurrency, accBalance);
+      await addOrUpdateAccount(editingId, accName, accCurrency, accBalance, accNumber);
       cancelEdit();
       loadAccounts();
     } catch (e) { console.error(e); }
@@ -182,6 +194,10 @@ const Finance = () => {
     if (acc.currency === 'USD') {
       totalUSD += acc.balance;
       if (rates.binance) totalBS += acc.balance * rates.binance;
+    } else if (acc.currency === 'PEN') {
+      const usdValue = acc.balance / 3.75;
+      totalUSD += usdValue;
+      if (rates.binance) totalBS += usdValue * rates.binance;
     } else {
       totalBS += acc.balance;
       if (rates.bcv) totalUSD += acc.balance / rates.bcv;
@@ -283,9 +299,11 @@ const Finance = () => {
         <h2>{editingId ? 'Editar cuenta' : 'Mis Cuentas y Wallets'}</h2>
         <form onSubmit={handleSaveAccount} style={{ display: 'flex', gap: '1rem', marginTop: '1rem', marginBottom: '1.5rem', flexWrap: 'wrap' }}>
           <input type="text" placeholder="Nombre (ej. Mercantil, Binance)" value={accName} onChange={(e) => setAccName(e.target.value)} required style={{ ...inputStyle, flex: 2, minWidth: '160px' }} />
+          <input type="text" placeholder="Nro de cuenta (opcional)" value={accNumber} onChange={(e) => setAccNumber(e.target.value)} style={{ ...inputStyle, flex: 2, minWidth: '200px' }} />
           <select value={accCurrency} onChange={(e) => setAccCurrency(e.target.value)} style={{ ...inputStyle, flex: 1 }}>
             <option value="BS">Bolívares (BS)</option>
             <option value="USD">Dólares (USD/USDT)</option>
+            <option value="PEN">Soles (PEN)</option>
           </select>
           <input type="number" step="0.01" placeholder="Saldo Actual" value={accBalance} onChange={(e) => setAccBalance(e.target.value)} required style={{ ...inputStyle, flex: 1, minWidth: '120px' }} />
           <button type="submit" style={{ background: 'var(--brutal-yellow)', color: '#000', border: '3px solid #000', padding: '0.75rem 1.5rem', borderRadius: '0', fontWeight: '900', boxShadow: '4px 4px 0 #000', cursor: 'pointer' }}>
@@ -306,10 +324,11 @@ const Finance = () => {
                 <button onClick={() => startEdit(acc)} title="Editar" style={{ background: 'transparent', border: 'none', color: 'var(--text-secondary)', cursor: 'pointer' }}>✏️</button>
                 <button onClick={() => handleDeleteAccount(acc.id)} title="Eliminar" style={{ background: 'transparent', border: 'none', color: 'var(--text-secondary)', cursor: 'pointer' }}>🗑</button>
               </div>
-              <div style={{ color: 'var(--text-secondary)', fontSize: '0.9rem', marginBottom: '0.5rem' }}>{acc.name}</div>
-              <div style={{ fontSize: '1.5rem', fontWeight: 'bold' }}>{acc.currency === 'USD' ? '$' : 'Bs. '}{acc.balance.toFixed(2)}</div>
+              <div style={{ color: '#000', fontSize: '0.95rem', marginBottom: '0.2rem', fontWeight: '900' }}>{acc.name}</div>
+              {acc.accountNumber && <div style={{ fontSize: '0.8rem', color: '#000', marginBottom: '0.5rem', background: '#eee', padding: '0.2rem', display: 'inline-block', border: '1px solid #000', fontWeight: '600' }}>{acc.accountNumber}</div>}
+              <div style={{ fontSize: '1.5rem', fontWeight: 'bold' }}>{acc.currency === 'USD' ? '$' : acc.currency === 'PEN' ? 'S/' : 'Bs. '}{acc.balance.toFixed(2)}</div>
               <div style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', marginTop: '0.2rem' }}>
-                ≈ {acc.currency === 'USD' ? `Bs. ${(acc.balance * rates.binance).toFixed(2)}` : `$${rates.bcv ? (acc.balance / rates.bcv).toFixed(2) : 0}`}
+                ≈ {acc.currency === 'USD' ? `Bs. ${(acc.balance * rates.binance).toFixed(2)}` : acc.currency === 'PEN' ? `Bs. ${((acc.balance / 3.75) * rates.binance).toFixed(2)}` : `$${rates.bcv ? (acc.balance / rates.bcv).toFixed(2) : 0}`}
               </div>
             </div>
           ))}

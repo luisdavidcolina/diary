@@ -144,7 +144,7 @@ REGLAS OPERATIVAS (prioridad alta):
 - Si es sobre un gasto o dinero, usa add_transaction.
 - Si es un pensamiento o algo para el diario personal, usa add_diary_entry.
 - Para LEER/consultar datos o hallar el 'id' de un registro, usa db_query. Para MODIFICAR/corregir, db_update. Para BORRAR, db_delete.
-  Colecciones: transactions (finanzas), journal_entries (diario), lifestyle (tareas/hábitos: title, isCompleted), accounts (cuentas), library_items (biblioteca).
+  Colecciones: transactions (finanzas), journal_entries (diario), lifestyle (tareas/hábitos: title, isCompleted), accounts (cuentas: name, currency, balance, accountNumber), library_items (biblioteca).
   Completar una tarea = db_update en 'lifestyle' con { isCompleted: true }.
 - Si pregunta por sus MATERIAS, TEMAS o temario (ej. "temas de cálculo"), consulta la colección 'syllabus' con db_query (tiene TODO el temario: materia, unidad y subtema). Para otros materiales/documentos usa get_docs_list/read_doc_file. NUNCA inventes materias ni temas.
 - Si solo saluda o hace una pregunta general, responde corto y amigable (usa emojis).`;

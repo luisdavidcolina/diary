@@ -218,8 +218,8 @@ export const saveFinanceLimits = async (limitsObj) => {
 // =============================
 // CUENTAS Y WALLETS (Multimoneda)
 // =============================
-export const addOrUpdateAccount = async (id, name, currency, balance) => {
-  const payload = { name, currency, balance: parseFloat(balance), updatedAt: new Date().toISOString() };
+export const addOrUpdateAccount = async (id, name, currency, balance, accountNumber = '') => {
+  const payload = { name, currency, balance: parseFloat(balance), accountNumber, updatedAt: new Date().toISOString() };
   if (id) {
     await updateDoc(doc(db, "accounts", id), payload);
     return id;
