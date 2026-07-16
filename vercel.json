@@ -28,6 +28,10 @@
   ],
   "rewrites": [
     {
+      "source": "/api/rates",
+      "destination": "/api/get-credits?type=rates"
+    },
+    {
       "source": "/(.*)",
       "destination": "/index.html"
     }
