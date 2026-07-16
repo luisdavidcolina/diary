@@ -324,3 +324,13 @@ export const getChatMessages = async () => {
   return out.sort((a, b) => (a.createdAt > b.createdAt ? 1 : a.createdAt < b.createdAt ? -1 : 0)); // Ascending
 };
 
+// =============================
+// LOGS DE CONSUMO API
+// =============================
+export const getApiUsageLogs = async () => {
+  const snap = await getDocs(collection(db, "api_usage"));
+  const out = [];
+  snap.forEach((d) => out.push({ id: d.id, ...d.data() }));
+  return out.sort((a, b) => (a.createdAt < b.createdAt ? 1 : -1)).slice(0, 50); // Últimos 50
+};
+
