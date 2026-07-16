@@ -1,7 +1,48 @@
-import { doc, updateDoc, collection, addDoc, serverTimestamp } from "firebase/firestore/lite";
+import { doc, updateDoc, collection, addDoc, getDocs, query, where } from "firebase/firestore/lite";
 import { dbNode } from "./_firebaseNode.js";
 
 const TELEGRAM_TOKEN = process.env.TELEGRAM_BOT_TOKEN;
+
+// UID del dueño (app single-user). La app web filtra TODO por userId, así que los
+// datos creados desde Telegram deben llevarlo o no aparecerán. Configúralo en Vercel
+// como OWNER_UID (el uid de Firebase Auth del usuario).
+const OWNER_UID = process.env.OWNER_UID || null;
+const nowIso = () => new Date().toISOString();
+
+// Escrituras unificadas con la app web (mismas colecciones y esquema que src/services/db.js).
+async function saveTransaction({ amount, description, type, category = 'other', currency = 'USD', rate = null, receiptUrl = null }) {
+  const amt = parseFloat(amount) || 0;
+  const amountUSD = currency === 'VES' && rate ? amt / parseFloat(rate) : amt;
+  const payload = {
+    userId: OWNER_UID, amount: amt, currency, description, type, category,
+    amountUSD: Number(amountUSD.toFixed(2)), createdAt: nowIso()
+  };
+  if (rate) payload.rate = parseFloat(rate);
+  if (receiptUrl) payload.receiptUrl = receiptUrl;
+  return addDoc(collection(dbNode, "transactions"), payload);
+}
+async function saveJournal(content) {
+  return addDoc(collection(dbNode, "journal_entries"), { userId: OWNER_UID, content, mood: 'neutral', createdAt: nowIso() });
+}
+async function saveTask(title) {
+  return addDoc(collection(dbNode, "lifestyle"), { userId: OWNER_UID, title, category: 'task', isCompleted: false, createdAt: nowIso() });
+}
+
+// Lectura scopeada por usuario (para comandos de consulta que NO gastan tokens de IA).
+async function readMine(coll) {
+  const ref = OWNER_UID
+    ? query(collection(dbNode, coll), where("userId", "==", OWNER_UID))
+    : collection(dbNode, coll);
+  const snap = await getDocs(ref);
+  const out = [];
+  snap.forEach((d) => out.push({ id: d.id, ...d.data() }));
+  return out;
+}
+const usd = (t) => (t.amountUSD != null ? t.amountUSD : parseFloat(t.amount) || 0);
+const isThisMonth = (iso) => {
+  const d = new Date(iso); const n = new Date();
+  return d.getFullYear() === n.getFullYear() && d.getMonth() === n.getMonth();
+};
 
 async function sendTelegramMessage(chatId, text) {
   const url = `https://api.telegram.org/bot${TELEGRAM_TOKEN}/sendMessage`;
@@ -35,19 +76,25 @@ async function processTextWithAI(text, chatId, reqHost) {
   const apiKey = process.env.OPENROUTER_API_KEY;
   if (!apiKey) return "⚠️ Falta OPENROUTER_API_KEY en el servidor.";
 
+  const nowCaracas = new Date().toLocaleString("es-VE", { timeZone: "America/Caracas" });
   const systemPrompt = `Eres un asistente de Telegram.
+La fecha y hora actual (Caracas) es: ${nowCaracas}.
 El usuario te enviará mensajes cortos (ideas, tareas, gastos, anécdotas).
-Si el mensaje es para agregar una tarea pendiente o recordatorio genérico, usa add_task.
-Si es sobre un gasto o dinero, usa add_transaction.
-Si es un pensamiento o algo para el diario personal, usa add_diary_entry.
-Si solo está saludando o haciendo una pregunta general, responde cortamente y amigable (usa emojis).`;
+REGLAS (en este orden de prioridad):
+- Si el mensaje pide un RECORDATORIO, ALARMA o AVISO con una HORA (ej. "recuérdame báñate a las 21:29", "avísame mañana 8am"), usa SIEMPRE schedule_reminder con esa hora. NO uses add_task en ese caso.
+  · Si dice "hoy" o no da fecha, deja date vacío. Si dice "todos los días", pon isRecurring=true.
+  · La hora debe ir en formato HH:MM de 24 horas (21:29, 08:00).
+- Si es una tarea pendiente SIN hora concreta, usa add_task.
+- Si es sobre un gasto o dinero, usa add_transaction.
+- Si es un pensamiento o algo para el diario personal, usa add_diary_entry.
+- Si solo saluda o hace una pregunta general, responde corto y amigable (usa emojis).`;
 
   const tools = [
     {
       type: "function",
       function: {
         name: "add_task",
-        description: "Agrega una tarea pendiente a la lista de tareas (Captura Rápida).",
+        description: "Agrega una tarea pendiente SIN hora a la lista (Captura Rápida). Si el usuario menciona una hora o pide un aviso/alarma, NO uses esta: usa schedule_reminder.",
         parameters: {
           type: "object",
           properties: {
@@ -91,7 +138,7 @@ Si solo está saludando o haciendo una pregunta general, responde cortamente y a
       type: "function",
       function: {
         name: "schedule_reminder",
-        description: "Programa un recordatorio o alarma para una fecha y hora específica, o recurrente.",
+        description: "Programa un recordatorio/alarma que ENVIARÁ un aviso por Telegram a una hora concreta. Úsala SIEMPRE que el usuario mencione una hora (ej. 'a las 21:29').",
         parameters: {
           type: "object",
           properties: {
@@ -124,10 +171,16 @@ Si solo está saludando o haciendo una pregunta general, responde cortamente y a
       })
     });
 
+    if (!response.ok) {
+      const errText = await response.text().catch(() => '');
+      throw new Error(`OpenRouter ${response.status}: ${errText.slice(0, 150)}`);
+    }
+
     const data = await response.json();
     if (data.error) throw new Error(data.error.message || "Error en OpenRouter");
 
-    const responseMsg = data.choices[0].message;
+    const responseMsg = data?.choices?.[0]?.message;
+    if (!responseMsg) throw new Error("La IA no devolvió respuesta.");
 
     // Si la IA decidió usar una herramienta
     if (responseMsg.tool_calls && responseMsg.tool_calls.length > 0) {
@@ -135,48 +188,26 @@ Si solo está saludando o haciendo una pregunta general, responde cortamente y a
       const args = JSON.parse(tool.arguments);
 
       if (tool.name === 'add_task') {
-        await addDoc(collection(dbNode, "lifestyle"), {
-          title: args.title,
-          category: 'task',
-          isCompleted: false,
-          createdAt: serverTimestamp()
-        });
+        await saveTask(args.title);
         return `✅ Tarea guardada: *${args.title}*`;
-      } 
-      
+      }
+
       if (tool.name === 'add_transaction') {
-        await addDoc(collection(dbNode, "finance"), {
-          type: args.type,
-          amount: args.amount,
-          title: args.description,
-          category: 'other',
-          date: new Date().toISOString().split('T')[0],
-          createdAt: serverTimestamp()
-        });
+        await saveTransaction({ amount: args.amount, description: args.description, type: args.type });
         const emoji = args.type === 'expense' ? '💸' : '💰';
         return `${emoji} Transacción guardada: *$${args.amount}* (${args.description})`;
       }
 
       if (tool.name === 'add_diary_entry') {
-        await addDoc(collection(dbNode, "diary"), {
-          title: "Entrada desde Telegram",
-          content: args.text,
-          date: new Date().toISOString(),
-          createdAt: serverTimestamp()
-        });
+        await saveJournal(args.text);
         return `📖 Diario actualizado exitosamente.`;
       }
 
       if (tool.name === 'schedule_reminder') {
         const dbDate = args.date || new Date().toISOString().split('T')[0];
-        
+
         // 1. Save Task
-        const docRef = await addDoc(collection(dbNode, "lifestyle"), {
-          title: args.title,
-          category: 'task',
-          isCompleted: false,
-          createdAt: serverTimestamp()
-        });
+        const docRef = await saveTask(args.title);
 
         // 2. Schedule
         const endpoint = args.isRecurring ? '/api/schedule-recurring-reminder' : '/api/schedule-exact-reminder';
@@ -276,36 +307,30 @@ export default async function handler(req, res) {
       if (update.message.photo) {
         await sendTelegramMessage(chatId, "⏳ Procesando comprobante con IA...");
         const photos = update.message.photo;
-        const fileId = photos[photos.length - 1].file_id; 
-        
+        const fileId = photos[photos.length - 1].file_id;
+        // El texto que el usuario escribe junto a la foto es la NOTA opcional que ayuda a la IA.
+        const caption = update.message.caption || '';
+
         try {
           const tgFileRes = await fetch(`https://api.telegram.org/bot${TELEGRAM_TOKEN}/getFile?file_id=${fileId}`);
           const tgFileData = await tgFileRes.json();
           if (!tgFileData.ok) throw new Error("Telegram API error");
-          
+
           const filePath = tgFileData.result.file_path;
           const tgFileUrl = `https://api.telegram.org/file/bot${TELEGRAM_TOKEN}/${filePath}`;
-          
+
           const appUrl = `https://${req.headers.host}`;
           const ocrRes = await fetch(`${appUrl}/api/process-receipt`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ imageUrl: tgFileUrl })
+            body: JSON.stringify({ imageUrl: tgFileUrl, note: caption })
           });
-          
+
           const ocrData = await ocrRes.json();
           if (ocrData.success) {
-            const { amount, date, description, type } = ocrData.data;
-            await addDoc(collection(dbNode, "finance"), {
-              type: type || 'expense',
-              amount: parseFloat(amount) || 0,
-              title: description || 'Gasto de comprobante',
-              category: 'other',
-              date: date || new Date().toISOString().split('T')[0],
-              telegramFileId: fileId,
-              createdAt: serverTimestamp()
-            });
-            await sendTelegramMessage(chatId, `✅ *Comprobante procesado:*\nMonto: $${amount}\\nConcepto: ${description}\\nGuardado en Finanzas.`);
+            const { amount, description, type } = ocrData.data;
+            await saveTransaction({ amount, description: description || 'Gasto de comprobante', type: type || 'expense', receiptUrl: fileId });
+            await sendTelegramMessage(chatId, `✅ *Comprobante procesado:*\nMonto: $${amount}\nConcepto: ${description}\nGuardado en Finanzas.`);
           } else {
             await sendTelegramMessage(chatId, `⚠️ Error en IA: ${ocrData.error}`);
           }
@@ -329,21 +354,63 @@ export default async function handler(req, res) {
         responseText = `🤖 *Guía Rápida de Comandos:*
 
 *📝 Captura Rápida:*
-Escribe cualquier mensaje normal (sin la barra /) para agregarlo como una tarea pendiente.
+Escribe cualquier mensaje normal (sin la /) y lo guardo como tarea o lo interpreto con IA.
 
 *⏰ Recordatorios:*
-\`/recordar HH:MM [texto]\`
-Ejemplo: \`/recordar 15:30 Llamar al banco\`
+\`/recordar HH:MM [texto]\` - Ej: \`/recordar 15:30 Llamar al banco\`
 
-*💸 Finanzas:*
+*💸 Registrar Finanzas:*
 \`/gasto [monto] [concepto]\` - Ej: \`/gasto 10 Cine\`
 \`/ingreso [monto] [concepto]\` - Ej: \`/ingreso 500 Sueldo\`
 
 *📖 Diario:*
-\`/diario [texto]\` - Ej: \`/diario Hoy fue un gran día...\`
+\`/diario [texto]\`
 
-*🤖 IA:*
-\`/creditos\` - Muestra el saldo consumido de la API\``;
+*🔎 Consultas (no gastan IA):*
+\`/saldo\` - Ingresos, gastos y balance del mes
+\`/gastos\` - Tus últimos movimientos
+\`/tareas\` - Tareas pendientes
+\`/creditos\` - Saldo consumido de la API de IA`;
+      }
+      else if (text.startsWith('/saldo')) {
+        try {
+          const txs = (await readMine("transactions")).filter((t) => isThisMonth(t.createdAt));
+          const income = txs.filter((t) => t.type === 'income').reduce((s, t) => s + usd(t), 0);
+          const expense = txs.filter((t) => t.type === 'expense').reduce((s, t) => s + usd(t), 0);
+          const bal = income - expense;
+          responseText = `📊 *Balance del mes:*\n💰 Ingresos: $${income.toFixed(2)}\n💸 Gastos: $${expense.toFixed(2)}\n${bal >= 0 ? '✅' : '⚠️'} Balance: $${bal.toFixed(2)}`;
+        } catch (e) {
+          responseText = `⚠️ Error consultando saldo: ${e.message}`;
+        }
+      }
+      else if (text.startsWith('/gastos')) {
+        try {
+          const txs = (await readMine("transactions"))
+            .sort((a, b) => (a.createdAt < b.createdAt ? 1 : -1))
+            .slice(0, 10);
+          if (!txs.length) {
+            responseText = "🧾 No tienes movimientos registrados aún.";
+          } else {
+            const lines = txs.map((t) => `${t.type === 'expense' ? '💸' : '💰'} $${usd(t).toFixed(2)} — ${t.description || 'Sin concepto'}`);
+            responseText = `🧾 *Últimos movimientos:*\n${lines.join('\n')}`;
+          }
+        } catch (e) {
+          responseText = `⚠️ Error consultando movimientos: ${e.message}`;
+        }
+      }
+      else if (text.startsWith('/tareas')) {
+        try {
+          const pend = (await readMine("lifestyle"))
+            .filter((i) => i.category === 'task' && !i.isCompleted)
+            .sort((a, b) => (a.createdAt < b.createdAt ? 1 : -1));
+          if (!pend.length) {
+            responseText = "✅ ¡Inbox limpio! No tienes tareas pendientes.";
+          } else {
+            responseText = `📋 *Tareas pendientes (${pend.length}):*\n${pend.map((t) => `• ${t.title}`).join('\n')}`;
+          }
+        } catch (e) {
+          responseText = `⚠️ Error consultando tareas: ${e.message}`;
+        }
       }
       else if (text.startsWith('/recordar ')) {
         const rawCommand = text.replace('/recordar ', '').trim();
@@ -378,19 +445,14 @@ Ejemplo: \`/recordar 15:30 Llamar al banco\`
           }
           dateStr = targetUtc4.toISOString().split('T')[0];
         } else {
-          await sendTelegramMessage(chatId, "⚠️ Formato inválido.\\nEjemplos:\\n`/recordar 15:30 Tarea`\\n`/recordar 2026-07-20 15:30 Tarea`\\n`/recordar diario 15:30 Tarea`");
+          await sendTelegramMessage(chatId, "⚠️ Formato inválido.\nEjemplos:\n`/recordar 15:30 Tarea`\n`/recordar 2026-07-20 15:30 Tarea`\n`/recordar diario 15:30 Tarea`");
           return res.status(200).send('OK');
         }
 
         timeStr = timeStr.padStart(5, '0');
         const title = parts.slice(titleStartIndex).join(' ') || 'Recordatorio Telegram';
         
-        const docRef = await addDoc(collection(dbNode, "lifestyle"), {
-          title: title,
-          category: 'task',
-          isCompleted: false,
-          createdAt: serverTimestamp()
-        });
+        const docRef = await saveTask(title);
 
         const appUrl = `https://${req.headers.host}`;
         const endpoint = isDaily ? '/api/schedule-recurring-reminder' : '/api/schedule-exact-reminder';
@@ -425,14 +487,7 @@ Ejemplo: \`/recordar 15:30 Llamar al banco\`
         const amount = parseFloat(parts[0]);
         const title = parts.slice(1).join(' ');
         
-        await addDoc(collection(dbNode, "finance"), {
-          type: 'expense',
-          amount: amount,
-          title: title || 'Gasto Telegram',
-          category: 'other',
-          date: new Date().toISOString().split('T')[0],
-          createdAt: serverTimestamp()
-        });
+        await saveTransaction({ amount, description: title || 'Gasto Telegram', type: 'expense' });
         responseText = `💸 Gasto de $${amount} registrado.`;
       } 
       else if (text.startsWith('/ingreso ')) {
@@ -440,24 +495,12 @@ Ejemplo: \`/recordar 15:30 Llamar al banco\`
         const amount = parseFloat(parts[0]);
         const title = parts.slice(1).join(' ');
         
-        await addDoc(collection(dbNode, "finance"), {
-          type: 'income',
-          amount: amount,
-          title: title || 'Ingreso Telegram',
-          category: 'Varios',
-          date: new Date().toISOString().split('T')[0],
-          createdAt: serverTimestamp()
-        });
+        await saveTransaction({ amount, description: title || 'Ingreso Telegram', type: 'income' });
         responseText = `💰 Ingreso de $${amount} registrado.`;
       }
       else if (text.startsWith('/diario ')) {
         const content = text.replace('/diario ', '');
-        await addDoc(collection(dbNode, "diary"), {
-          title: "Entrada desde Telegram",
-          content: content,
-          date: new Date().toISOString(),
-          createdAt: serverTimestamp()
-        });
+        await saveJournal(content);
         responseText = `📖 Entrada de diario guardada.`;
       }
       else if (text.startsWith('/creditos')) {

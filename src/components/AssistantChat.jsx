@@ -1,5 +1,11 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { addTransaction, getTransactions, addJournalEntry, getJournalEntries, addHabitOrTask } from '../services/db';
+import { addTransaction, getTransactions, addJournalEntry, getJournalEntries, addHabitOrTask, getLifestyleItems } from '../services/db';
+
+const txUSD = (t) => (t.amountUSD != null ? t.amountUSD : parseFloat(t.amount) || 0);
+const isThisMonth = (iso) => {
+  const d = new Date(iso); const n = new Date();
+  return d.getFullYear() === n.getFullYear() && d.getMonth() === n.getMonth();
+};
 
 export default function AssistantChat() {
   const [isOpen, setIsOpen] = useState(false);
@@ -149,16 +155,38 @@ export default function AssistantChat() {
           const res = await fetch('/api/get-credits');
           const data = await res.json();
           responseContent = data.error ? `⚠️ Error: ${data.error}` : `📊 Has gastado $${data.usage}`;
+        } else if (text === '/saldo') {
+          const txs = (await getTransactions()).filter(t => isThisMonth(t.createdAt));
+          const income = txs.filter(t => t.type === 'income').reduce((s, t) => s + txUSD(t), 0);
+          const expense = txs.filter(t => t.type === 'expense').reduce((s, t) => s + txUSD(t), 0);
+          const bal = income - expense;
+          responseContent = `📊 Balance del mes:\n💰 Ingresos: $${income.toFixed(2)}\n💸 Gastos: $${expense.toFixed(2)}\n${bal >= 0 ? '✅' : '⚠️'} Balance: $${bal.toFixed(2)}`;
+        } else if (text === '/gastos') {
+          const txs = (await getTransactions()).slice(0, 10);
+          responseContent = txs.length
+            ? `🧾 Últimos movimientos:\n${txs.map(t => `${t.type === 'expense' ? '💸' : '💰'} $${txUSD(t).toFixed(2)} — ${t.description || 'Sin concepto'}`).join('\n')}`
+            : '🧾 No tienes movimientos aún.';
+        } else if (text === '/tareas') {
+          const pend = (await getLifestyleItems()).filter(i => i.category === 'task' && !i.isCompleted);
+          responseContent = pend.length
+            ? `📋 Tareas pendientes (${pend.length}):\n${pend.map(t => `• ${t.title}`).join('\n')}`
+            : '✅ ¡Inbox limpio! Sin tareas pendientes.';
         } else if (text === '/help' || text === '/ayuda') {
-          responseContent = `🤖 *Comandos Rápidos (Sin gastar API):*
-• \`/gasto [monto] [concepto]\` - Ej: /gasto 5 Café
-• \`/ingreso [monto] [concepto]\` - Ej: /ingreso 100 Sueldo
-• \`/diario [texto]\` - Guarda un pensamiento
-• \`/tarea [texto]\` - Añade una tarea pendiente
-• \`/creditos\` - Revisa tu saldo de IA
-• \`/help\` - Muestra esta lista
+          responseContent = `🤖 Comandos rápidos (sin gastar IA):
 
-*¡Recuerda que si no usas la barra (/), la IA entenderá tus mensajes naturalmente!*`;
+📝 Registrar:
+• /gasto [monto] [concepto]
+• /ingreso [monto] [concepto]
+• /diario [texto]
+• /tarea [texto]
+
+🔎 Consultar:
+• /saldo — balance del mes
+• /gastos — últimos movimientos
+• /tareas — pendientes
+• /creditos — saldo de IA
+
+Si no usas la barra (/), la IA entiende tus mensajes naturalmente.`;
         } else {
           responseContent = `⚠️ Comando desconocido. Usa /help para ver la lista.`;
         }

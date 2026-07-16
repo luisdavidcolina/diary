@@ -1,12 +1,12 @@
 export default async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).end();
-  
-  const { imageUrl } = req.body;
-  if (!imageUrl) return res.status(400).json({ error: "Falta imageUrl" });
 
-  // Cambiado a OpenRouter
+  // `note` es OPCIONAL: si viene, ayuda a la IA a interpretar mejor el comprobante.
+  const { imageUrl, note } = req.body;
+  if (!imageUrl) return res.status(400).json({ success: false, error: "Falta imageUrl" });
+
   const apiKey = process.env.OPENROUTER_API_KEY;
-  if (!apiKey) return res.status(500).json({ error: "Falta OPENROUTER_API_KEY" });
+  if (!apiKey) return res.status(500).json({ success: false, error: "Falta OPENROUTER_API_KEY" });
 
   try {
     let base64Data = "";
@@ -15,6 +15,7 @@ export default async function handler(req, res) {
     if (imageUrl.startsWith("http")) {
       // Viene desde Telegram (URL)
       const imageRes = await fetch(imageUrl);
+      if (!imageRes.ok) throw new Error("No se pudo descargar la imagen del comprobante");
       const buffer = await imageRes.arrayBuffer();
       base64Data = Buffer.from(buffer).toString('base64');
       mimeType = imageRes.headers.get('content-type') || "image/jpeg";
@@ -28,7 +29,12 @@ export default async function handler(req, res) {
       throw new Error("Formato de imagen no soportado");
     }
 
-    const promptText = `Analiza este comprobante de pago/transferencia o factura.
+    // La nota del usuario se antepone como contexto para guiar la extracción.
+    const noteBlock = note && note.trim()
+      ? `\nContexto que da el usuario (úsalo para desambiguar el monto, el tipo o el concepto): "${note.trim()}"\n`
+      : '';
+
+    const promptText = `Analiza este comprobante de pago/transferencia o factura.${noteBlock}
 Extrae la siguiente información y devuélvela estrictamente en un objeto JSON con este formato exacto:
 {
   "amount": número (el monto total transferido o pagado, usa punto decimal, sin separador de miles. Ej: 15.50),
@@ -38,11 +44,9 @@ Extrae la siguiente información y devuélvela estrictamente en un objeto JSON c
 }
 No devuelvas NADA más que el JSON puro.`;
 
-    const openRouterUrl = 'https://openrouter.ai/api/v1/chat/completions';
-    
-    const response = await fetch(openRouterUrl, {
+    const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
       method: "POST",
-      headers: { 
+      headers: {
         "Content-Type": "application/json",
         "Authorization": `Bearer ${apiKey}`
       },
@@ -53,12 +57,7 @@ No devuelvas NADA más que el JSON puro.`;
             role: "user",
             content: [
               { type: "text", text: promptText },
-              {
-                type: "image_url",
-                image_url: {
-                  url: `data:${mimeType};base64,${base64Data}`
-                }
-              }
+              { type: "image_url", image_url: { url: `data:${mimeType};base64,${base64Data}` } }
             ]
           }
         ],
@@ -67,12 +66,18 @@ No devuelvas NADA más que el JSON puro.`;
       })
     });
 
+    if (!response.ok) {
+      const errText = await response.text().catch(() => '');
+      throw new Error(`OpenRouter respondió ${response.status}: ${errText.slice(0, 200)}`);
+    }
+
     const data = await response.json();
     if (data.error) throw new Error(data.error.message || JSON.stringify(data.error));
 
-    const resultText = data.choices[0].message.content.trim();
-    // Limpieza por si acaso
-    const jsonStr = resultText.replace(/```json/g, '').replace(/```/g, '').trim();
+    const content = data?.choices?.[0]?.message?.content;
+    if (!content) throw new Error("La IA no devolvió contenido");
+
+    const jsonStr = content.replace(/```json/gi, '').replace(/```/g, '').trim();
     const parsed = JSON.parse(jsonStr);
 
     return res.status(200).json({ success: true, data: parsed });
