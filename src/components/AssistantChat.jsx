@@ -14,8 +14,7 @@ export default function AssistantChat() {
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [dailyCostInfo, setDailyCostInfo] = useState(null);
-  const [viewMode, setViewMode] = useState('chat'); // 'chat' | 'stats'
-  const [apiLogs, setApiLogs] = useState([]);
+  const [viewMode, setViewMode] = useState('chat'); // kept temporarily just in case
   const messagesEndRef = useRef(null);
 
   const scrollToBottom = () => {
@@ -37,11 +36,15 @@ export default function AssistantChat() {
         })
         .catch(console.error);
         
-      if (viewMode === 'stats') {
-        getApiUsageLogs().then(setApiLogs).catch(console.error);
-      }
+      // Fetch daily cost info
+      fetch('/api/get-credits?type=daily')
+        .then(res => res.json())
+        .then(data => {
+          if (data && !data.error) setDailyCostInfo(data);
+        })
+        .catch(console.error);
     }
-  }, [isOpen, viewMode]);
+  }, [isOpen]);
 
   useEffect(() => {
     scrollToBottom();
@@ -359,12 +362,6 @@ Si no usas la barra (/), la IA entiende tus mensajes naturalmente.`;
                 <h3 style={{ margin: 0, fontSize: '1.2rem', fontWeight: 900, textTransform: 'uppercase', color: '#000' }}>
                   ✨ Luisda Bot
                 </h3>
-                <button 
-                  onClick={() => setViewMode(viewMode === 'chat' ? 'stats' : 'chat')}
-                  style={{ background: 'var(--brutal-white)', border: '2px solid #000', borderRadius: '0', cursor: 'pointer', fontWeight: 800, padding: '2px 8px', fontSize: '0.8rem', boxShadow: '2px 2px 0 #000' }}
-                >
-                  {viewMode === 'chat' ? '📊 Gastos' : '💬 Chat'}
-                </button>
               </div>
               {dailyCostInfo && (
                 <div style={{ fontSize: '0.75rem', fontWeight: 800, color: dailyCostInfo.total >= dailyCostInfo.limit ? 'darkred' : '#000' }}>
@@ -374,32 +371,6 @@ Si no usas la barra (/), la IA entiende tus mensajes naturalmente.`;
             </div>
             <button onClick={() => setIsOpen(false)} style={{ background: 'var(--brutal-white)', border: '2px solid #000', color: '#000', cursor: 'pointer', fontSize: '1.2rem', fontWeight: 900, width: '32px', height: '32px', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '2px 2px 0 #000' }}>X</button>
           </div>
-
-          {viewMode === 'stats' ? (
-            <div style={{ flex: 1, overflowY: 'auto', padding: '1rem', background: '#fff', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-              <h4 style={{ margin: 0, borderBottom: '2px solid #000', paddingBottom: '0.5rem', fontWeight: 900 }}>Desglose de Costos</h4>
-              {apiLogs.length === 0 ? (
-                <p style={{ fontWeight: 600, fontSize: '0.9rem' }}>No hay consumos registrados recientemente.</p>
-              ) : (
-                apiLogs.map(log => (
-                  <div key={log.id} style={{ border: '2px solid #000', padding: '0.75rem', background: 'var(--brutal-white)', boxShadow: '4px 4px 0 #000' }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem', fontWeight: 800, fontSize: '0.85rem' }}>
-                      <span>{new Date(log.createdAt).toLocaleString()}</span>
-                      <span style={{ color: 'var(--brutal-blue)' }}>${Number(log.cost).toFixed(5)}</span>
-                    </div>
-                    <div style={{ fontSize: '0.8rem', marginBottom: '0.5rem', fontWeight: 600 }}>
-                      <span style={{ background: '#eee', padding: '2px 4px', border: '1px solid #000', marginRight: '4px' }}>Origen: {log.source}</span>
-                      <span style={{ background: '#eee', padding: '2px 4px', border: '1px solid #000' }}>Tokens: {log.total_tokens || '?'} (P:{log.prompt_tokens || '?'} C:{log.completion_tokens || '?'})</span>
-                    </div>
-                    <div style={{ fontSize: '0.85rem', fontStyle: 'italic', color: '#444', wordBreak: 'break-word', borderLeft: '3px solid var(--brutal-pink)', paddingLeft: '0.5rem' }}>
-                      "{log.promptPreview || 'Sin prompt'}"
-                    </div>
-                  </div>
-                ))
-              )}
-            </div>
-          ) : (
-            <>
               {/* Messages */}
               <div style={{ flex: 1, overflowY: 'auto', padding: '1rem', display: 'flex', flexDirection: 'column', gap: '1rem', background: '#fff' }}>
             {messages.length === 0 && (
@@ -484,8 +455,6 @@ Si no usas la barra (/), la IA entiende tus mensajes naturalmente.`;
               </button>
             </form>
           </div>
-          </>
-          )}
         </div>
       )}
     </>

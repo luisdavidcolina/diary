@@ -323,11 +323,11 @@ const Lifestyle = () => {
         <form onSubmit={handleAddItem} style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem', position: 'relative', zIndex: 1 }}>
           
           <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap', alignItems: 'center' }}>
-            <div style={{ flex: '0 0 auto', background: 'rgba(0,0,0,0.4)', borderRadius: '12px', padding: '0.25rem', border: '1px solid var(--glass-border)' }}>
+            <div style={{ flex: '0 0 auto', background: 'var(--brutal-white)', borderRadius: '0', padding: '0.25rem', border: '3px solid #000' }}>
               <select
                 value={category}
                 onChange={(e) => setCategory(e.target.value)}
-                style={{ padding: '0.6rem 1rem', borderRadius: '8px', background: 'transparent', border: 'none', color: 'white', outline: 'none', cursor: 'pointer', fontWeight: '600' }}
+                style={{ padding: '0.6rem 1rem', borderRadius: '0', background: 'transparent', border: 'none', color: '#000', outline: 'none', cursor: 'pointer', fontWeight: '900', textTransform: 'uppercase' }}
               >
                 <option value="task" style={{ background: 'var(--bg-color)' }}>📌 Pendiente</option>
                 <option value="habit" style={{ background: 'var(--bg-color)' }}>🔄 Hábito</option>
@@ -340,21 +340,21 @@ const Lifestyle = () => {
               value={title}
               onChange={(e) => setTitle(e.target.value)}
               required
-              style={{ flex: 1, minWidth: '250px', padding: '0.85rem 1.25rem', borderRadius: '12px', background: 'rgba(0,0,0,0.4)', border: '1px solid var(--glass-border)', color: 'white', fontSize: '1rem', outline: 'none', transition: 'border-color 0.2s' }}
-              onFocus={(e) => e.target.style.borderColor = 'var(--accent-color)'}
-              onBlur={(e) => e.target.style.borderColor = 'var(--glass-border)'}
+              style={{ flex: 1, minWidth: '250px', padding: '0.85rem 1.25rem', borderRadius: '0', background: '#fff', border: '3px solid #000', color: '#000', fontSize: '1rem', outline: 'none', transition: 'box-shadow 0.2s', fontWeight: '600' }}
+              onFocus={(e) => e.target.style.boxShadow = '4px 4px 0 var(--brutal-blue)'}
+              onBlur={(e) => e.target.style.boxShadow = 'none'}
             />
           </div>
 
           {category === 'task' && (
-            <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap', background: 'rgba(255,255,255,0.03)', padding: '1rem', borderRadius: '12px', border: '1px dashed var(--glass-border)' }}>
+            <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap', background: 'var(--brutal-yellow)', padding: '1rem', borderRadius: '0', border: '3px solid #000', boxShadow: '4px 4px 0 #000' }}>
               <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem', flex: 1, minWidth: '150px' }}>
                 <label style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', fontWeight: '600', textTransform: 'uppercase', letterSpacing: '0.05em' }}>🗓️ Fecha (Opcional)</label>
                 <input
                   type="date"
                   value={reminderDate}
                   onChange={(e) => setReminderDate(e.target.value)}
-                  style={{ padding: '0.75rem', borderRadius: '8px', background: 'rgba(0,0,0,0.3)', border: '1px solid var(--glass-border)', color: 'white', outline: 'none', colorScheme: 'dark' }}
+                  style={{ padding: '0.75rem', borderRadius: '0', background: '#fff', border: '3px solid #000', color: '#000', outline: 'none', fontWeight: 'bold' }}
                 />
               </div>
               <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem', flex: 1, minWidth: '150px' }}>
@@ -363,7 +363,7 @@ const Lifestyle = () => {
                   type="time"
                   value={reminderTime}
                   onChange={(e) => setReminderTime(e.target.value)}
-                  style={{ padding: '0.75rem', borderRadius: '8px', background: 'rgba(0,0,0,0.3)', border: '1px solid var(--glass-border)', color: 'white', outline: 'none', colorScheme: 'dark' }}
+                  style={{ padding: '0.75rem', borderRadius: '0', background: '#fff', border: '3px solid #000', color: '#000', outline: 'none', fontWeight: 'bold' }}
                 />
               </div>
             </div>
