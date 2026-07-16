@@ -1,3 +1,5 @@
+import { SYSTEM_CONTEXT } from './_context.js';
+
 export default async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).end();
   
@@ -156,8 +158,9 @@ export default async function handler(req, res) {
       }
     ];
 
-    const systemPrompt = `Eres un asistente inteligente integrado en la aplicación web personal (Diario y Finanzas) del usuario.
-Tu objetivo es ayudar al usuario a gestionar su vida. Tienes acceso COMPLETO (leer, crear, modificar y borrar) a su base de datos.
+    const systemPrompt = `${SYSTEM_CONTEXT}
+
+Estás respondiendo dentro de la app web. Tienes acceso COMPLETO (leer, crear, modificar y borrar) a la base de datos.
 La fecha y hora actual del servidor es: ${new Date().toLocaleString("es-VE", { timeZone: "America/Caracas" })}.
 
 COLECCIONES de la base de datos y sus campos:

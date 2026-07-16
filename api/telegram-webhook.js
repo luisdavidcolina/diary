@@ -1,5 +1,6 @@
 import { doc, updateDoc, deleteDoc, collection, addDoc, getDocs, query, where } from "firebase/firestore/lite";
 import { dbNode } from "./_firebaseNode.js";
+import { SYSTEM_CONTEXT } from "./_context.js";
 
 const TELEGRAM_TOKEN = process.env.TELEGRAM_BOT_TOKEN;
 
@@ -104,7 +105,9 @@ async function processTextWithAI(text, chatId, reqHost) {
   if (!apiKey) return "⚠️ Falta OPENROUTER_API_KEY en el servidor.";
 
   const nowCaracas = new Date().toLocaleString("es-VE", { timeZone: "America/Caracas" });
-  const systemPrompt = `Eres un asistente de Telegram.
+  const systemPrompt = `${SYSTEM_CONTEXT}
+
+Estás respondiendo por Telegram (mensajes cortos).
 La fecha y hora actual (Caracas) es: ${nowCaracas}.
 El usuario te enviará mensajes cortos (ideas, tareas, gastos, anécdotas).
 REGLAS (en este orden de prioridad):
@@ -331,11 +334,16 @@ REGLAS (en este orden de prioridad):
 
         if (schedRes.ok) {
           const schedData = await schedRes.json();
+          if (schedData.success === false) {
+            return schedData.noQstash
+              ? `⚠️ Guardé "${args.title}" como tarea, pero el AVISO no se pudo agendar: falta configurar *QSTASH_TOKEN* en el servidor (Vercel).`
+              : `⚠️ Guardé la tarea, pero falló el aviso: ${schedData.error || 'error del servidor'}.`;
+          }
           const reminderId = args.isRecurring ? schedData.scheduleId : schedData.messageId;
           if (reminderId) {
             await updateDoc(doc(dbNode, "lifestyle", docRef.id), { reminderId, isRecurring: args.isRecurring || false });
           }
-          return `⏰ Recordatorio programado para las ${args.time}`;
+          return `⏰ Recordatorio "${args.title}" programado para las ${args.time}`;
         }
         return `⚠️ Tarea guardada, pero hubo un error programando la alarma del servidor.`;
       }
@@ -626,12 +634,18 @@ Escribe cualquier mensaje normal (sin la /) y lo guardo como tarea o lo interpre
           
           if (schedRes.ok) {
             const schedData = await schedRes.json();
-            const reminderId = isDaily ? schedData.scheduleId : schedData.messageId;
-            if (reminderId) {
-              await updateDoc(doc(dbNode, "lifestyle", docRef.id), { reminderId: reminderId, isRecurring: isDaily });
+            if (schedData.success === false) {
+              responseText = schedData.noQstash
+                ? `⚠️ Guardé "${title}" como tarea, pero el AVISO no se agendó: falta configurar *QSTASH_TOKEN* en el servidor.`
+                : `⚠️ Guardé la tarea, pero falló el aviso: ${schedData.error || 'error del servidor'}.`;
+            } else {
+              const reminderId = isDaily ? schedData.scheduleId : schedData.messageId;
+              if (reminderId) {
+                await updateDoc(doc(dbNode, "lifestyle", docRef.id), { reminderId: reminderId, isRecurring: isDaily });
+              }
+              const dateStrMsg = isDaily ? 'todos los días' : (dateStr ? `el ${dateStr}` : 'hoy/mañana');
+              responseText = `⏰ Recordatorio "${title}" programado para ${dateStrMsg} a las ${timeStr}.`;
             }
-            const dateStrMsg = isDaily ? 'todos los días' : (dateStr ? `el ${dateStr}` : 'hoy/mañana');
-            responseText = `⏰ Recordatorio "${title}" programado para ${dateStrMsg} a las ${timeStr}.`;
           } else {
             responseText = `⚠️ Tarea guardada, pero la hora falló. Revisa el formato (ej. 15:30).`;
           }

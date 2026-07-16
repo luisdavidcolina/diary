@@ -6,7 +6,7 @@ export default async function handler(req, res) {
   const appUrl = `https://${req.headers.host}`; 
 
   if (!qstashToken) {
-    return res.status(200).json({ success: true, message: "Ignorado (sin QStash)" });
+    return res.status(200).json({ success: false, noQstash: true, error: "Falta QSTASH_TOKEN en el servidor." });
   }
 
   // Convert time (e.g., "15:30") from UTC-4 to UTC

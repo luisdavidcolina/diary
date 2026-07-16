@@ -7,8 +7,9 @@ export default async function handler(req, res) {
 
   if (!qstashToken) {
     console.error("QSTASH_TOKEN no configurado. El recordatorio exacto no se enviará.");
-    // Devolvemos 200 para no romper el frontend si el usuario no ha configurado QStash aún
-    return res.status(200).json({ success: true, message: "Ignorado (sin QStash)" });
+    // Antes devolvía success:true y el bot decía "programado" sin agendar nada.
+    // Ahora lo señalamos para poder avisar al usuario.
+    return res.status(200).json({ success: false, noQstash: true, error: "Falta QSTASH_TOKEN en el servidor." });
   }
 
   // Parseamos la fecha y hora objetivo (ej. 2026-07-20T15:30:00) en zona horaria de Venezuela (UTC-4)
