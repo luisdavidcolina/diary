@@ -347,7 +347,18 @@ REGLAS (en este orden de prioridad):
         const rows = (await readMine(args.collection))
           .sort((a, b) => (a.createdAt < b.createdAt ? 1 : -1))
           .slice(0, args.limit || (args.collection === 'syllabus' ? 100 : 8));
-        if (!rows.length) return `No hay registros en ${args.collection}.`;
+        if (!rows.length) {
+          // Fallback del temario: si la BD aún no está sembrada, leer el plan de estudio del repo.
+          if (args.collection === 'syllabus') {
+            const dr = await fetch(`https://${reqHost}/api/read-doc?filepath=PLAN_ESTUDIO.md`);
+            const dd = await dr.json();
+            if (dd.content) {
+              const s = await summarizeToolResult(apiKey, systemPrompt, text, tool, dd.content);
+              if (s) return s;
+            }
+          }
+          return `No hay registros en ${args.collection}.`;
+        }
         // Segunda pasada: la IA interpreta/resume los datos en lenguaje natural.
         const summary = await summarizeToolResult(apiKey, systemPrompt, text, tool, JSON.stringify(rows));
         return summary || `📋 ${args.collection}:\n${rows.map((r) => `• ${r.description || r.title || r.content || r.name || r.id}${r.amount != null ? ` ($${r.amount})` : ''} [id: ${r.id}]`).join('\n')}`;
