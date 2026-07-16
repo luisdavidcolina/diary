@@ -30,6 +30,136 @@ async function editMessageText(chatId, messageId, text) {
   });
 }
 
+// Llama a OpenRouter (Economizado: 1 sola llamada, resuelve herramientas aquí mismo)
+async function processTextWithAI(text, chatId, reqHost) {
+  const apiKey = process.env.OPENROUTER_API_KEY;
+  if (!apiKey) return "⚠️ Falta OPENROUTER_API_KEY en el servidor.";
+
+  const systemPrompt = `Eres un asistente de Telegram.
+El usuario te enviará mensajes cortos (ideas, tareas, gastos, anécdotas).
+Si el mensaje es para agregar una tarea pendiente o recordatorio genérico, usa add_task.
+Si es sobre un gasto o dinero, usa add_transaction.
+Si es un pensamiento o algo para el diario personal, usa add_diary_entry.
+Si solo está saludando o haciendo una pregunta general, responde cortamente y amigable (usa emojis).`;
+
+  const tools = [
+    {
+      type: "function",
+      function: {
+        name: "add_task",
+        description: "Agrega una tarea pendiente a la lista de tareas (Captura Rápida).",
+        parameters: {
+          type: "object",
+          properties: {
+            title: { type: "string", description: "El título de la tarea" }
+          },
+          required: ["title"]
+        }
+      }
+    },
+    {
+      type: "function",
+      function: {
+        name: "add_transaction",
+        description: "Registra un gasto o ingreso.",
+        parameters: {
+          type: "object",
+          properties: {
+            amount: { type: "number", description: "El monto" },
+            description: { type: "string", description: "Descripción" },
+            type: { type: "string", description: "'expense' o 'income'" }
+          },
+          required: ["amount", "description", "type"]
+        }
+      }
+    },
+    {
+      type: "function",
+      function: {
+        name: "add_diary_entry",
+        description: "Añade una entrada al diario personal.",
+        parameters: {
+          type: "object",
+          properties: {
+            text: { type: "string", description: "El texto del diario" }
+          },
+          required: ["text"]
+        }
+      }
+    }
+  ];
+
+  try {
+    const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+      method: "POST",
+      headers: { 
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${apiKey}`
+      },
+      body: JSON.stringify({
+        model: 'openai/gpt-4o-mini',
+        messages: [
+          { role: 'system', content: systemPrompt },
+          { role: 'user', content: text }
+        ],
+        tools: tools,
+        temperature: 0.7
+      })
+    });
+
+    const data = await response.json();
+    if (data.error) throw new Error(data.error.message || "Error en OpenRouter");
+
+    const responseMsg = data.choices[0].message;
+
+    // Si la IA decidió usar una herramienta
+    if (responseMsg.tool_calls && responseMsg.tool_calls.length > 0) {
+      const tool = responseMsg.tool_calls[0].function;
+      const args = JSON.parse(tool.arguments);
+
+      if (tool.name === 'add_task') {
+        await addDoc(collection(dbNode, "lifestyle"), {
+          title: args.title,
+          category: 'task',
+          isCompleted: false,
+          createdAt: serverTimestamp()
+        });
+        return `✅ Tarea guardada: *${args.title}*`;
+      } 
+      
+      if (tool.name === 'add_transaction') {
+        await addDoc(collection(dbNode, "finance"), {
+          type: args.type,
+          amount: args.amount,
+          title: args.description,
+          category: 'other',
+          date: new Date().toISOString().split('T')[0],
+          createdAt: serverTimestamp()
+        });
+        const emoji = args.type === 'expense' ? '💸' : '💰';
+        return `${emoji} Transacción guardada: *$${args.amount}* (${args.description})`;
+      }
+
+      if (tool.name === 'add_diary_entry') {
+        await addDoc(collection(dbNode, "diary"), {
+          title: "Entrada desde Telegram",
+          content: args.text,
+          date: new Date().toISOString(),
+          createdAt: serverTimestamp()
+        });
+        return `📖 Diario actualizado exitosamente.`;
+      }
+    }
+
+    // Si no usó herramientas, devolver el texto natural que generó
+    return responseMsg.content;
+
+  } catch (error) {
+    console.error("AI Error:", error);
+    return "⚠️ Hubo un error al pensar la respuesta.";
+  }
+}
+
 export default async function handler(req, res) {
   if (req.method !== 'POST') return res.status(200).send('OK');
 
@@ -277,14 +407,28 @@ Ejemplo: \`/recordar 15:30 Llamar al banco\`
         responseText = `📖 Entrada de diario guardada.`;
       }
       else {
-        // Captura rápida: Tarea
-        const title = text.startsWith('/tarea ') ? text.replace('/tarea ', '') : text;
-        await addDoc(collection(dbNode, "lifestyle"), {
-          title: title,
-          category: 'task',
-          isCompleted: false,
-          createdAt: serverTimestamp()
+        // Enviar mensaje temporal y obtener su message_id
+        const tempMsgRes = await fetch(`https://api.telegram.org/bot${TELEGRAM_TOKEN}/sendMessage`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ chat_id: chatId, text: "⏳ Pensando...", parse_mode: 'Markdown' })
         });
+        
+        let tempMsgId = null;
+        if (tempMsgRes.ok) {
+          const tempMsgData = await tempMsgRes.json();
+          tempMsgId = tempMsgData.result.message_id;
+        }
+
+        // Procesar con IA
+        const aiResponse = await processTextWithAI(text, chatId, req.headers.host);
+
+        if (tempMsgId) {
+          await editMessageText(chatId, tempMsgId, aiResponse);
+        } else {
+          await sendTelegramMessage(chatId, aiResponse);
+        }
+        return res.status(200).send('OK');
       }
 
       await sendTelegramMessage(chatId, responseText);
