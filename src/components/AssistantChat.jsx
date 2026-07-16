@@ -373,12 +373,12 @@ Si no usas la barra (/), la IA entiende tus mensajes naturalmente.`;
       {/* Botón Flotante */}
       <button 
         onClick={() => setIsOpen(!isOpen)}
+        className="assistant-chat-btn"
         style={{
-          position: 'fixed', bottom: '20px', right: '20px', zIndex: 1000,
-          width: '60px', height: '60px', borderRadius: '0',
+          borderRadius: '0',
           background: 'var(--brutal-yellow)',
           border: '3px solid #000', color: '#000', fontSize: '24px', cursor: 'pointer',
-          boxShadow: '4px 4px 0 #000', display: 'flex', alignItems: 'center', justifyContent: 'center',
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
           transition: 'transform 0.15s, box-shadow 0.15s'
         }}
         onMouseOver={e => { e.currentTarget.style.transform = 'translate(2px, 2px)'; e.currentTarget.style.boxShadow = '2px 2px 0 #000'; }}
@@ -389,12 +389,11 @@ Si no usas la barra (/), la IA entiende tus mensajes naturalmente.`;
 
       {/* Ventana de Chat */}
       {isOpen && (
-        <div style={{
-          position: 'fixed', bottom: '90px', right: '20px', zIndex: 1000,
-          width: '350px', height: '500px', background: 'var(--brutal-white)',
+        <div className="assistant-chat-window" style={{
+          background: 'var(--brutal-white)',
           border: '4px solid #000',
           borderRadius: '0', display: 'flex', flexDirection: 'column',
-          boxShadow: '8px 8px 0 #000', overflow: 'hidden'
+          overflow: 'hidden'
         }}>
           {/* Header */}
           <div style={{ padding: '1rem', background: 'var(--brutal-pink)', borderBottom: '4px solid #000', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>

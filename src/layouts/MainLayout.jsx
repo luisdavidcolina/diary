@@ -44,10 +44,11 @@ const MainLayout = () => {
         
         <button 
           onClick={logout}
-          className="nav-btn"
+          className="nav-btn logout-btn"
           style={{ background: 'var(--brutal-pink)' }}
         >
-          Cerrar Sesión
+          <span className="logout-text">Cerrar Sesión</span>
+          <span className="logout-icon" style={{ display: 'none' }}>🚪</span>
         </button>
       </nav>
 
