@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { addTransaction, getTransactions, addJournalEntry, getJournalEntries } from '../services/db';
+import { addTransaction, getTransactions, addJournalEntry, getJournalEntries, addHabitOrTask } from '../services/db';
 
 export default function AssistantChat() {
   const [isOpen, setIsOpen] = useState(false);
@@ -87,6 +87,56 @@ export default function AssistantChat() {
       newMessages = [...history, { role: 'user', content: text }];
       setMessages(newMessages);
       setInput('');
+    }
+    
+    // Check if it's a direct command (bypass AI)
+    if (text && text.startsWith('/')) {
+      setIsLoading(true);
+      try {
+        let responseContent = '';
+        if (text.startsWith('/gasto ')) {
+          const parts = text.replace('/gasto ', '').trim().split(' ');
+          const amount = parseFloat(parts[0]);
+          const description = parts.slice(1).join(' ');
+          if (!isNaN(amount)) {
+            await addTransaction(amount, description || 'Gasto web', 'expense', 'other');
+            responseContent = `💸 Gasto de $${amount} registrado.`;
+          } else {
+            responseContent = `⚠️ Formato inválido. Usa: /gasto [monto] [concepto]`;
+          }
+        } else if (text.startsWith('/ingreso ')) {
+          const parts = text.replace('/ingreso ', '').trim().split(' ');
+          const amount = parseFloat(parts[0]);
+          const description = parts.slice(1).join(' ');
+          if (!isNaN(amount)) {
+            await addTransaction(amount, description || 'Ingreso web', 'income', 'other');
+            responseContent = `💰 Ingreso de $${amount} registrado.`;
+          } else {
+            responseContent = `⚠️ Formato inválido. Usa: /ingreso [monto] [concepto]`;
+          }
+        } else if (text.startsWith('/diario ')) {
+          const content = text.replace('/diario ', '').trim();
+          await addJournalEntry(content, 'neutral');
+          responseContent = `📖 Entrada de diario guardada.`;
+        } else if (text.startsWith('/tarea ')) {
+          const title = text.replace('/tarea ', '').trim();
+          await addHabitOrTask(title, 'task');
+          responseContent = `✅ Tarea guardada: ${title}`;
+        } else if (text === '/creditos') {
+          const res = await fetch('/api/get-credits');
+          const data = await res.json();
+          responseContent = data.error ? `⚠️ Error: ${data.error}` : `📊 Has gastado $${data.usage}`;
+        } else {
+          responseContent = `⚠️ Comando desconocido. Usa: /gasto, /ingreso, /diario, /tarea o /creditos.`;
+        }
+        
+        setMessages([...newMessages, { role: 'model', content: responseContent }]);
+      } catch (e) {
+        setMessages([...newMessages, { role: 'model', content: `❌ Error procesando comando: ${e.message}` }]);
+      } finally {
+        setIsLoading(false);
+      }
+      return;
     }
     
     setIsLoading(true);
