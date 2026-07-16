@@ -72,6 +72,33 @@ async function editMessageText(chatId, messageId, text) {
 }
 
 // Llama a OpenRouter (Economizado: 1 sola llamada, resuelve herramientas aquí mismo)
+// Segunda pasada: le devuelve a la IA el resultado de una herramienta de LECTURA
+// para que responda en lenguaje natural (como hace el chat web), en vez de volcar
+// datos crudos. Solo se usa en consultas (get_docs_list, read_doc_file).
+async function summarizeToolResult(apiKey, systemPrompt, userText, toolCall, toolResult) {
+  try {
+    const r = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+      method: "POST",
+      headers: { "Content-Type": "application/json", "Authorization": `Bearer ${apiKey}` },
+      body: JSON.stringify({
+        model: 'openai/gpt-4o-mini',
+        temperature: 0.5,
+        messages: [
+          { role: 'system', content: systemPrompt },
+          { role: 'user', content: userText },
+          { role: 'assistant', content: null, tool_calls: [{ id: 'call_1', type: 'function', function: { name: toolCall.name, arguments: toolCall.arguments } }] },
+          { role: 'tool', tool_call_id: 'call_1', name: toolCall.name, content: String(toolResult).slice(0, 6000) }
+        ]
+      })
+    });
+    if (!r.ok) return null;
+    const d = await r.json();
+    return d?.choices?.[0]?.message?.content || null;
+  } catch {
+    return null;
+  }
+}
+
 async function processTextWithAI(text, chatId, reqHost) {
   const apiKey = process.env.OPENROUTER_API_KEY;
   if (!apiKey) return "⚠️ Falta OPENROUTER_API_KEY en el servidor.";
@@ -90,6 +117,7 @@ REGLAS (en este orden de prioridad):
 - Para LEER/consultar datos o hallar el 'id' de un registro, usa db_query. Para MODIFICAR/corregir, db_update. Para BORRAR, db_delete.
   Colecciones: transactions (finanzas), journal_entries (diario), lifestyle (tareas/hábitos: title, isCompleted), accounts (cuentas), library_items (biblioteca).
   Completar una tarea = db_update en 'lifestyle' con { isCompleted: true }.
+- Si pregunta por sus MATERIAS, temarios, temas de estudio o material, usa get_docs_list (y read_doc_file para leer un documento). NO inventes materias.
 - Si solo saluda o hace una pregunta general, responde corto y amigable (usa emojis).`;
 
   const tools = [
@@ -197,6 +225,28 @@ REGLAS (en este orden de prioridad):
             id: { type: "string", description: "id del registro" }
           },
           required: ["collection", "id"]
+        }
+      }
+    },
+    {
+      type: "function",
+      function: {
+        name: "get_docs_list",
+        description: "Lista los documentos y materiales de estudio del usuario (materias, temarios, plan de estudio, apuntes). Úsala cuando pregunte por sus materias, temas o qué está estudiando.",
+        parameters: { type: "object", properties: {} }
+      }
+    },
+    {
+      type: "function",
+      function: {
+        name: "read_doc_file",
+        description: "Lee el contenido de un documento/material concreto (ej. 'PLAN_ESTUDIO.md'). Úsala tras get_docs_list para responder sobre el contenido.",
+        parameters: {
+          type: "object",
+          properties: {
+            filepath: { type: "string", description: "Ruta del archivo, ej. 'PLAN_ESTUDIO.md' o 'ingles/guia.pdf'" }
+          },
+          required: ["filepath"]
         }
       }
     }
@@ -309,6 +359,21 @@ REGLAS (en este orden de prioridad):
         if (!AI_COLLECTIONS.includes(args.collection)) return `⚠️ Colección no permitida.`;
         await deleteDoc(doc(dbNode, args.collection, args.id));
         return `🗑 Registro eliminado de ${args.collection}.`;
+      }
+
+      if (tool.name === 'get_docs_list') {
+        const r = await fetch(`https://${reqHost}/api/read-doc`);
+        const d = await r.json();
+        const result = JSON.stringify(d.files || d.error || []);
+        const summary = await summarizeToolResult(apiKey, systemPrompt, text, tool, result);
+        return summary || `📚 Documentos:\n${(d.files || []).map((f) => `• ${f}`).join('\n')}`;
+      }
+      if (tool.name === 'read_doc_file') {
+        const r = await fetch(`https://${reqHost}/api/read-doc?filepath=${encodeURIComponent(args.filepath)}`);
+        const d = await r.json();
+        const result = d.content || d.error || 'No se pudo leer el archivo.';
+        const summary = await summarizeToolResult(apiKey, systemPrompt, text, tool, result);
+        return summary || String(result).slice(0, 3000);
       }
     }
 
