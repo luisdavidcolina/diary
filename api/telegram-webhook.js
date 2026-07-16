@@ -275,8 +275,14 @@ REGLAS OPERATIVAS (prioridad alta):
           properties: {
             filepath: { type: "string", description: "Ruta del archivo, ej. 'PLAN_ESTUDIO.md' o 'ingles/guia.pdf'" }
           },
-          required: ["filepath"]
-        }
+      }
+    },
+    {
+      type: "function",
+      function: {
+        name: "get_exchange_rates",
+        description: "Consulta y devuelve las tasas de cambio actuales del dólar en Venezuela (BCV y Paralelo). Úsala cuando el usuario pregunte por el precio del dólar, tasas, BCV o paralelo.",
+        parameters: { type: "object", properties: {} }
       }
     }
   ];
@@ -438,11 +444,27 @@ REGLAS OPERATIVAS (prioridad alta):
       }
       if (tool.name === 'read_doc_file') {
         const r = await fetch(`https://${reqHost}/api/read-doc?filepath=${encodeURIComponent(args.filepath)}`);
-        const d = await r.json();
-        const result = d.content || d.error || 'No se pudo leer el archivo.';
-        const summary = await summarizeToolResult(apiKey, systemPrompt, text, tool, result);
-        return { text: summary || String(result).slice(0, 3000) };
+        const dd = await r.json();
+        const result = dd.content || dd.error || 'No se pudo leer el archivo.';
+        const summary = await summarizeToolResult(apiKey, systemPrompt, text, tool, dd.content || "Error leyendo");
+        return { text: summary || (dd.content ? dd.content.slice(0, 1000) : "No se pudo leer.") };
       }
+
+      if (tool.name === 'get_exchange_rates') {
+        try {
+          const r = await fetch('https://pydolarvenezuela-api.vercel.app/api/v1/dollar');
+          const d = await r.json();
+          const bcv = d.monitors.bcv.price;
+          const paralelo = d.monitors.enparalelovzla.price;
+          const resultText = `Tasas de cambio actuales: BCV (Bs. ${bcv}), Paralelo (Bs. ${paralelo})`;
+          const summary = await summarizeToolResult(apiKey, systemPrompt, text, tool, resultText);
+          return { text: summary || resultText };
+        } catch (e) {
+          return { text: "No se pudieron obtener las tasas de cambio en este momento." };
+        }
+      }
+
+      return { text: `Herramienta desconocida solicitada: ${tool.name}` };
     }
 
     return { text: responseMsg.content };

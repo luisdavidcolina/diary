@@ -157,6 +157,28 @@ export default async function handler(req, res) {
             required: ["collection", "id"]
           }
         }
+      },
+      {
+        type: "function",
+        function: {
+          name: "get_exchange_rates",
+          description: "Consulta y devuelve las tasas de cambio actuales del dólar en Venezuela (BCV y Paralelo). Úsala cuando el usuario pregunte por el precio del dólar, tasas, BCV o paralelo.",
+          parameters: { type: "object", properties: {} }
+        }
+      },
+      {
+        type: "function",
+        function: {
+          name: "navigate_to",
+          description: "Redirige al usuario a una página específica de la aplicación web. Úsala cuando el usuario pida ir o ver una sección (ej. 'llévame a finanzas', 'quiero ver mi diario', 'vamos a la biblioteca').",
+          parameters: {
+            type: "object",
+            properties: {
+              path: { type: "string", description: "La ruta de la aplicación a la cual redirigir: '/', '/calendar', '/finance', '/lifestyle', '/journal', '/library', o '/asistente'." }
+            },
+            required: ["path"]
+          }
+        }
       }
     ];
 

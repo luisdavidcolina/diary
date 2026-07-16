@@ -1,4 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import ReactMarkdown from 'react-markdown';
 import { addTransaction, getTransactions, addJournalEntry, getJournalEntries, addHabitOrTask, getLifestyleItems, queryCollection, updateRecord, deleteRecord, addChatMessage, getChatMessages, getApiUsageLogs } from '../services/db';
 
@@ -9,6 +10,7 @@ const isThisMonth = (iso) => {
 };
 
 export default function AssistantChat() {
+  const navigate = useNavigate();
   const [isOpen, setIsOpen] = useState(false);
   const [messages, setMessages] = useState([]);
   const [input, setInput] = useState('');
@@ -145,6 +147,25 @@ export default function AssistantChat() {
         const { collection, id } = argsObj;
         await deleteRecord(collection, id);
         return `Registro eliminado de ${collection}.`;
+      }
+
+      if (name === 'get_exchange_rates') {
+        try {
+          const res = await fetch('https://pydolarvenezuela-api.vercel.app/api/v1/dollar');
+          const data = await res.json();
+          const bcv = data.monitors.bcv.price;
+          const paralelo = data.monitors.enparalelovzla.price;
+          return `Tasas actuales: BCV (Bs. ${bcv}), Paralelo (Bs. ${paralelo})`;
+        } catch(e) {
+          return "No se pudieron obtener las tasas de cambio en este momento.";
+        }
+      }
+
+      if (name === 'navigate_to') {
+        const { path } = argsObj;
+        navigate(path);
+        setTimeout(() => setIsOpen(false), 1500); // Close chat shortly after
+        return `Navegación exitosa a ${path}.`;
       }
 
       return "Error: Herramienta desconocida";
