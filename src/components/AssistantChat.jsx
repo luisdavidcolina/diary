@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { addTransaction, getTransactions, addJournalEntry, getJournalEntries, addHabitOrTask, getLifestyleItems, queryCollection, updateRecord, deleteRecord } from '../services/db';
+import { addTransaction, getTransactions, addJournalEntry, getJournalEntries, addHabitOrTask, getLifestyleItems, queryCollection, updateRecord, deleteRecord, addChatMessage, getChatMessages } from '../services/db';
 
 const txUSD = (t) => (t.amountUSD != null ? t.amountUSD : parseFloat(t.amount) || 0);
 const isThisMonth = (iso) => {
@@ -12,11 +12,29 @@ export default function AssistantChat() {
   const [messages, setMessages] = useState([]);
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [dailyCostInfo, setDailyCostInfo] = useState(null);
   const messagesEndRef = useRef(null);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   };
+
+  useEffect(() => {
+    if (isOpen) {
+      if (messages.length === 0) {
+        getChatMessages().then(msgs => {
+          if (msgs.length > 0) setMessages(msgs);
+        });
+      }
+      // Fetch daily cost info
+      fetch('/api/get-daily-cost')
+        .then(res => res.json())
+        .then(data => {
+          if (data && !data.error) setDailyCostInfo(data);
+        })
+        .catch(console.error);
+    }
+  }, [isOpen]);
 
   useEffect(() => {
     scrollToBottom();
@@ -133,6 +151,7 @@ export default function AssistantChat() {
       newMessages = [...history, { role: 'user', content: text }];
       setMessages(newMessages);
       setInput('');
+      addChatMessage('user', text);
     }
     
     // Check if it's a direct command (bypass AI)
@@ -209,8 +228,11 @@ Si no usas la barra (/), la IA entiende tus mensajes naturalmente.`;
         }
         
         setMessages([...newMessages, { role: 'model', content: responseContent }]);
+        addChatMessage('model', responseContent);
       } catch (e) {
-        setMessages([...newMessages, { role: 'model', content: `❌ Error procesando comando: ${e.message}` }]);
+        const errMsg = `❌ Error procesando comando: ${e.message}`;
+        setMessages([...newMessages, { role: 'model', content: errMsg }]);
+        addChatMessage('model', errMsg);
       } finally {
         setIsLoading(false);
       }
@@ -220,31 +242,31 @@ Si no usas la barra (/), la IA entiende tus mensajes naturalmente.`;
     setIsLoading(true);
     
     try {
+      // Send only the last 5 messages to save tokens
+      const contextToSend = newMessages.slice(-5);
+      
       const res = await fetch('/api/chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ messages: newMessages })
+        body: JSON.stringify({ messages: contextToSend })
       });
       
       const data = await res.json();
       
       if (data.type === 'text') {
         setMessages([...newMessages, { role: 'model', content: data.text }]);
+        addChatMessage('model', data.text);
       } else if (data.type === 'function_call') {
-        // Ejecutar función local
-        const funcResult = await executeTool(data.functionCall);
-        
-        // Agregar la llamada y la respuesta al historial
-        const historyWithFunc = [
-          ...newMessages,
-          { role: 'model', content: `(Ejecutando: ${data.functionCall.name}...)`, functionCall: data.functionCall },
-          { role: 'function', name: data.functionCall.name, content: funcResult }
-        ];
-        
-        setMessages(historyWithFunc);
-        
-        // Volver a llamar a la IA con el resultado para que de la respuesta final
-        await handleSend('', historyWithFunc);
+        // En lugar de ejecutar de inmediato, lo mandamos a la bandeja de aprobación
+        const proposalMsg = { 
+          role: 'model', 
+          type: 'proposal', 
+          content: `Me gustaría ejecutar una acción: ${data.functionCall.name}`, 
+          functionCall: data.functionCall,
+          status: 'pending'
+        };
+        setMessages([...newMessages, proposalMsg]);
+        addChatMessage('model', proposalMsg.content, data.functionCall);
       }
     } catch (e) {
       console.error(e);
@@ -252,6 +274,42 @@ Si no usas la barra (/), la IA entiende tus mensajes naturalmente.`;
     } finally {
       setIsLoading(false);
     }
+  };
+
+  const handleApproveProposal = async (index, msg) => {
+    // Actualizamos UI a 'executing'
+    const updatedMessages = [...messages];
+    updatedMessages[index] = { ...msg, status: 'executing' };
+    setMessages(updatedMessages);
+    
+    // Ejecutamos la herramienta
+    const funcResult = await executeTool(msg.functionCall);
+    
+    // Actualizamos la propuesta como aprobada
+    updatedMessages[index] = { ...updatedMessages[index], status: 'approved', content: `✅ Acción ejecutada: ${msg.functionCall.name}` };
+    
+    const funcResponseMsg = { role: 'function', name: msg.functionCall.name, content: funcResult };
+    const historyWithFunc = [...updatedMessages, funcResponseMsg];
+    
+    setMessages(historyWithFunc);
+    addChatMessage('function', funcResult, null, { name: msg.functionCall.name, result: funcResult });
+    
+    // Informamos a la IA
+    await handleSend('', historyWithFunc);
+  };
+
+  const handleRejectProposal = (index, msg) => {
+    const updatedMessages = [...messages];
+    updatedMessages[index] = { ...msg, status: 'rejected', content: `❌ Acción rechazada por el usuario.` };
+    setMessages(updatedMessages);
+    
+    // Enviamos el rechazo a la IA simulando una respuesta de función
+    const funcResponseMsg = { role: 'function', name: msg.functionCall.name, content: "El usuario rechazó la acción. Pregúntale si desea hacer algo más." };
+    const historyWithFunc = [...updatedMessages, funcResponseMsg];
+    setMessages(historyWithFunc);
+    addChatMessage('function', funcResponseMsg.content, null, { name: msg.functionCall.name, result: 'rejected' });
+    
+    handleSend('', historyWithFunc);
   };
 
   return (
@@ -284,9 +342,16 @@ Si no usas la barra (/), la IA entiende tus mensajes naturalmente.`;
         }}>
           {/* Header */}
           <div style={{ padding: '1rem', background: 'var(--brutal-pink)', borderBottom: '4px solid #000', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <h3 style={{ margin: 0, fontSize: '1.2rem', fontWeight: 900, textTransform: 'uppercase', display: 'flex', alignItems: 'center', gap: '0.5rem', color: '#000' }}>
-              ✨ Asistente IA
-            </h3>
+            <div style={{ display: 'flex', flexDirection: 'column' }}>
+              <h3 style={{ margin: 0, fontSize: '1.2rem', fontWeight: 900, textTransform: 'uppercase', display: 'flex', alignItems: 'center', gap: '0.5rem', color: '#000' }}>
+                ✨ Asistente IA
+              </h3>
+              {dailyCostInfo && (
+                <div style={{ fontSize: '0.75rem', fontWeight: 800, marginTop: '4px', color: dailyCostInfo.total >= dailyCostInfo.limit ? 'darkred' : '#000' }}>
+                  💰 Gasto Hoy: ${dailyCostInfo.total.toFixed(4)} / ${dailyCostInfo.limit}
+                </div>
+              )}
+            </div>
             <button onClick={() => setIsOpen(false)} style={{ background: 'var(--brutal-white)', border: '2px solid #000', color: '#000', cursor: 'pointer', fontSize: '1.2rem', fontWeight: 900, width: '32px', height: '32px', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '2px 2px 0 #000' }}>X</button>
           </div>
 
@@ -303,6 +368,29 @@ Si no usas la barra (/), la IA entiende tus mensajes naturalmente.`;
               if (msg.role === 'function') return null; // No mostrar las respuestas JSON crudas al usuario
               
               const isUser = msg.role === 'user';
+              
+              if (msg.type === 'proposal') {
+                return (
+                  <div key={i} style={{ display: 'flex', justifyContent: 'flex-start' }}>
+                    <div style={{ 
+                      background: 'var(--brutal-yellow)', color: '#000', padding: '1rem', borderRadius: '0',
+                      border: '3px solid #000', boxShadow: '4px 4px 0 #000', maxWidth: '85%', fontWeight: 700
+                    }}>
+                      <p style={{ margin: '0 0 0.5rem 0' }}>{msg.content}</p>
+                      {msg.status === 'pending' && (
+                        <div style={{ display: 'flex', gap: '0.5rem', marginTop: '0.5rem' }}>
+                          <button onClick={() => handleApproveProposal(i, msg)} style={{ background: 'var(--brutal-green)', color: '#000', border: '2px solid #000', padding: '0.5rem', fontWeight: 900, cursor: 'pointer', boxShadow: '2px 2px 0 #000' }}>✅ Aprobar</button>
+                          <button onClick={() => handleRejectProposal(i, msg)} style={{ background: 'var(--brutal-pink)', color: '#000', border: '2px solid #000', padding: '0.5rem', fontWeight: 900, cursor: 'pointer', boxShadow: '2px 2px 0 #000' }}>❌ Rechazar</button>
+                        </div>
+                      )}
+                      {msg.status === 'executing' && <span style={{ fontSize: '0.9rem' }}>⏳ Ejecutando...</span>}
+                      {msg.status === 'approved' && <span style={{ fontSize: '0.9rem', color: 'green' }}>✅ Aprobado</span>}
+                      {msg.status === 'rejected' && <span style={{ fontSize: '0.9rem', color: 'red' }}>❌ Rechazado</span>}
+                    </div>
+                  </div>
+                );
+              }
+
               return (
                 <div key={i} style={{ display: 'flex', justifyContent: isUser ? 'flex-end' : 'flex-start' }}>
                   <div style={{ 

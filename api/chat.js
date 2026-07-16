@@ -1,5 +1,6 @@
 import { buildSystemPrompt } from './_context.js';
 import { loadBotBrain } from './_botConfig.js';
+import { checkDailyLimit, logApiCost } from './_costTracker.js';
 
 export default async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).end();
@@ -185,6 +186,12 @@ REGLAS:
 - Resumen de finanzas → get_finance_summary. Materias/temarios → get_docs_list + read_doc_file. Créditos → check_api_credits.
 - Responde conciso, amigable y con emojis.`;
 
+    // 1. Verificar límite diario
+    const limitStatus = await checkDailyLimit();
+    if (!limitStatus.allowed) {
+      return res.status(200).json({ type: 'text', text: `⚠️ ${limitStatus.message}` });
+    }
+
     const formattedMessages = [
       { role: 'system', content: systemPrompt }
     ];
@@ -238,7 +245,12 @@ REGLAS:
     });
 
     const data = await response.json();
-    if (data.error) throw new Error(data.error.message || JSON.stringify(data.error));
+    if (data.error) throw new Error(data.error.message || "Error en OpenRouter");
+
+    // 2. Registrar costo
+    if (data.usage && data.usage.cost) {
+      await logApiCost(data.usage.cost, 'web');
+    }
 
     const responseMessage = data.choices[0].message;
 

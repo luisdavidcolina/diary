@@ -1,5 +1,6 @@
 import { doc, getDoc, updateDoc, deleteDoc, collection, addDoc, getDocs, query, where } from "firebase/firestore/lite";
 import { dbNode } from "./_firebaseNode.js";
+import { checkDailyLimit, logApiCost } from "./_costTracker.js";
 import { buildSystemPrompt } from "./_context.js";
 import { loadBotBrain } from "./_botConfig.js";
 
@@ -115,6 +116,11 @@ async function summarizeToolResult(apiKey, systemPrompt, userText, toolCall, too
 async function processTextWithAI(text, chatId, reqHost) {
   const apiKey = process.env.OPENROUTER_API_KEY;
   if (!apiKey) return "⚠️ Falta OPENROUTER_API_KEY en el servidor.";
+
+  const limitStatus = await checkDailyLimit();
+  if (!limitStatus.allowed) {
+    return `⚠️ ${limitStatus.message}`;
+  }
 
   const nowCaracas = new Date().toLocaleString("es-VE", { timeZone: "America/Caracas" });
   // Cerebro editable desde la web (identidad, personalidad, reglas, conocimiento).
@@ -305,6 +311,10 @@ REGLAS OPERATIVAS (prioridad alta):
 
     const data = await response.json();
     if (data.error) throw new Error(data.error.message || "Error en OpenRouter");
+
+    if (data.usage && data.usage.cost) {
+      await logApiCost(data.usage.cost, 'telegram');
+    }
 
     const responseMsg = data?.choices?.[0]?.message;
     if (!responseMsg) throw new Error("La IA no devolvió respuesta.");

@@ -298,3 +298,29 @@ export const updateLibraryItemStatus = (id, status) =>
   updateDoc(doc(db, "library_items", id), { status, updatedAt: new Date().toISOString() });
 
 export const deleteLibraryItem = (id) => deleteDoc(doc(db, "library_items", id));
+
+// =============================
+// HISTORIAL DE CHAT (Asistente Web)
+// =============================
+export const addChatMessage = async (role, content, functionCall = null, toolResult = null) => {
+  const payload = {
+    userId: uid(),
+    role,
+    content,
+    createdAt: new Date().toISOString()
+  };
+  if (functionCall) payload.functionCall = functionCall;
+  if (toolResult) payload.toolResult = toolResult;
+  
+  const docRef = await addDoc(collection(db, "chat_history"), payload);
+  return docRef.id;
+};
+
+export const getChatMessages = async () => {
+  const q = query(collection(db, "chat_history"), where("userId", "==", uid()));
+  const snap = await getDocs(q);
+  const out = [];
+  snap.forEach((d) => out.push({ id: d.id, ...d.data() }));
+  return out.sort((a, b) => (a.createdAt > b.createdAt ? 1 : a.createdAt < b.createdAt ? -1 : 0)); // Ascending
+};
+
