@@ -153,10 +153,16 @@ REGLAS (en este orden de prioridad):
     }
   ];
 
+  // Refuerzo determinista: si hay clara intención de recordatorio + una hora,
+  // FORZAMOS schedule_reminder (el modelo a veces elige add_task por error).
+  const reminderIntent = /\b(recu[eé]rda|record[aá]|av[ií]sa|al[aá]rma|recordatorio)/i.test(text);
+  const hasTimeish = /\b\d{1,2}[:\s.hH]\d{2}\b|\ba las\b|\b\d{1,2}\s?(am|pm)\b/i.test(text);
+  const forceReminder = reminderIntent && hasTimeish;
+
   try {
     const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
       method: "POST",
-      headers: { 
+      headers: {
         "Content-Type": "application/json",
         "Authorization": `Bearer ${apiKey}`
       },
@@ -167,6 +173,9 @@ REGLAS (en este orden de prioridad):
           { role: 'user', content: text }
         ],
         tools: tools,
+        tool_choice: forceReminder
+          ? { type: 'function', function: { name: 'schedule_reminder' } }
+          : 'auto',
         temperature: 0.7
       })
     });

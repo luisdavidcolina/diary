@@ -121,6 +121,25 @@ export function studyStreak(doneMap, pomoMap = {}) {
   return streak;
 }
 
+// Proyecta el plan de estudio sobre fechas futuras: reparte el backlog restante
+// (perDay por día) desde hoy, devolviendo { 'YYYY-MM-DD': [items] }.
+export function projectSchedule(items, doneMap, config) {
+  const backlog = orderedBacklog(items, doneMap);
+  const daysLeft = daysUntil(config.targetDate);
+  const perDay = config.perDayOverride && config.perDayOverride > 0
+    ? config.perDayOverride
+    : Math.max(1, Math.ceil(backlog.length / daysLeft));
+
+  const byDate = {};
+  const start = new Date(`${todayISO()}T00:00:00`);
+  backlog.forEach((it, i) => {
+    const d = new Date(start);
+    d.setDate(d.getDate() + Math.floor(i / perDay));
+    (byDate[isoDate(d)] = byDate[isoDate(d)] || []).push(it);
+  });
+  return byDate;
+}
+
 // Progreso por materia: { subjectId: {done, total, percent} }.
 export function progressBySubject(items, doneMap) {
   const acc = {};

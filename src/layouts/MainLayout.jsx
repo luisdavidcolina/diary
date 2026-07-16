@@ -39,7 +39,14 @@ const MainLayout = () => {
             fontWeight: isActive ? 'bold' : 'normal',
             transition: 'color 0.2s'
           })}>📚 Estudios</NavLink>
-          
+
+          <NavLink to="/calendar" style={({ isActive }) => ({
+            color: isActive ? 'var(--accent-color)' : 'var(--text-primary)',
+            textDecoration: 'none',
+            fontWeight: isActive ? 'bold' : 'normal',
+            transition: 'color 0.2s'
+          })}>📅 Calendario</NavLink>
+
           <NavLink to="/finance" style={({ isActive }) => ({
             color: isActive ? 'var(--accent-color)' : 'var(--text-primary)',
             textDecoration: 'none',
