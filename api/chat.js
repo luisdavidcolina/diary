@@ -47,6 +47,21 @@ export default async function handler(req, res) {
         {
           name: "get_diary_entries",
           description: "Obtiene las entradas más recientes del diario del usuario."
+        },
+        {
+          name: "get_docs_list",
+          description: "Explora la estructura de la aplicación y obtiene la lista de todos los documentos y materiales de estudio (archivos .md) disponibles en la carpeta docs/."
+        },
+        {
+          name: "read_doc_file",
+          description: "Lee el contenido exacto de un archivo de documento o materia.",
+          parameters: {
+            type: "OBJECT",
+            properties: {
+              filepath: { type: "STRING", description: "Ruta del archivo (ej. 'PLAN_ESTUDIO.md' o 'ingles/guia.md')" }
+            },
+            required: ["filepath"]
+          }
         }
       ]
     }];
@@ -59,6 +74,7 @@ REGLAS IMPORTANTES:
 - Si el usuario te pide registrar un gasto, usa la herramienta add_transaction y confírmale.
 - Si el usuario te pregunta por sus finanzas o saldo, usa get_finance_summary y luego explícale los datos.
 - Si el usuario te cuenta algo íntimo o del día a día y quiere que lo guardes, usa add_diary_entry.
+- Si el usuario pregunta por el contexto general de la app, sus materias, temarios o enlaces, usa get_docs_list para ver qué archivos existen y luego read_doc_file para leer el contenido que necesites antes de responder. Los enlaces directos de las materias están dentro de esos archivos.
 - Responde siempre de manera concisa, amigable y usando emojis.`
       }]
     };
