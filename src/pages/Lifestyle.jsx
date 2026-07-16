@@ -68,7 +68,7 @@ const Lifestyle = () => {
   };
 
   const scheduleExactReminder = async (id, title, date, time) => {
-    const res = await fetch('/api/schedule-exact-reminder', {
+    const res = await fetch('/api/reminders?action=schedule-exact', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ id, title, date, time })
@@ -105,7 +105,7 @@ const Lifestyle = () => {
       if (dateVal && timeVal) {
         try {
           if (isRecurring) {
-            const res = await fetch('/api/schedule-recurring-reminder', {
+            const res = await fetch('/api/reminders?action=schedule-recurring', {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify({ id: newId, title, time: timeVal })
@@ -158,7 +158,7 @@ const Lifestyle = () => {
 
   const cancelReminderAPI = async (reminderId, isRecur) => {
     try {
-      await fetch('/api/cancel-reminder', {
+      await fetch('/api/reminders?action=cancel', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ reminderId, isRecurring: isRecur })

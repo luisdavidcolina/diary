@@ -29,7 +29,7 @@ export default function AssistantChat() {
         });
       }
       // Fetch daily cost info
-      fetch('/api/get-daily-cost')
+      fetch('/api/get-credits?type=daily')
         .then(res => res.json())
         .then(data => {
           if (data && !data.error) setDailyCostInfo(data);
@@ -91,7 +91,7 @@ export default function AssistantChat() {
         const docId = await addHabitOrTask(title, 'task', dbDate, time);
         
         // 2. Llamar API de QStash para programar recordatorio
-        const endpoint = isRecurring ? '/api/schedule-recurring-reminder' : '/api/schedule-exact-reminder';
+        const endpoint = isRecurring ? '/api/reminders?action=schedule-recurring' : '/api/reminders?action=schedule-exact';
         const bodyPayload = isRecurring 
           ? { id: docId, title, time }
           : { id: docId, title, date: dbDate, time };

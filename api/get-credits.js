@@ -1,6 +1,8 @@
 // Endpoint doble (para no exceder el límite de 12 funciones del plan Hobby):
 //  - GET /api/get-credits            → saldo/consumo de OpenRouter
 //  - GET /api/get-credits?type=rates → tasas BCV + Binance P2P (vía rewrite /api/rates)
+//  - GET /api/get-credits?type=daily → consumo diario de la API
+import { checkDailyLimit } from "./_costTracker.js";
 
 // BCV oficial vía dolarapi (JSON estable y mantenido).
 async function fetchBCV() {
@@ -54,6 +56,16 @@ export default async function handler(req, res) {
 
   // Ruta de tasas (reescrita desde /api/rates).
   if (req.query?.type === 'rates') return handleRates(res);
+
+  // Ruta de costo diario.
+  if (req.query?.type === 'daily') {
+    try {
+      const limitInfo = await checkDailyLimit();
+      return res.status(200).json(limitInfo);
+    } catch (e) {
+      return res.status(500).json({ error: e.message });
+    }
+  }
 
   const apiKey = process.env.OPENROUTER_API_KEY;
   if (!apiKey) return res.status(500).json({ error: "Falta OPENROUTER_API_KEY" });

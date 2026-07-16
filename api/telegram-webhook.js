@@ -380,7 +380,7 @@ REGLAS OPERATIVAS (prioridad alta):
         });
 
         // 2. Schedule
-        const endpoint = args.isRecurring ? '/api/schedule-recurring-reminder' : '/api/schedule-exact-reminder';
+        const endpoint = args.isRecurring ? '/api/reminders?action=schedule-recurring' : '/api/reminders?action=schedule-exact';
         const bodyPayload = args.isRecurring 
           ? { id: docRef.id, title: args.title, time: args.time }
           : { id: docRef.id, title: args.title, date: dbDate, time: args.time };
@@ -541,7 +541,7 @@ export default async function handler(req, res) {
             } else if (proposal.toolName === 'schedule_reminder') {
               const dbDate = args.date || new Date().toISOString().split('T')[0];
               const docRef = await saveTask(args.title, { reminderDate: dbDate, reminderTime: args.time, isRecurring: !!args.isRecurring });
-              const endpoint = args.isRecurring ? '/api/schedule-recurring-reminder' : '/api/schedule-exact-reminder';
+              const endpoint = args.isRecurring ? '/api/reminders?action=schedule-recurring' : '/api/reminders?action=schedule-exact';
               const bodyPayload = args.isRecurring ? { id: docRef.id, title: args.title, time: args.time } : { id: docRef.id, title: args.title, date: dbDate, time: args.time };
               const schedRes = await fetch(`https://${reqHost}${endpoint}`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(bodyPayload) });
               if (schedRes.ok) {
@@ -740,7 +740,7 @@ Escribe cualquier mensaje normal (sin la /) y lo guardo como tarea o lo interpre
         });
 
         const appUrl = `https://${req.headers.host}`;
-        const endpoint = isDaily ? '/api/schedule-recurring-reminder' : '/api/schedule-exact-reminder';
+        const endpoint = isDaily ? '/api/reminders?action=schedule-recurring' : '/api/reminders?action=schedule-exact';
         const bodyPayload = isDaily 
           ? { id: docRef.id, title: title, time: timeStr }
           : { id: docRef.id, title: title, date: dateStr, time: timeStr };
