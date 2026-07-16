@@ -246,10 +246,28 @@ REGLAS:
         continue;
       }
 
-      formattedMessages.push({
-        role: msg.role === 'user' ? 'user' : 'assistant',
-        content: msg.content
-      });
+      if (msg.role === 'user') {
+        if (msg.images && msg.images.length > 0) {
+          const contentArray = [{ type: 'text', text: msg.content || '' }];
+          for (const img of msg.images) {
+            contentArray.push({ type: 'image_url', image_url: { url: img } });
+          }
+          formattedMessages.push({
+            role: 'user',
+            content: contentArray
+          });
+        } else {
+          formattedMessages.push({
+            role: 'user',
+            content: msg.content
+          });
+        }
+      } else {
+        formattedMessages.push({
+          role: 'assistant',
+          content: msg.content
+        });
+      }
     }
 
     const response = await fetch(openRouterUrl, {

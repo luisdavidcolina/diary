@@ -330,7 +330,7 @@ export const deleteChatSession = async (sessionId) => {
   await Promise.all(deletePromises);
 };
 
-export const addChatMessage = async (sessionId, role, content, functionCall = null, toolResult = null) => {
+export const addChatMessage = async (sessionId, role, content, functionCall = null, toolResult = null, images = null) => {
   const payload = {
     userId: uid(),
     sessionId,
@@ -340,6 +340,7 @@ export const addChatMessage = async (sessionId, role, content, functionCall = nu
   };
   if (functionCall) payload.functionCall = functionCall;
   if (toolResult) payload.toolResult = toolResult;
+  if (images) payload.images = images;
   
   const docRef = await addDoc(collection(db, "chat_history"), payload);
   return docRef.id;

@@ -18,6 +18,8 @@ export default function AssistantChat() {
   const [isLoading, setIsLoading] = useState(false);
   const [dailyCostInfo, setDailyCostInfo] = useState(null);
   const [viewMode, setViewMode] = useState('chat'); // kept temporarily just in case
+  const [attachedFiles, setAttachedFiles] = useState([]);
+  const [isUploading, setIsUploading] = useState(false);
   const messagesEndRef = useRef(null);
 
   const scrollToBottom = () => {
@@ -193,16 +195,22 @@ export default function AssistantChat() {
   };
 
   const handleSend = async (text, history = messages) => {
-    if (!text.trim() && !history.length) return;
+    if (!text.trim() && !attachedFiles.length && !history.length) return;
     
-    const sid = await ensureSession(text);
+    const sid = await ensureSession(text || "Consulta con imagen");
     
     let newMessages = history;
-    if (text) {
-      newMessages = [...history, { role: 'user', content: text }];
+    const currentAttachments = [...attachedFiles];
+    if (text || currentAttachments.length > 0) {
+      const userMsg = { role: 'user', content: text };
+      if (currentAttachments.length > 0) {
+        userMsg.images = currentAttachments;
+      }
+      newMessages = [...history, userMsg];
       setMessages(newMessages);
       setInput('');
-      addChatMessage(sid, 'user', text);
+      setAttachedFiles([]);
+      addChatMessage(sid, 'user', text, null, null, currentAttachments);
     }
     
     // Check if it's a direct command (bypass AI)
@@ -472,6 +480,13 @@ Si no usas la barra (/), la IA entiende tus mensajes naturalmente.`;
                     fontWeight: 700
                   }}>
                     <ReactMarkdown>{msg.content}</ReactMarkdown>
+                    {msg.images && msg.images.length > 0 && (
+                      <div style={{ display: 'flex', gap: '0.25rem', flexWrap: 'wrap', marginTop: '0.5rem' }}>
+                        {msg.images.map((img, imgIdx) => (
+                          <img key={imgIdx} src={img} alt="Adjunto" style={{ width: '80px', height: '80px', objectFit: 'cover', border: '1px solid #000' }} />
+                        ))}
+                      </div>
+                    )}
                   </div>
                 </div>
               );
@@ -488,24 +503,72 @@ Si no usas la barra (/), la IA entiende tus mensajes naturalmente.`;
 
           {/* Input */}
           <div style={{ padding: '1rem', borderTop: '4px solid #000', background: 'var(--brutal-yellow)' }}>
-            <form onSubmit={(e) => { e.preventDefault(); handleSend(input); }} style={{ display: 'flex', gap: '0.5rem' }}>
-              <input 
-                type="text" 
-                value={input} 
-                onChange={e => setInput(e.target.value)}
-                placeholder="Escribe un comando o pregunta..."
-                style={{ flex: 1, padding: '0.75rem', borderRadius: '0', border: '3px solid #000', background: '#fff', color: '#000', outline: 'none', fontWeight: 600, boxShadow: 'inset 2px 2px 0 rgba(0,0,0,0.1)' }}
-                disabled={isLoading}
-              />
-              <button 
-                type="submit" 
-                disabled={isLoading || !input.trim()}
-                style={{ background: 'var(--brutal-blue)', color: '#000', border: '3px solid #000', borderRadius: '0', padding: '0 1rem', cursor: 'pointer', fontWeight: 900, boxShadow: '2px 2px 0 #000', transition: 'all 0.15s' }}
-                onMouseOver={e => { if(!e.currentTarget.disabled) { e.currentTarget.style.transform = 'translate(2px, 2px)'; e.currentTarget.style.boxShadow = '0 0 0 #000'; }}}
-                onMouseOut={e => { if(!e.currentTarget.disabled) { e.currentTarget.style.transform = 'none'; e.currentTarget.style.boxShadow = '2px 2px 0 #000'; }}}
-              >
-                ➔
-              </button>
+            <form onSubmit={(e) => { e.preventDefault(); handleSend(input); }} style={{ display: 'flex', gap: '0.5rem', flexDirection: 'column' }}>
+              {attachedFiles.length > 0 && (
+                <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap', marginBottom: '0.5rem', background: '#fff', padding: '0.5rem', border: '2px solid #000' }}>
+                  {attachedFiles.map((file, idx) => (
+                    <div key={idx} style={{ position: 'relative', display: 'inline-block' }}>
+                      <img src={file} alt="Preview" style={{ width: '40px', height: '40px', border: '1px solid #000', objectFit: 'cover' }} />
+                      <button 
+                        type="button" 
+                        onClick={() => setAttachedFiles(prev => prev.filter((_, i) => i !== idx))}
+                        style={{ position: 'absolute', top: '-5px', right: '-5px', background: 'red', color: '#fff', border: '1px solid #000', borderRadius: '50%', width: '16px', height: '16px', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', fontSize: '10px', fontWeight: 'bold' }}
+                      >
+                        x
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
+              <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+                <label style={{ background: 'var(--brutal-orange)', color: '#000', border: '3px solid #000', borderRadius: '0', padding: '0.75rem', cursor: 'pointer', fontWeight: 900, boxShadow: '2px 2px 0 #000', display: 'flex', alignItems: 'center', justifyContent: 'center', height: '44px', width: '44px', flexShrink: 0 }}>
+                  📎
+                  <input 
+                    type="file" 
+                    accept="image/*" 
+                    multiple 
+                    onChange={async (e) => {
+                      const files = Array.from(e.target.files);
+                      if (!files.length) return;
+                      setIsUploading(true);
+                      try {
+                        const base64s = await Promise.all(files.map(file => {
+                          return new Promise((resolve, reject) => {
+                            const reader = new FileReader();
+                            reader.readAsDataURL(file);
+                            reader.onload = () => resolve(reader.result);
+                            reader.onerror = reject;
+                          });
+                        }));
+                        setAttachedFiles(prev => [...prev, ...base64s]);
+                      } catch (err) {
+                        console.error(err);
+                      } finally {
+                        setIsUploading(false);
+                      }
+                    }}
+                    style={{ display: 'none' }}
+                    disabled={isLoading || isUploading}
+                  />
+                </label>
+                <input 
+                  type="text" 
+                  value={input} 
+                  onChange={e => setInput(e.target.value)}
+                  placeholder={isUploading ? "Cargando..." : "Escribe un comando..."}
+                  style={{ flex: 1, padding: '0.75rem', borderRadius: '0', border: '3px solid #000', background: '#fff', color: '#000', outline: 'none', fontWeight: 600, boxShadow: 'inset 2px 2px 0 rgba(0,0,0,0.1)' }}
+                  disabled={isLoading || isUploading}
+                />
+                <button 
+                  type="submit" 
+                  disabled={isLoading || isUploading || (!input.trim() && attachedFiles.length === 0)}
+                  style={{ background: 'var(--brutal-blue)', color: '#000', border: '3px solid #000', borderRadius: '0', padding: '0 1rem', cursor: 'pointer', fontWeight: 900, boxShadow: '2px 2px 0 #000', transition: 'all 0.15s', height: '44px' }}
+                  onMouseOver={e => { if(!e.currentTarget.disabled) { e.currentTarget.style.transform = 'translate(2px, 2px)'; e.currentTarget.style.boxShadow = '0 0 0 #000'; }}}
+                  onMouseOut={e => { if(!e.currentTarget.disabled) { e.currentTarget.style.transform = 'none'; e.currentTarget.style.boxShadow = '2px 2px 0 #000'; }}}
+                >
+                  ➔
+                </button>
+              </div>
             </form>
           </div>
         </div>
