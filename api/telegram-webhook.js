@@ -58,12 +58,14 @@ const isThisMonth = (iso) => {
   return d.getFullYear() === n.getFullYear() && d.getMonth() === n.getMonth();
 };
 
-async function sendTelegramMessage(chatId, text) {
+async function sendTelegramMessage(chatId, text, replyMarkup = null) {
   const url = `https://api.telegram.org/bot${TELEGRAM_TOKEN}/sendMessage`;
+  const body = { chat_id: chatId, text, parse_mode: 'Markdown' };
+  if (replyMarkup) body.reply_markup = replyMarkup;
   await fetch(url, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ chat_id: chatId, text, parse_mode: 'Markdown' })
+    body: JSON.stringify(body)
   });
 }
 
@@ -76,12 +78,14 @@ async function answerCallbackQuery(callbackQueryId, text) {
   });
 }
 
-async function editMessageText(chatId, messageId, text) {
+async function editMessageText(chatId, messageId, text, replyMarkup = null) {
   const url = `https://api.telegram.org/bot${TELEGRAM_TOKEN}/editMessageText`;
+  const body = { chat_id: chatId, message_id: messageId, text, parse_mode: 'Markdown' };
+  if (replyMarkup) body.reply_markup = replyMarkup;
   await fetch(url, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ chat_id: chatId, message_id: messageId, text, parse_mode: 'Markdown' })
+    body: JSON.stringify(body)
   });
 }
 
@@ -119,7 +123,7 @@ async function processTextWithAI(text, chatId, reqHost) {
 
   const limitStatus = await checkDailyLimit();
   if (!limitStatus.allowed) {
-    return `⚠️ ${limitStatus.message}`;
+    return { text: `⚠️ ${limitStatus.message}` };
   }
 
   const nowCaracas = new Date().toLocaleString("es-VE", { timeZone: "America/Caracas" });
@@ -324,6 +328,31 @@ REGLAS OPERATIVAS (prioridad alta):
       const tool = responseMsg.tool_calls[0].function;
       const args = JSON.parse(tool.arguments);
 
+      const modifyingTools = ['add_task', 'add_transaction', 'add_diary_entry', 'schedule_reminder', 'db_update', 'db_delete'];
+      if (modifyingTools.includes(tool.name)) {
+        // En lugar de ejecutar, guardamos la propuesta en Firebase
+        const proposalPayload = {
+          userId: OWNER_UID,
+          toolName: tool.name,
+          toolArgs: args,
+          createdAt: new Date().toISOString()
+        };
+        const docRef = await addDoc(collection(dbNode, "telegram_proposals"), proposalPayload);
+        
+        const replyMarkup = {
+          inline_keyboard: [
+            [
+              { text: "✅ Aprobar", callback_data: `approve_${docRef.id}` },
+              { text: "❌ Rechazar", callback_data: `reject_${docRef.id}` }
+            ]
+          ]
+        };
+        return { 
+          text: `La IA propone ejecutar la acción: *${tool.name}*.\n¿Deseas proceder?`, 
+          replyMarkup 
+        };
+      }
+
       if (tool.name === 'add_task') {
         await saveTask(args.title);
         return `✅ Tarea guardada: *${args.title}*`;
@@ -378,38 +407,26 @@ REGLAS OPERATIVAS (prioridad alta):
         return `⚠️ Tarea guardada, pero hubo un error programando la alarma del servidor.`;
       }
 
-      // CRUD genérico sobre la BD.
+      // CRUD genérico sobre la BD. (solo lecturas)
       const AI_COLLECTIONS = ['transactions', 'journal_entries', 'lifestyle', 'accounts', 'library_items', 'syllabus'];
       if (tool.name === 'db_query') {
-        if (!AI_COLLECTIONS.includes(args.collection)) return `⚠️ Colección no permitida.`;
+        if (!AI_COLLECTIONS.includes(args.collection)) return { text: `⚠️ Colección no permitida.` };
         const rows = (await readMine(args.collection))
           .sort((a, b) => (a.createdAt < b.createdAt ? 1 : -1))
           .slice(0, args.limit || (args.collection === 'syllabus' ? 100 : 8));
         if (!rows.length) {
-          // Fallback del temario: si la BD aún no está sembrada, leer el plan de estudio del repo.
           if (args.collection === 'syllabus') {
             const dr = await fetch(`https://${reqHost}/api/read-doc?filepath=PLAN_ESTUDIO.md`);
             const dd = await dr.json();
             if (dd.content) {
               const s = await summarizeToolResult(apiKey, systemPrompt, text, tool, dd.content);
-              if (s) return s;
+              if (s) return { text: s };
             }
           }
-          return `No hay registros en ${args.collection}.`;
+          return { text: `No hay registros en ${args.collection}.` };
         }
-        // Segunda pasada: la IA interpreta/resume los datos en lenguaje natural.
         const summary = await summarizeToolResult(apiKey, systemPrompt, text, tool, JSON.stringify(rows));
-        return summary || `📋 ${args.collection}:\n${rows.map((r) => `• ${r.description || r.title || r.content || r.name || r.id}${r.amount != null ? ` ($${r.amount})` : ''} [id: ${r.id}]`).join('\n')}`;
-      }
-      if (tool.name === 'db_update') {
-        if (!AI_COLLECTIONS.includes(args.collection)) return `⚠️ Colección no permitida.`;
-        await updateDoc(doc(dbNode, args.collection, args.id), { ...args.data, updatedAt: nowIso() });
-        return `✏️ Registro actualizado en ${args.collection}.`;
-      }
-      if (tool.name === 'db_delete') {
-        if (!AI_COLLECTIONS.includes(args.collection)) return `⚠️ Colección no permitida.`;
-        await deleteDoc(doc(dbNode, args.collection, args.id));
-        return `🗑 Registro eliminado de ${args.collection}.`;
+        return { text: summary || `📋 ${args.collection}:\n${rows.map((r) => `• ${r.description || r.title || r.content || r.name || r.id}${r.amount != null ? ` ($${r.amount})` : ''} [id: ${r.id}]`).join('\n')}` };
       }
 
       if (tool.name === 'get_docs_list') {
@@ -417,23 +434,22 @@ REGLAS OPERATIVAS (prioridad alta):
         const d = await r.json();
         const result = JSON.stringify(d.files || d.error || []);
         const summary = await summarizeToolResult(apiKey, systemPrompt, text, tool, result);
-        return summary || `📚 Documentos:\n${(d.files || []).map((f) => `• ${f}`).join('\n')}`;
+        return { text: summary || `📚 Documentos:\n${(d.files || []).map((f) => `• ${f}`).join('\n')}` };
       }
       if (tool.name === 'read_doc_file') {
         const r = await fetch(`https://${reqHost}/api/read-doc?filepath=${encodeURIComponent(args.filepath)}`);
         const d = await r.json();
         const result = d.content || d.error || 'No se pudo leer el archivo.';
         const summary = await summarizeToolResult(apiKey, systemPrompt, text, tool, result);
-        return summary || String(result).slice(0, 3000);
+        return { text: summary || String(result).slice(0, 3000) };
       }
     }
 
-    // Si no usó herramientas, devolver el texto natural que generó
-    return responseMsg.content;
+    return { text: responseMsg.content };
 
   } catch (error) {
     console.error("AI Error:", error);
-    return "⚠️ Hubo un error al pensar la respuesta.";
+    return { text: "⚠️ Hubo un error al pensar la respuesta." };
   }
 }
 
@@ -488,6 +504,73 @@ export default async function handler(req, res) {
 
         await answerCallbackQuery(cb.id, "Pospuesto 1 hora");
         await editMessageText(chatId, messageId, "⏳ *Pospuesto 1 hora*");
+      }
+      else if (data.startsWith('approve_') || data.startsWith('reject_')) {
+        const action = data.split('_')[0];
+        const docId = data.split('_')[1];
+        
+        if (action === 'reject') {
+          await answerCallbackQuery(cb.id, "Acción rechazada");
+          await editMessageText(chatId, messageId, "❌ Acción cancelada por el usuario.");
+          return res.status(200).send('OK');
+        }
+
+        if (action === 'approve') {
+          const docSnap = await getDoc(doc(dbNode, "telegram_proposals", docId));
+          if (!docSnap.exists()) {
+            await answerCallbackQuery(cb.id, "Propuesta no encontrada o ya ejecutada");
+            await editMessageText(chatId, messageId, "⚠️ Propuesta expirada.");
+            return res.status(200).send('OK');
+          }
+
+          const proposal = docSnap.data();
+          const args = proposal.toolArgs;
+          let resultMsg = "✅ Acción ejecutada.";
+
+          try {
+            if (proposal.toolName === 'add_task') {
+              await saveTask(args.title);
+              resultMsg = `✅ Tarea guardada: *${args.title}*`;
+            } else if (proposal.toolName === 'add_transaction') {
+              await saveTransaction({ amount: args.amount, description: args.description, type: args.type });
+              const emoji = args.type === 'expense' ? '💸' : '💰';
+              resultMsg = `${emoji} Transacción guardada: *$${args.amount}* (${args.description})`;
+            } else if (proposal.toolName === 'add_diary_entry') {
+              await saveJournal(args.text);
+              resultMsg = `📖 Diario actualizado exitosamente.`;
+            } else if (proposal.toolName === 'schedule_reminder') {
+              const dbDate = args.date || new Date().toISOString().split('T')[0];
+              const docRef = await saveTask(args.title, { reminderDate: dbDate, reminderTime: args.time, isRecurring: !!args.isRecurring });
+              const endpoint = args.isRecurring ? '/api/schedule-recurring-reminder' : '/api/schedule-exact-reminder';
+              const bodyPayload = args.isRecurring ? { id: docRef.id, title: args.title, time: args.time } : { id: docRef.id, title: args.title, date: dbDate, time: args.time };
+              const schedRes = await fetch(`https://${reqHost}${endpoint}`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(bodyPayload) });
+              if (schedRes.ok) {
+                const schedData = await schedRes.json();
+                if (schedData.success === false) {
+                  resultMsg = `⚠️ Guardé la tarea, pero falló el aviso: ${schedData.error}`;
+                } else {
+                  if (schedData.messageId || schedData.scheduleId) await updateDoc(doc(dbNode, "lifestyle", docRef.id), { reminderId: schedData.messageId || schedData.scheduleId, isRecurring: !!args.isRecurring });
+                  resultMsg = `⏰ Recordatorio programado para las ${args.time}`;
+                }
+              } else {
+                resultMsg = `⚠️ Tarea guardada, falló alarma de servidor.`;
+              }
+            } else if (proposal.toolName === 'db_update') {
+              await updateDoc(doc(dbNode, args.collection, args.id), { ...args.data, updatedAt: nowIso() });
+              resultMsg = `✏️ Registro actualizado en ${args.collection}.`;
+            } else if (proposal.toolName === 'db_delete') {
+              await deleteDoc(doc(dbNode, args.collection, args.id));
+              resultMsg = `🗑 Registro eliminado de ${args.collection}.`;
+            }
+
+            await deleteDoc(doc(dbNode, "telegram_proposals", docId));
+            await answerCallbackQuery(cb.id, "Ejecutado");
+            await editMessageText(chatId, messageId, resultMsg);
+          } catch (e) {
+            await answerCallbackQuery(cb.id, "Error");
+            await editMessageText(chatId, messageId, `⚠️ Error ejecutando: ${e.message}`);
+          }
+        }
       }
       return res.status(200).send('OK');
     }
@@ -743,9 +826,9 @@ Escribe cualquier mensaje normal (sin la /) y lo guardo como tarea o lo interpre
         const aiResponse = await processTextWithAI(text, chatId, req.headers.host);
 
         if (tempMsgId) {
-          await editMessageText(chatId, tempMsgId, aiResponse);
+          await editMessageText(chatId, tempMsgId, aiResponse.text, aiResponse.replyMarkup);
         } else {
-          await sendTelegramMessage(chatId, aiResponse);
+          await sendTelegramMessage(chatId, aiResponse.text, aiResponse.replyMarkup);
         }
         return res.status(200).send('OK');
       }

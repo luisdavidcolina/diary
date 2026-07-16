@@ -249,7 +249,8 @@ REGLAS:
 
     // 2. Registrar costo
     if (data.usage && data.usage.cost) {
-      await logApiCost(data.usage.cost, 'web');
+      const promptPreview = messages.length > 0 ? messages[messages.length - 1].content : '';
+      await logApiCost(data.usage.cost, 'web', data.usage, promptPreview);
     }
 
     const responseMessage = data.choices[0].message;

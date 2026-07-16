@@ -1,7 +1,7 @@
 import { collection, addDoc, getDocs, query, where } from "firebase/firestore/lite";
 import { dbNode } from "./_firebaseNode.js";
 
-const DAILY_LIMIT = 0.10; // $0.10
+const DAILY_LIMIT = 5.00; // $5.00
 
 export async function checkDailyLimit() {
   const today = new Date().toISOString().split('T')[0];
@@ -23,13 +23,24 @@ export async function checkDailyLimit() {
   return { allowed: true, total: totalCost, limit: DAILY_LIMIT };
 }
 
-export async function logApiCost(cost, source) {
+export async function logApiCost(cost, source, usage = null, promptPreview = null) {
   if (!cost || cost <= 0) return;
   const today = new Date().toISOString().split('T')[0];
-  await addDoc(collection(dbNode, "api_usage"), {
+  const payload = {
     cost: parseFloat(cost),
     source,
     date: today,
     createdAt: new Date().toISOString()
-  });
+  };
+  
+  if (usage) {
+    payload.prompt_tokens = usage.prompt_tokens || 0;
+    payload.completion_tokens = usage.completion_tokens || 0;
+    payload.total_tokens = usage.total_tokens || 0;
+  }
+  if (promptPreview) {
+    payload.promptPreview = String(promptPreview).slice(0, 100);
+  }
+
+  await addDoc(collection(dbNode, "api_usage"), payload);
 }
