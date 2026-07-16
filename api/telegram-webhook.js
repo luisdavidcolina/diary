@@ -325,7 +325,7 @@ REGLAS OPERATIVAS (prioridad alta):
     if (data.error) throw new Error(data.error.message || "Error en OpenRouter");
 
     if (data.usage && data.usage.cost) {
-      await logApiCost(data.usage.cost, 'telegram');
+      await logApiCost(data.usage.cost, 'telegram', data.usage, text);
     }
 
     const responseMsg = data?.choices?.[0]?.message;
