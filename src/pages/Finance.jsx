@@ -4,7 +4,7 @@ import {
   deleteTransaction, deleteAccount, getFinanceLimits, saveFinanceLimits, uploadReceiptImage
 } from '../services/db';
 
-const inputStyle = { padding: '0.75rem', borderRadius: '8px', background: 'rgba(0,0,0,0.3)', border: '1px solid var(--glass-border)', color: 'white' };
+const inputStyle = { padding: '0.75rem', borderRadius: '0', background: '#fff', border: '3px solid #000', color: '#000', fontWeight: 600, boxShadow: 'inset 2px 2px 0 rgba(0,0,0,0.1)' };
 
 const FINANCE_CATEGORIES = [
   { id: 'house', label: 'Gastos de casa', icon: '🏠', defaultLimit: 200, color: '#3b82f6' },
@@ -207,9 +207,9 @@ const Finance = () => {
       </header>
 
       {dbError && (
-        <div style={{ padding: '1rem 1.5rem', marginBottom: '2rem', background: 'rgba(239, 68, 68, 0.1)', border: '1px solid rgba(239, 68, 68, 0.3)', borderRadius: '12px', color: '#fca5a5' }}>
+        <div style={{ padding: '1rem 1.5rem', marginBottom: '2rem', background: '#fca5a5', border: '3px solid #000', borderRadius: '0', color: '#000', boxShadow: '4px 4px 0 #000' }}>
            <strong>Error de Conexión:</strong> {dbError}
-           <p style={{ fontSize: '0.85rem', marginTop: '0.5rem', color: '#f87171' }}>Sugerencia: Si usas bloqueadores de anuncios (ej. Brave Shields), intenta desactivarlos para esta página.</p>
+           <p style={{ fontSize: '0.85rem', marginTop: '0.5rem', color: '#000', fontWeight: 600 }}>Sugerencia: Si usas bloqueadores de anuncios (ej. Brave Shields), intenta desactivarlos para esta página.</p>
         </div>
       )}
 
@@ -238,9 +238,9 @@ const Finance = () => {
           <h2>Presupuesto Mensual por Categorías</h2>
           <button 
             onClick={() => { setTempLimits(limits); setShowLimitsModal(true); }}
-            style={{ background: 'var(--glass-border)', color: 'white', border: 'none', padding: '0.5rem 1rem', borderRadius: '8px', cursor: 'pointer', transition: 'background 0.2s' }}
-            onMouseOver={(e) => e.target.style.background = 'rgba(255,255,255,0.1)'}
-            onMouseOut={(e) => e.target.style.background = 'var(--glass-border)'}
+            style={{ background: '#000', color: 'white', border: '3px solid #000', padding: '0.5rem 1rem', borderRadius: '0', cursor: 'pointer', transition: 'transform 0.15s', boxShadow: '2px 2px 0 #000' }}
+            onMouseOver={(e) => { e.target.style.transform = 'translate(1px, 1px)'; e.target.style.boxShadow = '1px 1px 0 #000'; }}
+            onMouseOut={(e) => { e.target.style.transform = 'none'; e.target.style.boxShadow = '2px 2px 0 #000'; }}
           >
             ⚙️ Ajustar Límites
           </button>
@@ -265,11 +265,11 @@ const Finance = () => {
                     ${spent.toFixed(2)} / ${limit.toFixed(2)}
                   </span>
                 </div>
-                <div style={{ height: '10px', background: 'rgba(255,255,255,0.08)', borderRadius: '6px', overflow: 'hidden' }}>
+                <div style={{ height: '14px', background: '#ddd', borderRadius: '0', overflow: 'hidden', border: '2px solid #000' }}>
                   <div style={{
                     width: `${Math.min(100, ratio * 100)}%`, height: '100%',
                     background: over ? '#ef4444' : cat.color, transition: 'width 0.6s ease',
-                    boxShadow: over ? '0 0 8px #ef4444' : 'none'
+                    borderRight: '2px solid #000'
                   }} />
                 </div>
               </div>
@@ -288,11 +288,11 @@ const Finance = () => {
             <option value="USD">Dólares (USD/USDT)</option>
           </select>
           <input type="number" step="0.01" placeholder="Saldo Actual" value={accBalance} onChange={(e) => setAccBalance(e.target.value)} required style={{ ...inputStyle, flex: 1, minWidth: '120px' }} />
-          <button type="submit" style={{ background: 'var(--accent-color)', color: 'white', border: 'none', padding: '0.75rem 1.5rem', borderRadius: '8px', fontWeight: 'bold', cursor: 'pointer' }}>
+          <button type="submit" style={{ background: 'var(--brutal-yellow)', color: '#000', border: '3px solid #000', padding: '0.75rem 1.5rem', borderRadius: '0', fontWeight: '900', boxShadow: '4px 4px 0 #000', cursor: 'pointer' }}>
             {editingId ? 'Guardar cambios' : '+ Añadir'}
           </button>
           {editingId && (
-            <button type="button" onClick={cancelEdit} style={{ background: 'transparent', color: 'var(--text-secondary)', border: '1px solid var(--glass-border)', padding: '0.75rem 1rem', borderRadius: '8px', cursor: 'pointer' }}>
+            <button type="button" onClick={cancelEdit} style={{ background: '#fff', color: '#000', border: '3px solid #000', padding: '0.75rem 1rem', borderRadius: '0', fontWeight: '900', boxShadow: '4px 4px 0 #000', cursor: 'pointer' }}>
               Cancelar
             </button>
           )}
@@ -301,7 +301,7 @@ const Finance = () => {
         <div className="grid">
           {accounts.length === 0 && <p style={{ color: 'var(--text-secondary)' }}>Aún no tienes cuentas registradas.</p>}
           {accounts.map((acc) => (
-            <div key={acc.id} style={{ padding: '1rem', background: 'rgba(255,255,255,0.05)', borderRadius: '8px', borderLeft: `4px solid ${acc.currency === 'USD' ? 'var(--color-security)' : 'var(--color-cloud)'}`, position: 'relative' }}>
+            <div key={acc.id} style={{ padding: '1rem', background: '#fff', borderRadius: '0', border: '3px solid #000', borderLeft: `8px solid ${acc.currency === 'USD' ? 'var(--color-security)' : 'var(--color-cloud)'}`, position: 'relative', boxShadow: '4px 4px 0 #000' }}>
               <div style={{ position: 'absolute', top: '0.5rem', right: '0.5rem', display: 'flex', gap: '0.4rem' }}>
                 <button onClick={() => startEdit(acc)} title="Editar" style={{ background: 'transparent', border: 'none', color: 'var(--text-secondary)', cursor: 'pointer' }}>✏️</button>
                 <button onClick={() => handleDeleteAccount(acc.id)} title="Eliminar" style={{ background: 'transparent', border: 'none', color: 'var(--text-secondary)', cursor: 'pointer' }}>🗑</button>
@@ -322,7 +322,7 @@ const Finance = () => {
           <h2>Registrar Transacción</h2>
           <form onSubmit={handleAddTransaction} style={{ display: 'flex', flexDirection: 'column', gap: '1rem', marginTop: '1rem' }}>
             <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
-              <label style={{ cursor: 'pointer', background: 'rgba(255,255,255,0.1)', padding: '0.75rem', borderRadius: '8px', fontSize: '0.9rem', color: 'var(--text-secondary)', display: 'flex', alignItems: 'center', gap: '0.5rem', transition: 'background 0.2s' }} onMouseOver={e=>e.currentTarget.style.background='rgba(255,255,255,0.2)'} onMouseOut={e=>e.currentTarget.style.background='rgba(255,255,255,0.1)'}>
+              <label style={{ cursor: 'pointer', background: 'var(--brutal-blue)', border: '3px solid #000', padding: '0.75rem', borderRadius: '0', fontSize: '0.9rem', color: '#000', fontWeight: 900, display: 'flex', alignItems: 'center', gap: '0.5rem', boxShadow: '2px 2px 0 #000' }}>
                 {isProcessingReceipt ? '⏳ Analizando...' : '📷 Escanear Comprobante (IA)'}
                 <input type="file" accept="image/*" onChange={handleFileUpload} style={{ display: 'none' }} disabled={isProcessingReceipt} />
               </label>
@@ -342,7 +342,7 @@ const Finance = () => {
               <input type="number" step="0.01" placeholder="Monto ($)" value={amount} onChange={(e) => setAmount(e.target.value)} required style={{ ...inputStyle, flex: 1, minWidth: '100px' }} />
             </div>
             <input type="text" placeholder="Descripción (ej. Café, Transporte)" value={desc} onChange={(e) => setDesc(e.target.value)} required style={{ ...inputStyle, width: '100%' }} />
-            <button type="submit" style={{ background: type === 'expense' ? '#ef4444' : '#10b981', color: 'white', border: 'none', padding: '0.75rem', borderRadius: '8px', fontWeight: 'bold', cursor: 'pointer' }}>
+            <button type="submit" style={{ background: type === 'expense' ? 'var(--brutal-pink)' : 'var(--brutal-green)', color: '#000', border: '3px solid #000', padding: '0.75rem', borderRadius: '0', fontWeight: '900', boxShadow: '4px 4px 0 #000', cursor: 'pointer' }}>
               Guardar
             </button>
           </form>
@@ -353,7 +353,7 @@ const Finance = () => {
           <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', marginTop: '1rem' }}>
             {transactions.length === 0 && <p style={{ color: 'var(--text-secondary)' }}>No hay transacciones aún.</p>}
             {transactions.map((t) => (
-              <div key={t.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '0.5rem', padding: '0.75rem', background: 'rgba(255,255,255,0.05)', borderRadius: '8px', borderLeft: `4px solid ${t.type === 'expense' ? '#ef4444' : '#10b981'}` }}>
+              <div key={t.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '0.5rem', padding: '0.75rem', background: '#fff', borderRadius: '0', border: '3px solid #000', borderLeft: `8px solid ${t.type === 'expense' ? '#ef4444' : '#10b981'}`, boxShadow: '2px 2px 0 #000' }}>
                 <span style={{ flex: 1 }}>
                   {t.description}
                   {t.type === 'expense' && t.category && (

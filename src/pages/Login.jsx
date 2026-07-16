@@ -58,13 +58,13 @@ const Login = () => {
         <p style={{ color: 'var(--text-secondary)', marginBottom: '2rem' }}>Sistema Operativo Personal</p>
         
         {error && (
-          <div style={{ background: 'rgba(239, 68, 68, 0.2)', color: '#ef4444', padding: '0.75rem', borderRadius: '8px', marginBottom: '1rem' }}>
+          <div style={{ background: '#fca5a5', color: '#000', padding: '0.75rem', borderRadius: '0', marginBottom: '1rem', border: '3px solid #000', fontWeight: 600 }}>
             {error}
           </div>
         )}
 
         {message && (
-          <div style={{ background: 'rgba(16, 185, 129, 0.2)', color: '#10b981', padding: '0.75rem', borderRadius: '8px', marginBottom: '1rem' }}>
+          <div style={{ background: 'var(--brutal-green)', color: '#000', padding: '0.75rem', borderRadius: '0', marginBottom: '1rem', border: '3px solid #000', fontWeight: 600 }}>
             {message}
           </div>
         )}
@@ -79,11 +79,13 @@ const Login = () => {
             style={{
               width: '100%',
               padding: '1rem',
-              borderRadius: '8px',
-              background: 'rgba(0,0,0,0.3)',
-              border: '1px solid var(--glass-border)',
-              color: 'white',
-              fontFamily: 'inherit'
+              borderRadius: '0',
+              background: '#fff',
+              border: '3px solid #000',
+              color: '#000',
+              fontFamily: 'inherit',
+              fontWeight: 600,
+              boxShadow: 'inset 2px 2px 0 rgba(0,0,0,0.1)'
             }}
           />
           <input 
@@ -95,11 +97,13 @@ const Login = () => {
             style={{
               width: '100%',
               padding: '1rem',
-              borderRadius: '8px',
-              background: 'rgba(0,0,0,0.3)',
-              border: '1px solid var(--glass-border)',
-              color: 'white',
-              fontFamily: 'inherit'
+              borderRadius: '0',
+              background: '#fff',
+              border: '3px solid #000',
+              color: '#000',
+              fontFamily: 'inherit',
+              fontWeight: 600,
+              boxShadow: 'inset 2px 2px 0 rgba(0,0,0,0.1)'
             }}
           />
           
@@ -107,15 +111,16 @@ const Login = () => {
             type="submit"
             disabled={loading}
             style={{
-              background: 'var(--accent-color)',
-              color: 'white',
-              border: 'none',
+              background: 'var(--brutal-yellow)',
+              color: '#000',
+              border: '3px solid #000',
               padding: '1rem',
-              borderRadius: '8px',
-              fontWeight: 'bold',
+              borderRadius: '0',
+              fontWeight: '900',
               cursor: loading ? 'not-allowed' : 'pointer',
               marginTop: '0.5rem',
-              transition: 'opacity 0.2s'
+              boxShadow: '4px 4px 0 #000',
+              transition: 'transform 0.15s, box-shadow 0.15s'
             }}
           >
             {loading ? 'Procesando...' : 'Entrar al Diario'}

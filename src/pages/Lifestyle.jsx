@@ -407,10 +407,10 @@ const Lifestyle = () => {
       {loading ? (
         <p style={{ color: 'var(--text-secondary)' }}>Cargando…</p>
       ) : dbError ? (
-        <div style={{ padding: '2rem', background: 'rgba(239, 68, 68, 0.1)', border: '1px solid rgba(239, 68, 68, 0.3)', borderRadius: '12px', color: '#fca5a5' }}>
-           <h3>Error de Conexión</h3>
-           <p style={{ marginTop: '0.5rem' }}>{dbError}</p>
-           <p style={{ fontSize: '0.85rem', marginTop: '1rem', color: '#f87171' }}>Sugerencia: Si usas Brave u otro bloqueador de anuncios, intenta desactivar los escudos para esta página, ya que pueden bloquear la base de datos.</p>
+        <div style={{ padding: '2rem', background: '#fca5a5', border: '3px solid #000', borderRadius: '0', color: '#000', boxShadow: '4px 4px 0 #000' }}>
+           <h3 style={{ fontWeight: 900 }}>Error de Conexión</h3>
+           <p style={{ marginTop: '0.5rem', fontWeight: 600 }}>{dbError}</p>
+           <p style={{ fontSize: '0.85rem', marginTop: '1rem', color: '#000', fontWeight: 600 }}>Sugerencia: Si usas Brave u otro bloqueador de anuncios, intenta desactivar los escudos para esta página, ya que pueden bloquear la base de datos.</p>
         </div>
       ) : (
         <>
@@ -452,14 +452,14 @@ const Lifestyle = () => {
               >
                 <h3 style={{ marginBottom: '1.25rem', color: 'var(--color-security)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                   Por Hacer
-                  <span style={{ fontSize: '0.8rem', background: 'rgba(255,255,255,0.1)', padding: '0.2rem 0.6rem', borderRadius: '12px', color: 'white' }}>
+                  <span style={{ fontSize: '0.8rem', background: '#000', padding: '0.2rem 0.6rem', borderRadius: '0', color: '#fff', fontWeight: 900, border: '2px solid #000' }}>
                     {reminders.filter(r => !r.isCompleted).length}
                   </span>
                 </h3>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
                   {reminders.filter(r => !r.isCompleted).map(renderCard)}
                   {reminders.filter(r => !r.isCompleted).length === 0 && (
-                     <div style={{ border: '1px dashed var(--glass-border)', padding: '2rem', textAlign: 'center', color: 'var(--text-secondary)', borderRadius: '12px' }}>Arrastra tarjetas aquí</div>
+                     <div style={{ border: '3px dashed #000', padding: '2rem', textAlign: 'center', color: '#000', fontWeight: 600, borderRadius: '0' }}>Arrastra tarjetas aquí</div>
                   )}
                 </div>
               </div>
@@ -473,7 +473,7 @@ const Lifestyle = () => {
               >
                 <h3 style={{ marginBottom: '1.25rem', color: 'var(--color-cloud)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                   Completados
-                  <span style={{ fontSize: '0.8rem', background: 'rgba(255,255,255,0.1)', padding: '0.2rem 0.6rem', borderRadius: '12px', color: 'white' }}>
+                  <span style={{ fontSize: '0.8rem', background: '#000', padding: '0.2rem 0.6rem', borderRadius: '0', color: '#fff', fontWeight: 900, border: '2px solid #000' }}>
                     {reminders.filter(r => r.isCompleted).length}
                   </span>
                 </h3>

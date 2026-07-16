@@ -75,11 +75,12 @@ const Journal = () => {
                 key={mood.label}
                 onClick={() => setSelectedMood(mood)}
                 style={{
-                  background: selectedMood.label === mood.label ? 'rgba(255,255,255,0.15)' : 'transparent',
-                  border: `1px solid ${selectedMood.label === mood.label ? 'var(--accent-color)' : 'var(--glass-border)'}`,
+                  background: selectedMood.label === mood.label ? 'var(--brutal-yellow)' : 'transparent',
+                  border: `3px solid ${selectedMood.label === mood.label ? '#000' : 'transparent'}`,
                   padding: '0.5rem 1rem',
-                  borderRadius: '20px',
-                  color: 'white',
+                  borderRadius: '0',
+                  color: '#000',
+                  fontWeight: 900,
                   cursor: 'pointer',
                   display: 'flex',
                   alignItems: 'center',
@@ -102,11 +103,13 @@ const Journal = () => {
             style={{
               width: '100%',
               padding: '1.5rem',
-              borderRadius: '12px',
-              background: 'rgba(0,0,0,0.4)',
-              border: '1px solid var(--glass-border)',
-              color: 'white',
+              borderRadius: '0',
+              background: '#fff',
+              border: '3px solid #000',
+              boxShadow: 'inset 4px 4px 0 rgba(0,0,0,0.05)',
+              color: '#000',
               fontFamily: 'inherit',
+              fontWeight: 600,
               fontSize: '1.1rem',
               lineHeight: '1.6',
               resize: 'vertical'
@@ -118,12 +121,13 @@ const Journal = () => {
               type="submit" 
               disabled={loading}
               style={{ 
-                background: 'var(--accent-color)', 
-                color: 'white', 
-                border: 'none', 
+                background: 'var(--brutal-blue)', 
+                color: '#000', 
+                border: '3px solid #000', 
                 padding: '0.75rem 2rem', 
-                borderRadius: '8px', 
-                fontWeight: 'bold', 
+                borderRadius: '0', 
+                fontWeight: '900', 
+                boxShadow: '4px 4px 0 #000',
                 cursor: loading ? 'not-allowed' : 'pointer',
                 opacity: loading ? 0.7 : 1
               }}
@@ -136,9 +140,9 @@ const Journal = () => {
 
       {/* Línea de Tiempo (Feed) */}
       <div>
-        <h2 style={{ marginBottom: '1.5rem', color: 'var(--color-cloud)' }}>Historial de Reflexiones</h2>
+        <h2 style={{ marginBottom: '1.5rem', color: '#000' }}>Historial de Reflexiones</h2>
         <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
-          {entries.length === 0 && <p style={{ color: 'var(--text-secondary)' }}>No has escrito nada aún. ¡Empieza hoy!</p>}
+          {entries.length === 0 && <p style={{ color: '#000', fontWeight: 600 }}>No has escrito nada aún. ¡Empieza hoy!</p>}
           
           {entries.map(entry => (
             <div key={entry.id} className="glass-panel" style={{ position: 'relative' }}>

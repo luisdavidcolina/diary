@@ -100,12 +100,12 @@ const Library = () => {
               placeholder="Enlace (URL) - Opcional"
               value={url}
               onChange={handleUrlChange}
-              style={{ flex: 1, minWidth: '200px', padding: '0.75rem', borderRadius: '8px', background: 'rgba(0,0,0,0.3)', border: '1px solid var(--glass-border)', color: 'white' }}
+              style={{ flex: 1, minWidth: '200px', padding: '0.75rem', borderRadius: '0', background: '#fff', border: '3px solid #000', color: '#000', fontWeight: 600, boxShadow: 'inset 2px 2px 0 rgba(0,0,0,0.1)' }}
             />
             <select 
               value={type} 
               onChange={(e) => setType(e.target.value)}
-              style={{ padding: '0.75rem', borderRadius: '8px', background: 'rgba(0,0,0,0.3)', border: '1px solid var(--glass-border)', color: 'white' }}
+              style={{ padding: '0.75rem', borderRadius: '0', background: '#fff', border: '3px solid #000', color: '#000', fontWeight: 600, boxShadow: 'inset 2px 2px 0 rgba(0,0,0,0.1)' }}
             >
               <option value="article">📄 Artículo</option>
               <option value="video">▶️ Video</option>
@@ -121,9 +121,9 @@ const Library = () => {
               value={title}
               onChange={(e) => setTitle(e.target.value)}
               required
-              style={{ flex: 3, minWidth: '200px', padding: '0.75rem', borderRadius: '8px', background: 'rgba(0,0,0,0.3)', border: '1px solid var(--glass-border)', color: 'white' }}
+              style={{ flex: 3, minWidth: '200px', padding: '0.75rem', borderRadius: '0', background: '#fff', border: '3px solid #000', color: '#000', fontWeight: 600, boxShadow: 'inset 2px 2px 0 rgba(0,0,0,0.1)' }}
             />
-            <button type="submit" disabled={loading} style={{ flex: 1, background: 'var(--accent-color)', color: 'white', border: 'none', padding: '0.75rem', borderRadius: '8px', fontWeight: 'bold', cursor: loading ? 'not-allowed' : 'pointer' }}>
+            <button type="submit" disabled={loading} style={{ flex: 1, background: 'var(--brutal-yellow)', color: '#000', border: '3px solid #000', padding: '0.75rem', borderRadius: '0', fontWeight: '900', boxShadow: '4px 4px 0 #000', cursor: loading ? 'not-allowed' : 'pointer' }}>
               + Guardar
             </button>
           </div>
@@ -200,13 +200,12 @@ const Library = () => {
               style={{
                 width: '100%',
                 padding: '0.5rem',
-                borderRadius: '8px',
-                border: `1px solid ${item.status === 'unread' ? 'var(--color-security)' : 'var(--text-secondary)'}`,
-                background: item.status === 'unread' ? 'rgba(16, 185, 129, 0.1)' : 'transparent',
-                color: item.status === 'unread' ? 'var(--color-security)' : 'var(--text-secondary)',
+                border: '2px solid #000',
+                background: '#fff',
+                color: '#000',
                 cursor: 'pointer',
                 fontWeight: 'bold',
-                transition: 'all 0.2s'
+                boxShadow: '2px 2px 0 #000'
               }}
             >
               {item.status === 'unread' ? '✓ Marcar como Leído' : '↩ Volver a Por Consumir'}
