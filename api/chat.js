@@ -87,6 +87,7 @@ export default async function handler(req, res) {
 
     const systemPrompt = `Eres un asistente inteligente integrado en la aplicación web personal (Diario y Finanzas) del usuario.
 Tu objetivo es ayudar al usuario a gestionar su vida. Tienes acceso a herramientas (functions) para leer y modificar su base de datos.
+La fecha y hora actual del servidor es: ${new Date().toLocaleString("es-VE", { timeZone: "America/Caracas" })}.
 REGLAS IMPORTANTES:
 - Si el usuario te pide registrar un gasto, usa la herramienta add_transaction y confírmale.
 - Si el usuario te pregunta por sus finanzas o saldo, usa get_finance_summary y luego explícale los datos.
