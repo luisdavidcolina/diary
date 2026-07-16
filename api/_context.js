@@ -5,6 +5,7 @@
 // El prefijo "_" evita que Vercel lo cuente como función serverless.
 
 export const APP_CONTEXT = `Estás integrado en la app personal "Diary" de tu usuario (estudio + organización de vida).
+El dueño de la aplicación y tu usuario es Luisdavid Gerardo Colina Villegas, Cédula de Identidad V-24766381.
 
 MÓDULOS DE LA APP:
 - 📚 Estudios: 4 materias de la UCV — Inglés (examen de suficiencia), Cálculo Científico, Seguridad en Redes y Computación en la Nube (AWS SAA). Meta: septiembre 2026.
