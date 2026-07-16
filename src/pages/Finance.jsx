@@ -42,6 +42,7 @@ const Finance = () => {
   const [accNumber, setAccNumber] = useState('');
   const [editingId, setEditingId] = useState(null);
   const [dbError, setDbError] = useState(null);
+  const [isAccountsExpanded, setIsAccountsExpanded] = useState(false);
 
   useEffect(() => {
     window.importMyAccounts = async () => {
@@ -201,8 +202,16 @@ const Finance = () => {
       if (rates.binance) totalBS += usdValue * rates.binance;
     } else {
       totalBS += acc.balance;
-      if (rates.bcv) totalUSD += acc.balance / rates.bcv;
+      const bsRate = rates.binance || rates.bcv || 1;
+      totalUSD += acc.balance / bsRate;
     }
+  });
+
+  // Ordenar cuentas por su valor real equivalente en USD (de mayor a menor)
+  const sortedAccounts = [...accounts].sort((a, b) => {
+    const valA = a.currency === 'USD' ? a.balance : (a.currency === 'PEN' ? a.balance / 3.75 : a.balance / (rates.binance || rates.bcv || 1));
+    const valB = b.currency === 'USD' ? b.balance : (b.currency === 'PEN' ? b.balance / 3.75 : b.balance / (rates.binance || rates.bcv || 1));
+    return valB - valA;
   });
 
   // --- Resumen del mes actual (desde transacciones, en USD) ---
@@ -297,43 +306,58 @@ const Finance = () => {
 
       {/* CUENTAS Y WALLETS */}
       <div className="glass-panel" style={{ marginBottom: '2rem', padding: '1.5rem' }}>
-        <h2>{editingId ? 'Editar cuenta' : 'Mis Cuentas y Wallets'}</h2>
-        <form onSubmit={handleSaveAccount} style={{ display: 'flex', gap: '1rem', marginTop: '1rem', marginBottom: '1.5rem', flexWrap: 'wrap' }}>
-          <input type="text" placeholder="Nombre (ej. Mercantil, Binance)" value={accName} onChange={(e) => setAccName(e.target.value)} required style={{ ...inputStyle, flex: 2, minWidth: '160px' }} />
-          <input type="text" placeholder="Nro de cuenta (opcional)" value={accNumber} onChange={(e) => setAccNumber(e.target.value)} style={{ ...inputStyle, flex: 2, minWidth: '200px' }} />
-          <select value={accCurrency} onChange={(e) => setAccCurrency(e.target.value)} style={{ ...inputStyle, flex: 1 }}>
-            <option value="BS">Bolívares (BS)</option>
-            <option value="USD">Dólares (USD/USDT)</option>
-            <option value="PEN">Soles (PEN)</option>
-          </select>
-          <input type="number" step="0.01" placeholder="Saldo Actual" value={accBalance} onChange={(e) => setAccBalance(e.target.value)} required style={{ ...inputStyle, flex: 1, minWidth: '120px' }} />
-          <button type="submit" style={{ background: 'var(--brutal-yellow)', color: '#000', border: '3px solid #000', padding: '0.75rem 1.5rem', borderRadius: '0', fontWeight: '900', boxShadow: '4px 4px 0 #000', cursor: 'pointer' }}>
-            {editingId ? 'Guardar cambios' : '+ Añadir'}
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '0.5rem' }}>
+          <h2>{editingId ? 'Editar cuenta' : 'Mis Cuentas y Wallets'}</h2>
+          <button 
+            onClick={() => setIsAccountsExpanded(!isAccountsExpanded)}
+            style={{ background: 'var(--brutal-blue)', color: '#000', border: '3px solid #000', padding: '0.5rem 1rem', borderRadius: '0', fontWeight: '900', boxShadow: '2px 2px 0 #000', cursor: 'pointer', transition: 'transform 0.15s' }}
+            onMouseOver={(e) => { e.target.style.transform = 'translate(1px, 1px)'; e.target.style.boxShadow = '1px 1px 0 #000'; }}
+            onMouseOut={(e) => { e.target.style.transform = 'none'; e.target.style.boxShadow = '2px 2px 0 #000'; }}
+          >
+            {isAccountsExpanded ? '▲ Contraer' : '▼ Expandir cuentas'}
           </button>
-          {editingId && (
-            <button type="button" onClick={cancelEdit} style={{ background: '#fff', color: '#000', border: '3px solid #000', padding: '0.75rem 1rem', borderRadius: '0', fontWeight: '900', boxShadow: '4px 4px 0 #000', cursor: 'pointer' }}>
-              Cancelar
-            </button>
-          )}
-        </form>
-
-        <div className="grid">
-          {accounts.length === 0 && <p style={{ color: 'var(--text-secondary)' }}>Aún no tienes cuentas registradas.</p>}
-          {accounts.map((acc) => (
-            <div key={acc.id} style={{ padding: '1rem', background: '#fff', borderRadius: '0', border: '3px solid #000', borderLeft: `8px solid ${acc.currency === 'USD' ? 'var(--color-security)' : 'var(--color-cloud)'}`, position: 'relative', boxShadow: '4px 4px 0 #000' }}>
-              <div style={{ position: 'absolute', top: '0.5rem', right: '0.5rem', display: 'flex', gap: '0.4rem' }}>
-                <button onClick={() => startEdit(acc)} title="Editar" style={{ background: 'transparent', border: 'none', color: 'var(--text-secondary)', cursor: 'pointer' }}>✏️</button>
-                <button onClick={() => handleDeleteAccount(acc.id)} title="Eliminar" style={{ background: 'transparent', border: 'none', color: 'var(--text-secondary)', cursor: 'pointer' }}>🗑</button>
-              </div>
-              <div style={{ color: '#000', fontSize: '0.95rem', marginBottom: '0.2rem', fontWeight: '900' }}>{acc.name}</div>
-              {acc.accountNumber && <div style={{ fontSize: '0.8rem', color: '#000', marginBottom: '0.5rem', background: '#eee', padding: '0.2rem', display: 'inline-block', border: '1px solid #000', fontWeight: '600' }}>{acc.accountNumber}</div>}
-              <div style={{ fontSize: '1.5rem', fontWeight: 'bold' }}>{acc.currency === 'USD' ? '$' : acc.currency === 'PEN' ? 'S/' : 'Bs. '}{acc.balance.toFixed(2)}</div>
-              <div style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', marginTop: '0.2rem' }}>
-                ≈ {acc.currency === 'USD' ? `Bs. ${(acc.balance * rates.binance).toFixed(2)}` : acc.currency === 'PEN' ? `Bs. ${((acc.balance / 3.75) * rates.binance).toFixed(2)}` : `$${rates.bcv ? (acc.balance / rates.bcv).toFixed(2) : 0}`}
-              </div>
-            </div>
-          ))}
         </div>
+
+        {isAccountsExpanded && (
+          <>
+            <form onSubmit={handleSaveAccount} style={{ display: 'flex', gap: '1rem', marginTop: '1rem', marginBottom: '1.5rem', flexWrap: 'wrap' }}>
+              <input type="text" placeholder="Nombre (ej. Mercantil, Binance)" value={accName} onChange={(e) => setAccName(e.target.value)} required style={{ ...inputStyle, flex: 2, minWidth: '160px' }} />
+              <input type="text" placeholder="Nro de cuenta (opcional)" value={accNumber} onChange={(e) => setAccNumber(e.target.value)} style={{ ...inputStyle, flex: 2, minWidth: '200px' }} />
+              <select value={accCurrency} onChange={(e) => setAccCurrency(e.target.value)} style={{ ...inputStyle, flex: 1 }}>
+                <option value="BS">Bolívares (BS)</option>
+                <option value="USD">Dólares (USD/USDT)</option>
+                <option value="PEN">Soles (PEN)</option>
+              </select>
+              <input type="number" step="0.01" placeholder="Saldo Actual" value={accBalance} onChange={(e) => setAccBalance(e.target.value)} required style={{ ...inputStyle, flex: 1, minWidth: '120px' }} />
+              <button type="submit" style={{ background: 'var(--brutal-yellow)', color: '#000', border: '3px solid #000', padding: '0.75rem 1.5rem', borderRadius: '0', fontWeight: '900', boxShadow: '4px 4px 0 #000', cursor: 'pointer' }}>
+                {editingId ? 'Guardar cambios' : '+ Añadir'}
+              </button>
+              {editingId && (
+                <button type="button" onClick={cancelEdit} style={{ background: '#fff', color: '#000', border: '3px solid #000', padding: '0.75rem 1rem', borderRadius: '0', fontWeight: '900', boxShadow: '4px 4px 0 #000', cursor: 'pointer' }}>
+                  Cancelar
+                </button>
+              )}
+            </form>
+
+            <div className="grid">
+              {sortedAccounts.length === 0 && <p style={{ color: 'var(--text-secondary)' }}>Aún no tienes cuentas registradas.</p>}
+              {sortedAccounts.map((acc) => (
+                <div key={acc.id} style={{ padding: '1rem', background: '#fff', borderRadius: '0', border: '3px solid #000', borderLeft: `8px solid ${acc.currency === 'USD' ? 'var(--color-security)' : 'var(--color-cloud)'}`, position: 'relative', boxShadow: '4px 4px 0 #000' }}>
+                  <div style={{ position: 'absolute', top: '0.5rem', right: '0.5rem', display: 'flex', gap: '0.4rem' }}>
+                    <button onClick={() => startEdit(acc)} title="Editar" style={{ background: 'transparent', border: 'none', color: 'var(--text-secondary)', cursor: 'pointer' }}>✏️</button>
+                    <button onClick={() => handleDeleteAccount(acc.id)} title="Eliminar" style={{ background: 'transparent', border: 'none', color: 'var(--text-secondary)', cursor: 'pointer' }}>🗑</button>
+                  </div>
+                  <div style={{ color: '#000', fontSize: '0.95rem', marginBottom: '0.2rem', fontWeight: '900' }}>{acc.name}</div>
+                  {acc.accountNumber && <div style={{ fontSize: '0.8rem', color: '#000', marginBottom: '0.5rem', background: '#eee', padding: '0.2rem', display: 'inline-block', border: '1px solid #000', fontWeight: '600' }}>{acc.accountNumber}</div>}
+                  <div style={{ fontSize: '1.5rem', fontWeight: 'bold' }}>{acc.currency === 'USD' ? '$' : acc.currency === 'PEN' ? 'S/' : 'Bs. '}{acc.balance.toFixed(2)}</div>
+                  <div style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', marginTop: '0.2rem' }}>
+                    ≈ {acc.currency === 'USD' ? `Bs. ${(acc.balance * rates.binance).toFixed(2)}` : acc.currency === 'PEN' ? `Bs. ${((acc.balance / 3.75) * rates.binance).toFixed(2)}` : `$${rates.binance ? (acc.balance / rates.binance).toFixed(2) : 0}`}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </>
+        )}
       </div>
 
       {/* TRANSACCIONES */}
