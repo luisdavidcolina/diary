@@ -289,7 +289,10 @@ Ejemplo: \`/recordar 15:30 Llamar al banco\`
 \`/ingreso [monto] [concepto]\` - Ej: \`/ingreso 500 Sueldo\`
 
 *📖 Diario:*
-\`/diario [texto]\` - Ej: \`/diario Hoy fue un gran día...\``;
+\`/diario [texto]\` - Ej: \`/diario Hoy fue un gran día...\`
+
+*🤖 IA:*
+\`/creditos\` - Muestra el saldo consumido de la API\``;
       }
       else if (text.startsWith('/recordar ')) {
         const rawCommand = text.replace('/recordar ', '').trim();
