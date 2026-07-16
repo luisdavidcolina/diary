@@ -21,6 +21,8 @@ const Finance = () => {
 
   const [transactions, setTransactions] = useState([]);
   const [accounts, setAccounts] = useState([]);
+
+  const formatNum = (val) => new Intl.NumberFormat('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(parseFloat(val) || 0);
   
   // Limites
   const [limits, setLimits] = useState({});
@@ -248,17 +250,17 @@ const Finance = () => {
       <div className="grid" style={{ marginBottom: '2rem' }}>
         <div className="glass-panel" style={{ textAlign: 'center', borderColor: 'var(--accent-color)', gridColumn: '1 / -1', padding: '1.5rem' }}>
           <h2 style={{ color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '2px', fontSize: '1rem' }}>Patrimonio Neto Total</h2>
-          <h1 style={{ fontSize: '3rem', margin: '0.5rem 0', color: 'var(--accent-color)' }}>${totalUSD.toFixed(2)}</h1>
-          <span style={{ fontSize: '1rem', color: 'var(--text-secondary)' }}>≈ Bs. {totalBS.toFixed(2)}</span>
+          <h1 style={{ fontSize: '3rem', margin: '0.5rem 0', color: 'var(--accent-color)' }}>${formatNum(totalUSD)}</h1>
+          <span style={{ fontSize: '1rem', color: 'var(--text-secondary)' }}>≈ Bs. {formatNum(totalBS)}</span>
         </div>
         <div className="glass-panel" style={{ textAlign: 'center', borderColor: 'var(--color-cloud)', padding: '1.5rem' }}>
           <h3 style={{ color: 'var(--text-secondary)' }}>Tasa BCV</h3>
-          <h2 style={{ fontSize: '1.5rem', margin: '0.5rem 0' }}>{loadingRates ? 'Cargando...' : `Bs. ${rates.bcv.toFixed(2)}`}</h2>
+          <h2 style={{ fontSize: '1.5rem', margin: '0.5rem 0' }}>{loadingRates ? 'Cargando...' : `Bs. ${formatNum(rates.bcv)}`}</h2>
           <span style={{ fontSize: '0.8rem', color: 'var(--color-cloud)' }}>Oficial</span>
         </div>
         <div className="glass-panel" style={{ textAlign: 'center', borderColor: 'var(--color-security)', padding: '1.5rem' }}>
           <h3 style={{ color: 'var(--text-secondary)' }}>Binance P2P</h3>
-          <h2 style={{ fontSize: '1.5rem', margin: '0.5rem 0' }}>{loadingRates ? 'Cargando...' : `Bs. ${rates.binance.toFixed(2)}`}</h2>
+          <h2 style={{ fontSize: '1.5rem', margin: '0.5rem 0' }}>{loadingRates ? 'Cargando...' : `Bs. ${formatNum(rates.binance)}`}</h2>
           <span style={{ fontSize: '0.8rem', color: 'var(--color-security)' }}>Promedio</span>
         </div>
       </div>
@@ -277,9 +279,9 @@ const Finance = () => {
           </button>
         </div>
         <div style={{ color: 'var(--text-secondary)', marginTop: '0.5rem' }}>
-          Ingresos: <strong style={{ color: '#10b981' }}>${income.toFixed(2)}</strong> · Gastos:{' '}
-          <strong style={{ color: '#ef4444' }}>${expenses.toFixed(2)}</strong> · Balance:{' '}
-          <strong style={{ color: income - expenses >= 0 ? '#10b981' : '#ef4444' }}>${(income - expenses).toFixed(2)}</strong>
+          Ingresos: <strong style={{ color: '#10b981' }}>${formatNum(income)}</strong> · Gastos:{' '}
+          <strong style={{ color: '#ef4444' }}>${formatNum(expenses)}</strong> · Balance:{' '}
+          <strong style={{ color: income - expenses >= 0 ? '#10b981' : '#ef4444' }}>${formatNum(income - expenses)}</strong>
         </div>
 
         <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', marginTop: '1.5rem' }}>
@@ -293,7 +295,7 @@ const Finance = () => {
                 <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.9rem', marginBottom: '0.35rem' }}>
                   <span>{cat.icon} {cat.label}</span>
                   <span style={{ color: over ? '#ef4444' : 'var(--text-secondary)', fontWeight: over ? 'bold' : 'normal' }}>
-                    ${spent.toFixed(2)} / ${limit.toFixed(2)}
+                    ${formatNum(spent)} / ${formatNum(limit)}
                   </span>
                 </div>
                 <div style={{ height: '14px', background: '#ddd', borderRadius: '0', overflow: 'hidden', border: '2px solid #000' }}>
@@ -354,9 +356,9 @@ const Finance = () => {
                   </div>
                   <div style={{ color: '#000', fontSize: '0.95rem', marginBottom: '0.2rem', fontWeight: '900' }}>{acc.name}</div>
                   {acc.accountNumber && <div style={{ fontSize: '0.8rem', color: '#000', marginBottom: '0.5rem', background: '#eee', padding: '0.2rem', display: 'inline-block', border: '1px solid #000', fontWeight: '600' }}>{acc.accountNumber}</div>}
-                  <div style={{ fontSize: '1.5rem', fontWeight: 'bold' }}>{acc.currency === 'USD' ? '$' : acc.currency === 'PEN' ? 'S/' : 'Bs. '}{acc.balance.toFixed(2)}</div>
+                  <div style={{ fontSize: '1.5rem', fontWeight: 'bold' }}>{acc.currency === 'USD' ? '$' : acc.currency === 'PEN' ? 'S/' : 'Bs. '}{formatNum(acc.balance)}</div>
                   <div style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', marginTop: '0.2rem' }}>
-                    ≈ {acc.currency === 'USD' ? `Bs. ${(acc.balance * rates.binance).toFixed(2)}` : acc.currency === 'PEN' ? `Bs. ${((acc.balance / 3.75) * rates.binance).toFixed(2)}` : `$${rates.binance ? (acc.balance / rates.binance).toFixed(2) : 0}`}
+                    ≈ {acc.currency === 'USD' ? `Bs. ${formatNum(acc.balance * rates.binance)}` : acc.currency === 'PEN' ? `Bs. ${formatNum((acc.balance / 3.75) * rates.binance)}` : `$${rates.binance ? formatNum(acc.balance / rates.binance) : 0}`}
                   </div>
                 </div>
               ))}
@@ -427,7 +429,7 @@ const Finance = () => {
                   ) : null}
                 </span>
                 <span style={{ fontWeight: 'bold', color: t.type === 'expense' ? '#ef4444' : '#10b981' }}>
-                  {t.type === 'expense' ? '-' : '+'}${parseFloat(t.amount).toFixed(2)}
+                  {t.type === 'expense' ? '-' : '+'}${formatNum(t.amount)}
                 </span>
                 <button onClick={() => handleDeleteTransaction(t.id)} title="Eliminar" style={{ background: 'transparent', border: 'none', color: 'var(--text-secondary)', cursor: 'pointer' }}>🗑</button>
               </div>
