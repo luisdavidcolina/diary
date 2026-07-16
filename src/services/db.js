@@ -42,6 +42,18 @@ export const deleteRecord = (name, id) => {
   return deleteDoc(doc(db, name, id));
 };
 
+// Registra el uid del dueño en config/owner para que el bot de Telegram sepa
+// a quién pertenecen los datos (evita tener que configurar OWNER_UID a mano).
+export async function registerOwner() {
+  const u = uid();
+  if (!u) return;
+  try {
+    await setDoc(doc(db, "config", "owner"), { uid: u, updatedAt: new Date().toISOString() });
+  } catch (e) {
+    console.error("registerOwner error", e);
+  }
+}
+
 // ─────────── Sincronización del temario a Firestore ───────────
 // Guarda TODO el temario (src/data/syllabus.js) en la colección `syllabus`,
 // scopeado por usuario, para que los chatbots (web y Telegram) lo consulten.

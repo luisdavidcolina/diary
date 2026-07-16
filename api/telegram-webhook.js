@@ -1,13 +1,24 @@
-import { doc, updateDoc, deleteDoc, collection, addDoc, getDocs, query, where } from "firebase/firestore/lite";
+import { doc, getDoc, updateDoc, deleteDoc, collection, addDoc, getDocs, query, where } from "firebase/firestore/lite";
 import { dbNode } from "./_firebaseNode.js";
 import { SYSTEM_CONTEXT } from "./_context.js";
 
 const TELEGRAM_TOKEN = process.env.TELEGRAM_BOT_TOKEN;
 
 // UID del dueño (app single-user). La app web filtra TODO por userId, así que los
-// datos creados desde Telegram deben llevarlo o no aparecerán. Configúralo en Vercel
-// como OWNER_UID (el uid de Firebase Auth del usuario).
-const OWNER_UID = process.env.OWNER_UID || null;
+// datos de Telegram deben llevarlo. Se resuelve automáticamente desde config/owner
+// (lo escribe la web al abrir el Dashboard); OWNER_UID en Vercel es un override opcional.
+let OWNER_UID = process.env.OWNER_UID || null;
+
+async function resolveOwnerUid() {
+  if (OWNER_UID) return OWNER_UID;
+  try {
+    const snap = await getDoc(doc(dbNode, "config", "owner"));
+    if (snap.exists()) OWNER_UID = snap.data().uid || null;
+  } catch (e) {
+    console.error("resolveOwnerUid error", e);
+  }
+  return OWNER_UID;
+}
 const nowIso = () => new Date().toISOString();
 
 // Escrituras unificadas con la app web (mismas colecciones y esquema que src/services/db.js).
@@ -416,6 +427,9 @@ export default async function handler(req, res) {
   }
 
   const update = req.body;
+
+  // Resolver el uid del dueño (auto, desde config/owner) para scopear los datos.
+  await resolveOwnerUid();
 
   try {
     // 1. Manejar Botones (Callback Queries)
