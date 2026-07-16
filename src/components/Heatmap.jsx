@@ -35,9 +35,9 @@ const Heatmap = ({ counts = {}, weeks = 13, color = 'var(--color-cloud)' }) => {
 
   const max = Math.max(1, ...Object.values(counts));
   const cellColor = (count) => {
-    if (!count) return 'rgba(255,255,255,0.06)';
+    if (!count) return '#eee';
     const level = Math.min(1, 0.25 + (count / max) * 0.75);
-    return `color-mix(in srgb, ${color} ${Math.round(level * 100)}%, transparent)`;
+    return `color-mix(in srgb, ${color} ${Math.round(level * 100)}%, #fff)`;
   };
 
   return (
@@ -49,7 +49,7 @@ const Heatmap = ({ counts = {}, weeks = 13, color = 'var(--color-cloud)' }) => {
               <div
                 key={cell.key}
                 title={`${cell.key}: ${cell.count} completado(s)`}
-                style={{ width: '13px', height: '13px', borderRadius: '3px', background: cellColor(cell.count) }}
+                style={{ width: '13px', height: '13px', borderRadius: '0', background: cellColor(cell.count), border: '1px solid #000' }}
               />
             ) : (
               <div key={di} style={{ width: '13px', height: '13px' }} />
