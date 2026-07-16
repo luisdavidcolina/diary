@@ -90,6 +90,23 @@ export default async function handler(req, res) {
           description: "Consulta el saldo o los créditos gastados en la API de Inteligencia Artificial (OpenRouter).",
           parameters: { type: "object", properties: {} }
         }
+      },
+      {
+        type: "function",
+        function: {
+          name: "schedule_reminder",
+          description: "Programa un recordatorio o alarma para una fecha y hora específica, o un recordatorio recurrente diario.",
+          parameters: {
+            type: "object",
+            properties: {
+              title: { type: "string", description: "Título del recordatorio" },
+              date: { type: "string", description: "Fecha en formato YYYY-MM-DD. Dejar vacío si es recurrente diario o si es explícitamente para hoy." },
+              time: { type: "string", description: "Hora en formato HH:MM (24 horas)" },
+              isRecurring: { type: "boolean", description: "True si debe repetirse todos los días a esa hora" }
+            },
+            required: ["title", "time"]
+          }
+        }
       }
     ];
 
@@ -97,7 +114,9 @@ export default async function handler(req, res) {
 Tu objetivo es ayudar al usuario a gestionar su vida. Tienes acceso a herramientas (functions) para leer y modificar su base de datos.
 La fecha y hora actual del servidor es: ${new Date().toLocaleString("es-VE", { timeZone: "America/Caracas" })}.
 REGLAS IMPORTANTES:
-- Si el usuario te pide registrar un gasto, usa la herramienta add_transaction y confírmale.
+- Si el usuario te pide registrar un gasto, usa add_transaction.
+- Si el usuario te pide que le recuerdes algo o ponga una alarma en una fecha/hora, usa schedule_reminder.
+- Si el usuario te pide agregar una tarea sin fecha/hora específica, usa add_diary_entry o su equivalente.
 - Si el usuario te pregunta por sus finanzas o saldo, usa get_finance_summary y luego explícale los datos.
 - Si el usuario te cuenta algo íntimo o del día a día y quiere que lo guardes, usa add_diary_entry.
 - Si el usuario pregunta por el contexto general de la app, sus materias, temarios o enlaces, usa get_docs_list para ver qué archivos existen y luego read_doc_file para leer el contenido que necesites antes de responder.

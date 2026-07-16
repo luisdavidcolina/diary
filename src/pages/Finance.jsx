@@ -79,9 +79,9 @@ const Finance = () => {
           setRates(data); setLoadingRates(false); return;
         }
       }
-      const res = await fetch("https://pydolarvenezuela-api.vercel.app/api/v1/dollar");
+      const res = await fetch("/api/rates");
       const json = await res.json();
-      const newRates = { bcv: json.monitors?.bcv?.price || 0, binance: json.monitors?.binance?.price || 0 };
+      const newRates = { bcv: json.bcv || 0, binance: json.binance || 0 };
       setRates(newRates);
       localStorage.setItem('exchange_rates', JSON.stringify({ data: newRates, timestamp: new Date().getTime() }));
     } catch (error) {

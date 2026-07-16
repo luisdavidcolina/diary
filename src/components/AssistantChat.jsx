@@ -53,6 +53,29 @@ export default function AssistantChat() {
         return JSON.stringify(entries.slice(0, 5).map(e => ({ date: e.createdAt, content: e.content })));
       }
 
+      if (name === 'schedule_reminder') {
+        const { title, date, time, isRecurring } = argsObj;
+        
+        // 1. Guardar en BD (lifestyle)
+        const dbDate = date || new Date().toISOString().split('T')[0];
+        const docId = await addHabitOrTask(title, 'task', dbDate, time);
+        
+        // 2. Llamar API de QStash para programar recordatorio
+        const endpoint = isRecurring ? '/api/schedule-recurring-reminder' : '/api/schedule-exact-reminder';
+        const bodyPayload = isRecurring 
+          ? { id: docId, title, time }
+          : { id: docId, title, date: dbDate, time };
+          
+        const res = await fetch(endpoint, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(bodyPayload)
+        });
+        
+        if (!res.ok) return "La tarea se guardó, pero hubo un error al programar la alarma en el servidor.";
+        return `⏰ Recordatorio programado para las ${time}`;
+      }
+
       if (name === 'get_docs_list') {
         const res = await fetch('/api/read-doc');
         const data = await res.json();
@@ -126,8 +149,18 @@ export default function AssistantChat() {
           const res = await fetch('/api/get-credits');
           const data = await res.json();
           responseContent = data.error ? `⚠️ Error: ${data.error}` : `📊 Has gastado $${data.usage}`;
+        } else if (text === '/help' || text === '/ayuda') {
+          responseContent = `🤖 *Comandos Rápidos (Sin gastar API):*
+• \`/gasto [monto] [concepto]\` - Ej: /gasto 5 Café
+• \`/ingreso [monto] [concepto]\` - Ej: /ingreso 100 Sueldo
+• \`/diario [texto]\` - Guarda un pensamiento
+• \`/tarea [texto]\` - Añade una tarea pendiente
+• \`/creditos\` - Revisa tu saldo de IA
+• \`/help\` - Muestra esta lista
+
+*¡Recuerda que si no usas la barra (/), la IA entenderá tus mensajes naturalmente!*`;
         } else {
-          responseContent = `⚠️ Comando desconocido. Usa: /gasto, /ingreso, /diario, /tarea o /creditos.`;
+          responseContent = `⚠️ Comando desconocido. Usa /help para ver la lista.`;
         }
         
         setMessages([...newMessages, { role: 'model', content: responseContent }]);
@@ -243,7 +276,7 @@ export default function AssistantChat() {
             {isLoading && (
               <div style={{ display: 'flex', justifyContent: 'flex-start' }}>
                 <div style={{ background: 'rgba(255,255,255,0.05)', color: 'var(--text-secondary)', padding: '0.5rem 1rem', borderRadius: '16px', fontSize: '0.9rem' }}>
-                  Escribiendo...
+                  ⏳ Pensando...
                 </div>
               </div>
             )}

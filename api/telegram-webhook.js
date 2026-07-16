@@ -86,6 +86,23 @@ Si solo está saludando o haciendo una pregunta general, responde cortamente y a
           required: ["text"]
         }
       }
+    },
+    {
+      type: "function",
+      function: {
+        name: "schedule_reminder",
+        description: "Programa un recordatorio o alarma para una fecha y hora específica, o recurrente.",
+        parameters: {
+          type: "object",
+          properties: {
+            title: { type: "string", description: "Título del recordatorio" },
+            date: { type: "string", description: "Fecha en formato YYYY-MM-DD. Dejar vacío si es recurrente diario o si es explícitamente para hoy." },
+            time: { type: "string", description: "Hora en formato HH:MM (24 horas)" },
+            isRecurring: { type: "boolean", description: "True si debe repetirse todos los días a esa hora" }
+          },
+          required: ["title", "time"]
+        }
+      }
     }
   ];
 
@@ -148,6 +165,40 @@ Si solo está saludando o haciendo una pregunta general, responde cortamente y a
           createdAt: serverTimestamp()
         });
         return `📖 Diario actualizado exitosamente.`;
+      }
+
+      if (tool.name === 'schedule_reminder') {
+        const dbDate = args.date || new Date().toISOString().split('T')[0];
+        
+        // 1. Save Task
+        const docRef = await addDoc(collection(dbNode, "lifestyle"), {
+          title: args.title,
+          category: 'task',
+          isCompleted: false,
+          createdAt: serverTimestamp()
+        });
+
+        // 2. Schedule
+        const endpoint = args.isRecurring ? '/api/schedule-recurring-reminder' : '/api/schedule-exact-reminder';
+        const bodyPayload = args.isRecurring 
+          ? { id: docRef.id, title: args.title, time: args.time }
+          : { id: docRef.id, title: args.title, date: dbDate, time: args.time };
+        
+        const schedRes = await fetch(`https://${reqHost}${endpoint}`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(bodyPayload)
+        });
+
+        if (schedRes.ok) {
+          const schedData = await schedRes.json();
+          const reminderId = args.isRecurring ? schedData.scheduleId : schedData.messageId;
+          if (reminderId) {
+            await updateDoc(doc(dbNode, "lifestyle", docRef.id), { reminderId, isRecurring: args.isRecurring || false });
+          }
+          return `⏰ Recordatorio programado para las ${args.time}`;
+        }
+        return `⚠️ Tarea guardada, pero hubo un error programando la alarma del servidor.`;
       }
     }
 
