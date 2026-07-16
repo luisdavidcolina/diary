@@ -150,7 +150,7 @@ export const deleteNote = (id) => deleteDoc(doc(db, "notes", id));
 // opts: { currency: 'USD'|'VES', rate: number|null }
 // Toda transacción guarda su equivalente en USD (amountUSD) para sumar en una sola
 // moneda. En Bs se divide por la tasa (Binance por defecto, o una manual puntual).
-export const addTransaction = async (amount, description, type = 'expense', category = null, telegramFileId = null, opts = {}) => {
+export const addTransaction = async (amount, description, type = 'expense', category = null, telegramFileIds = null, opts = {}) => {
   const { currency = 'USD', rate = null } = opts || {};
   const amt = parseFloat(amount) || 0;
   const amountUSD = currency === 'VES' && rate ? amt / parseFloat(rate) : amt;
@@ -161,7 +161,10 @@ export const addTransaction = async (amount, description, type = 'expense', cate
     createdAt: new Date().toISOString()
   };
   if (rate) payload.rate = parseFloat(rate);
-  if (telegramFileId) payload.telegramFileId = telegramFileId;
+  if (telegramFileIds) {
+    payload.telegramFileIds = Array.isArray(telegramFileIds) ? telegramFileIds : [telegramFileIds];
+    payload.telegramFileId = payload.telegramFileIds[0] || null; // for backward compatibility
+  }
 
   const docRef = await addDoc(collection(db, "transactions"), payload);
   return docRef.id;

@@ -33,7 +33,7 @@ const Finance = () => {
   const [type, setType] = useState('expense');
   const [category, setCategory] = useState('house');
   const [isProcessingReceipt, setIsProcessingReceipt] = useState(false);
-  const [receiptUrl, setReceiptUrl] = useState(null);
+  const [receiptUrls, setReceiptUrls] = useState([]);
 
   // Cuentas (con edición)
   const [accName, setAccName] = useState('');
@@ -109,51 +109,55 @@ const Finance = () => {
     e.preventDefault();
     if (!amount || !desc) return;
     try {
-      await addTransaction(amount, desc, type, type === 'expense' ? category : null, receiptUrl);
-      setAmount(''); setDesc(''); setReceiptUrl(null);
+      await addTransaction(amount, desc, type, type === 'expense' ? category : null, receiptUrls);
+      setAmount(''); setDesc(''); setReceiptUrls([]);
       loadTransactions();
     } catch (e) { console.error(e); }
   };
 
   const handleFileUpload = async (e) => {
-    const file = e.target.files[0];
-    if (!file) return;
+    const files = Array.from(e.target.files);
+    if (!files.length) return;
     setIsProcessingReceipt(true);
     try {
-      const base64 = await new Promise((resolve, reject) => {
-        const reader = new FileReader();
-        reader.readAsDataURL(file);
-        reader.onload = () => resolve(reader.result);
-        reader.onerror = reject;
-      });
+      const newUrls = [];
+      for (const file of files) {
+        const base64 = await new Promise((resolve, reject) => {
+          const reader = new FileReader();
+          reader.readAsDataURL(file);
+          reader.onload = () => resolve(reader.result);
+          reader.onerror = reject;
+        });
 
-      // 1. Subir a Telegram
-      const uploadRes = await fetch('/api/upload-telegram', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ imageBase64: base64 })
-      });
-      const uploadJson = await uploadRes.json();
-      if (!uploadJson.success) throw new Error(uploadJson.error);
-      
-      setReceiptUrl(uploadJson.fileId); // Aquí guardamos el fileId
-      
-      // 2. Extraer datos con IA
-      const res = await fetch('/api/process-receipt', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ imageUrl: base64 })
-      });
-      const json = await res.json();
-      if (json.success) {
-        setAmount(String(json.data.amount));
-        setDesc(json.data.description);
-        if (json.data.type === 'income' || json.data.type === 'expense') {
-          setType(json.data.type);
+        // 1. Subir a Telegram
+        const uploadRes = await fetch('/api/upload-telegram', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ imageBase64: base64 })
+        });
+        const uploadJson = await uploadRes.json();
+        if (!uploadJson.success) throw new Error(uploadJson.error);
+        
+        newUrls.push(uploadJson.fileId); // Aquí guardamos el fileId
+        
+        // 2. Extraer datos con IA (solo para la primera imagen si es un lote)
+        if (newUrls.length === 1) {
+          const res = await fetch('/api/process-receipt', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ imageUrl: base64 })
+          });
+          const json = await res.json();
+          if (json.success) {
+            setAmount(String(json.data.amount));
+            setDesc(json.data.description);
+            if (json.data.type === 'income' || json.data.type === 'expense') {
+              setType(json.data.type);
+            }
+          }
         }
-      } else {
-        alert("Error de IA: " + json.error);
       }
+      setReceiptUrls(prev => [...prev, ...newUrls]);
     } catch (err) {
       console.error(err);
       alert("Error procesando imagen: " + err.message);
@@ -369,9 +373,13 @@ const Finance = () => {
             <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
               <label style={{ cursor: 'pointer', background: 'var(--brutal-blue)', border: '3px solid #000', padding: '0.75rem', borderRadius: '0', fontSize: '0.9rem', color: '#000', fontWeight: 900, display: 'flex', alignItems: 'center', gap: '0.5rem', boxShadow: '2px 2px 0 #000' }}>
                 {isProcessingReceipt ? '⏳ Analizando...' : '📷 Escanear Comprobante (IA)'}
-                <input type="file" accept="image/*" onChange={handleFileUpload} style={{ display: 'none' }} disabled={isProcessingReceipt} />
+                <input type="file" accept="image/*" multiple onChange={handleFileUpload} style={{ display: 'none' }} disabled={isProcessingReceipt} />
               </label>
-              {receiptUrl && !isProcessingReceipt && <span style={{ color: '#10b981', fontSize: '0.8rem' }}>✅ Listo</span>}
+              {receiptUrls.length > 0 && !isProcessingReceipt && (
+                <span style={{ color: '#10b981', fontSize: '0.8rem', fontWeight: 'bold' }}>
+                  ✅ {receiptUrls.length} archivo(s) listo(s)
+                </span>
+              )}
             </div>
             
             <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap' }}>
@@ -406,11 +414,17 @@ const Finance = () => {
                       · {FINANCE_CATEGORIES.find(c => c.id === t.category)?.label || t.category}
                     </span>
                   )}
-                  {t.telegramFileId && (
+                  {t.telegramFileIds && t.telegramFileIds.length > 0 ? (
+                    t.telegramFileIds.map((fid, idx) => (
+                      <a key={idx} href={`/api/telegram-image?id=${fid}`} target="_blank" rel="noreferrer" style={{ fontSize: '0.7rem', marginLeft: '0.5rem', color: 'var(--accent-color)', textDecoration: 'none' }}>
+                        📷 Doc {idx + 1}
+                      </a>
+                    ))
+                  ) : t.telegramFileId ? (
                     <a href={`/api/telegram-image?id=${t.telegramFileId}`} target="_blank" rel="noreferrer" style={{ fontSize: '0.7rem', marginLeft: '0.5rem', color: 'var(--accent-color)', textDecoration: 'none' }}>
                       📷 Ver
                     </a>
-                  )}
+                  ) : null}
                 </span>
                 <span style={{ fontWeight: 'bold', color: t.type === 'expense' ? '#ef4444' : '#10b981' }}>
                   {t.type === 'expense' ? '-' : '+'}${parseFloat(t.amount).toFixed(2)}
