@@ -216,8 +216,8 @@ const Lifestyle = () => {
       }}
       onDragEnd={(e) => e.currentTarget.style.opacity = it.isCompleted ? '0.6' : '1'}
       style={{
-        background: 'rgba(0,0,0,0.3)',
-        border: '1px solid var(--glass-border)',
+        background: 'var(--brutal-white)',
+        border: '3px solid #000',
         borderRadius: '12px',
         padding: '1rem',
         cursor: 'grab',
@@ -243,12 +243,12 @@ const Lifestyle = () => {
       </div>
       <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
         {it.reminderDate && (
-          <span style={{ fontSize: '0.75rem', background: 'rgba(99, 102, 241, 0.15)', color: '#a5b4fc', padding: '0.25rem 0.6rem', borderRadius: '6px', border: '1px solid rgba(99, 102, 241, 0.3)' }}>
+          <span style={{ fontSize: '0.75rem', background: 'var(--brutal-blue)', color: '#000', padding: '0.25rem 0.6rem', borderRadius: '0', border: '2px solid #000', fontWeight: 'bold' }}>
             🗓️ {it.reminderDate}
           </span>
         )}
         {it.reminderTime && (
-          <span style={{ fontSize: '0.75rem', background: 'rgba(234, 179, 8, 0.15)', color: '#fde047', padding: '0.25rem 0.6rem', borderRadius: '6px', border: '1px solid rgba(234, 179, 8, 0.3)' }}>
+          <span style={{ fontSize: '0.75rem', background: 'var(--brutal-yellow)', color: '#000', padding: '0.25rem 0.6rem', borderRadius: '0', border: '2px solid #000', fontWeight: 'bold' }}>
             ⏰ {it.reminderTime} {it.isRecurring ? '(Diario)' : ''}
           </span>
         )}
@@ -268,7 +268,7 @@ const Lifestyle = () => {
       key={it.id}
       style={{
         display: 'flex', alignItems: 'center', gap: '1rem', padding: '1rem',
-        background: 'rgba(255,255,255,0.05)', borderRadius: '8px', borderLeft: `4px solid ${color}`,
+        background: 'var(--brutal-white)', border: '3px solid #000', borderRadius: '0', borderLeft: `8px solid ${color}`,
         opacity: it.isCompleted ? 0.55 : 1
       }}
     >
@@ -446,7 +446,7 @@ const Lifestyle = () => {
               {/* Columna Por Hacer */}
               <div 
                 className="glass-panel" 
-                style={{ padding: '1.5rem', minHeight: '300px', background: 'rgba(255,255,255,0.02)' }}
+                style={{ padding: '1.5rem', minHeight: '300px', background: 'var(--brutal-white)', border: '4px solid #000', borderRadius: '0' }}
                 onDragOver={handleDragOver}
                 onDrop={(e) => handleDrop(e, false)}
               >
@@ -467,7 +467,7 @@ const Lifestyle = () => {
               {/* Columna Completados */}
               <div 
                 className="glass-panel" 
-                style={{ padding: '1.5rem', minHeight: '300px', background: 'rgba(255,255,255,0.02)' }}
+                style={{ padding: '1.5rem', minHeight: '300px', background: 'var(--brutal-white)', border: '4px solid #000', borderRadius: '0' }}
                 onDragOver={handleDragOver}
                 onDrop={(e) => handleDrop(e, true)}
               >
