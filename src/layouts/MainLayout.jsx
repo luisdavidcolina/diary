@@ -39,7 +39,7 @@ const MainLayout = () => {
           <NavLink to="/lifestyle" className={({ isActive }) => isActive ? 'nav-btn active' : 'nav-btn'}>🧘 Organización</NavLink>
           <NavLink to="/journal" className={({ isActive }) => isActive ? 'nav-btn active' : 'nav-btn'}>📝 Diario</NavLink>
           <NavLink to="/library" className={({ isActive }) => isActive ? 'nav-btn active' : 'nav-btn'}>🔖 Biblioteca</NavLink>
-          <NavLink to="/asistente" className={({ isActive }) => isActive ? 'nav-btn active' : 'nav-btn'}>🧠 Asistente</NavLink>
+          <NavLink to="/asistente" className={({ isActive }) => isActive ? 'nav-btn active' : 'nav-btn'}>🧠 Luisda Bot</NavLink>
         </div>
         
         <button 

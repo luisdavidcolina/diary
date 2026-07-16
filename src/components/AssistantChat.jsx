@@ -351,7 +351,7 @@ Si no usas la barra (/), la IA entiende tus mensajes naturalmente.`;
             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                 <h3 style={{ margin: 0, fontSize: '1.2rem', fontWeight: 900, textTransform: 'uppercase', color: '#000' }}>
-                  ✨ Asistente IA
+                  ✨ Luisda Bot
                 </h3>
                 <button 
                   onClick={() => setViewMode(viewMode === 'chat' ? 'stats' : 'chat')}
@@ -398,7 +398,7 @@ Si no usas la barra (/), la IA entiende tus mensajes naturalmente.`;
               <div style={{ flex: 1, overflowY: 'auto', padding: '1rem', display: 'flex', flexDirection: 'column', gap: '1rem', background: '#fff' }}>
             {messages.length === 0 && (
               <div style={{ textAlign: 'center', color: '#000', marginTop: '2rem', border: '2px solid #000', background: 'var(--brutal-yellow)', padding: '1rem', boxShadow: '4px 4px 0 #000' }}>
-                <p style={{fontWeight: 900, textTransform: 'uppercase'}}>¡Hola! Soy tu asistente.</p>
+                <p style={{fontWeight: 900, textTransform: 'uppercase'}}>¡Hola! Soy Luisda Bot.</p>
                 <p style={{ fontSize: '0.9rem', fontWeight: 600 }}>Puedo guardar gastos, leer tu diario, o simplemente charlar. ¿En qué te ayudo?</p>
               </div>
             )}

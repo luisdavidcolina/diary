@@ -82,12 +82,12 @@ const BotConfig = () => {
     try { await deleteRecord('bot_knowledge', id); } catch (e) { console.error(e); }
   };
 
-  if (loading) return <p className="muted" style={{ padding: '2rem' }}>Cargando el cerebro del asistente…</p>;
+  if (loading) return <p className="muted" style={{ padding: '2rem' }}>Cargando el cerebro de Luisda Bot…</p>;
 
   return (
     <div style={{ animation: 'fadeInUp 0.6s ease', maxWidth: '900px', margin: '0 auto' }}>
       <header style={{ marginBottom: '2rem' }}>
-        <h1 className="text-gradient">🧠 Cerebro del Asistente</h1>
+        <h1 className="text-gradient">🧠 Cerebro de Luisda Bot</h1>
         <p className="muted">Define quién es tu bot, cómo habla y qué sabe. Aplica a la web y a Telegram.</p>
       </header>
 
