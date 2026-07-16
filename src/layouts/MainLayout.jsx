@@ -44,7 +44,7 @@ const MainLayout = () => {
         
         <button 
           onClick={logout}
-          className="link-btn"
+          className="nav-btn"
           style={{ background: 'var(--brutal-pink)' }}
         >
           Cerrar Sesión
