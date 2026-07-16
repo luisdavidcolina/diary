@@ -52,7 +52,8 @@ const Finance = () => {
       await addOrUpdateAccount(null, 'BCP Corriente Soles', 'PEN', 1.00, '5159049815090');
       await addOrUpdateAccount(null, 'BCP Cuentas de Ahorro USD', 'USD', 1.21, '19301908973153');
       await addOrUpdateAccount(null, 'Mercantil Cta. Corriente', 'BS', 348.36, '01050020641020656670');
-      await addOrUpdateAccount(null, 'BDV Cuenta Corriente', 'BS', 95.68, '0102****9550');
+      await addOrUpdateAccount(null, 'BDV Cuenta Corriente', 'BS', 95.68, '01020727440000259550');
+      await addOrUpdateAccount(null, 'Binance USDT', 'USD', 324.29, '');
       loadAccounts();
       console.log('¡Cuentas importadas con éxito!');
     };
