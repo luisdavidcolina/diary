@@ -316,8 +316,6 @@ const Lifestyle = () => {
 
       {/* Captura Rápida (Inbox) */}
       <div className="glass-panel" style={{ marginBottom: '2rem', padding: '2rem', position: 'relative', overflow: 'hidden' }}>
-        <div style={{ position: 'absolute', top: '-50%', right: '-10%', width: '300px', height: '300px', background: 'var(--accent-glow)', filter: 'blur(100px)', borderRadius: '50%', opacity: 0.5, pointerEvents: 'none' }}></div>
-        
         <h2 style={{ marginBottom: '1.5rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
           <span style={{ color: 'var(--accent-color)' }}>⚡</span> Captura Rápida
         </h2>
@@ -394,17 +392,11 @@ const Lifestyle = () => {
             </div>
             <button 
               type="submit" 
+              className="primary-btn"
               disabled={isSaving}
               style={{ 
-                background: 'linear-gradient(135deg, var(--accent-color) 0%, #a5b4fc 100%)', 
-                color: 'white', border: 'none', padding: '0.85rem 2rem', borderRadius: '12px', 
-                fontWeight: 'bold', cursor: isSaving ? 'not-allowed' : 'pointer', 
-                boxShadow: '0 4px 15px var(--accent-glow)', transition: 'transform 0.2s, box-shadow 0.2s',
-                opacity: isSaving ? 0.7 : 1,
                 marginLeft: 'auto'
               }}
-              onMouseOver={(e) => { if(!isSaving) { e.target.style.transform = 'translateY(-2px)'; e.target.style.boxShadow = '0 6px 20px var(--accent-glow)'; } }}
-              onMouseOut={(e) => { if(!isSaving) { e.target.style.transform = 'translateY(0)'; e.target.style.boxShadow = '0 4px 15px var(--accent-glow)'; } }}
             >
               {isSaving ? 'Guardando...' : 'Guardar Tarea'}
             </button>

@@ -379,7 +379,7 @@ const Finance = () => {
 
       {/* MODAL DE LÍMITES */}
       {showLimitsModal && (
-        <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.8)', backdropFilter: 'blur(4px)', display: 'flex', justifyContent: 'center', alignItems: 'center', zIndex: 999 }}>
+        <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.8)', display: 'flex', justifyContent: 'center', alignItems: 'center', zIndex: 999 }}>
           <div className="glass-panel" style={{ padding: '2rem', width: '90%', maxWidth: '400px', animation: 'fadeInUp 0.3s ease' }}>
             <h2 style={{ marginBottom: '1.5rem', color: 'var(--accent-color)' }}>Ajustar Límites Mensuales</h2>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>

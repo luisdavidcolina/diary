@@ -33,69 +33,19 @@ const MainLayout = () => {
     <>
       <nav className="top-nav">
         <div className="nav-links">
-          <NavLink to="/" style={({ isActive }) => ({
-            color: isActive ? 'var(--accent-color)' : 'var(--text-primary)',
-            textDecoration: 'none',
-            fontWeight: isActive ? 'bold' : 'normal',
-            transition: 'color 0.2s'
-          })}>📚 Estudios</NavLink>
-
-          <NavLink to="/calendar" style={({ isActive }) => ({
-            color: isActive ? 'var(--accent-color)' : 'var(--text-primary)',
-            textDecoration: 'none',
-            fontWeight: isActive ? 'bold' : 'normal',
-            transition: 'color 0.2s'
-          })}>📅 Calendario</NavLink>
-
-          <NavLink to="/finance" style={({ isActive }) => ({
-            color: isActive ? 'var(--accent-color)' : 'var(--text-primary)',
-            textDecoration: 'none',
-            fontWeight: isActive ? 'bold' : 'normal',
-            transition: 'color 0.2s'
-          })}>💰 Finanzas</NavLink>
-          
-          <NavLink to="/lifestyle" style={({ isActive }) => ({
-            color: isActive ? 'var(--accent-color)' : 'var(--text-primary)',
-            textDecoration: 'none',
-            fontWeight: isActive ? 'bold' : 'normal',
-            transition: 'color 0.2s'
-          })}>🧘 Organización</NavLink>
-
-          <NavLink to="/journal" style={({ isActive }) => ({
-            color: isActive ? 'var(--accent-color)' : 'var(--text-primary)',
-            textDecoration: 'none',
-            fontWeight: isActive ? 'bold' : 'normal',
-            transition: 'color 0.2s'
-          })}>📝 Diario</NavLink>
-
-          <NavLink to="/library" style={({ isActive }) => ({
-            color: isActive ? 'var(--accent-color)' : 'var(--text-primary)',
-            textDecoration: 'none',
-            fontWeight: isActive ? 'bold' : 'normal',
-            transition: 'color 0.2s'
-          })}>🔖 Biblioteca</NavLink>
-
-          <NavLink to="/asistente" style={({ isActive }) => ({
-            color: isActive ? 'var(--accent-color)' : 'var(--text-primary)',
-            textDecoration: 'none',
-            fontWeight: isActive ? 'bold' : 'normal',
-            transition: 'color 0.2s'
-          })}>🧠 Asistente</NavLink>
+          <NavLink to="/" className={({ isActive }) => isActive ? 'nav-btn active' : 'nav-btn'}>📚 Estudios</NavLink>
+          <NavLink to="/calendar" className={({ isActive }) => isActive ? 'nav-btn active' : 'nav-btn'}>📅 Calendario</NavLink>
+          <NavLink to="/finance" className={({ isActive }) => isActive ? 'nav-btn active' : 'nav-btn'}>💰 Finanzas</NavLink>
+          <NavLink to="/lifestyle" className={({ isActive }) => isActive ? 'nav-btn active' : 'nav-btn'}>🧘 Organización</NavLink>
+          <NavLink to="/journal" className={({ isActive }) => isActive ? 'nav-btn active' : 'nav-btn'}>📝 Diario</NavLink>
+          <NavLink to="/library" className={({ isActive }) => isActive ? 'nav-btn active' : 'nav-btn'}>🔖 Biblioteca</NavLink>
+          <NavLink to="/asistente" className={({ isActive }) => isActive ? 'nav-btn active' : 'nav-btn'}>🧠 Asistente</NavLink>
         </div>
         
         <button 
           onClick={logout}
-          style={{
-            background: 'transparent',
-            color: 'var(--text-secondary)',
-            border: '1px solid var(--glass-border)',
-            padding: '0.5rem 1rem',
-            borderRadius: '8px',
-            cursor: 'pointer',
-            transition: 'background 0.2s'
-          }}
-          onMouseOver={(e) => e.target.style.background = 'rgba(255,255,255,0.1)'}
-          onMouseOut={(e) => e.target.style.background = 'transparent'}
+          className="link-btn"
+          style={{ background: 'var(--brutal-pink)' }}
         >
           Cerrar Sesión
         </button>

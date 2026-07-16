@@ -23,7 +23,7 @@ const SubjectCard = ({ subject, progress }) => {
           <div className="progress-bar-bg">
             <div
               className="progress-bar-fill"
-              style={{ width: `${pct}%`, backgroundColor: subject.color, boxShadow: `0 0 10px ${subject.color}` }}
+              style={{ width: `${pct}%`, backgroundColor: subject.color }}
             />
           </div>
           <div className="progress-text">

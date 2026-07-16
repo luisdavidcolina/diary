@@ -261,14 +261,14 @@ Si no usas la barra (/), la IA entiende tus mensajes naturalmente.`;
         onClick={() => setIsOpen(!isOpen)}
         style={{
           position: 'fixed', bottom: '20px', right: '20px', zIndex: 1000,
-          width: '60px', height: '60px', borderRadius: '50%',
-          background: 'linear-gradient(135deg, var(--accent-color), #8b5cf6)',
-          border: 'none', color: 'white', fontSize: '24px', cursor: 'pointer',
-          boxShadow: '0 4px 12px rgba(0,0,0,0.3)', display: 'flex', alignItems: 'center', justifyContent: 'center',
-          transition: 'transform 0.2s'
+          width: '60px', height: '60px', borderRadius: '0',
+          background: 'var(--brutal-yellow)',
+          border: '3px solid #000', color: '#000', fontSize: '24px', cursor: 'pointer',
+          boxShadow: '4px 4px 0 #000', display: 'flex', alignItems: 'center', justifyContent: 'center',
+          transition: 'transform 0.15s, box-shadow 0.15s'
         }}
-        onMouseOver={e => e.currentTarget.style.transform = 'scale(1.1)'}
-        onMouseOut={e => e.currentTarget.style.transform = 'scale(1)'}
+        onMouseOver={e => { e.currentTarget.style.transform = 'translate(2px, 2px)'; e.currentTarget.style.boxShadow = '2px 2px 0 #000'; }}
+        onMouseOut={e => { e.currentTarget.style.transform = 'none'; e.currentTarget.style.boxShadow = '4px 4px 0 #000'; }}
       >
         ✨
       </button>
@@ -277,25 +277,25 @@ Si no usas la barra (/), la IA entiende tus mensajes naturalmente.`;
       {isOpen && (
         <div style={{
           position: 'fixed', bottom: '90px', right: '20px', zIndex: 1000,
-          width: '350px', height: '500px', background: 'rgba(15,23,42,0.95)',
-          backdropFilter: 'blur(10px)', border: '1px solid rgba(255,255,255,0.1)',
-          borderRadius: '16px', display: 'flex', flexDirection: 'column',
-          boxShadow: '0 8px 32px rgba(0,0,0,0.5)', overflow: 'hidden'
+          width: '350px', height: '500px', background: 'var(--brutal-white)',
+          border: '4px solid #000',
+          borderRadius: '0', display: 'flex', flexDirection: 'column',
+          boxShadow: '8px 8px 0 #000', overflow: 'hidden'
         }}>
           {/* Header */}
-          <div style={{ padding: '1rem', background: 'rgba(255,255,255,0.05)', borderBottom: '1px solid rgba(255,255,255,0.1)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <h3 style={{ margin: 0, fontSize: '1.1rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+          <div style={{ padding: '1rem', background: 'var(--brutal-pink)', borderBottom: '4px solid #000', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <h3 style={{ margin: 0, fontSize: '1.2rem', fontWeight: 900, textTransform: 'uppercase', display: 'flex', alignItems: 'center', gap: '0.5rem', color: '#000' }}>
               ✨ Asistente IA
             </h3>
-            <button onClick={() => setIsOpen(false)} style={{ background: 'transparent', border: 'none', color: 'white', cursor: 'pointer', fontSize: '1.2rem' }}>×</button>
+            <button onClick={() => setIsOpen(false)} style={{ background: 'var(--brutal-white)', border: '2px solid #000', color: '#000', cursor: 'pointer', fontSize: '1.2rem', fontWeight: 900, width: '32px', height: '32px', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '2px 2px 0 #000' }}>X</button>
           </div>
 
           {/* Messages */}
-          <div style={{ flex: 1, overflowY: 'auto', padding: '1rem', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+          <div style={{ flex: 1, overflowY: 'auto', padding: '1rem', display: 'flex', flexDirection: 'column', gap: '1rem', background: '#fff' }}>
             {messages.length === 0 && (
-              <div style={{ textAlign: 'center', color: 'var(--text-secondary)', marginTop: '2rem' }}>
-                <p>¡Hola! Soy tu asistente personal.</p>
-                <p style={{ fontSize: '0.9rem' }}>Puedo guardar gastos, leer tu diario, o simplemente charlar. ¿En qué te ayudo?</p>
+              <div style={{ textAlign: 'center', color: '#000', marginTop: '2rem', border: '2px solid #000', background: 'var(--brutal-yellow)', padding: '1rem', boxShadow: '4px 4px 0 #000' }}>
+                <p style={{fontWeight: 900, textTransform: 'uppercase'}}>¡Hola! Soy tu asistente.</p>
+                <p style={{ fontSize: '0.9rem', fontWeight: 600 }}>Puedo guardar gastos, leer tu diario, o simplemente charlar. ¿En qué te ayudo?</p>
               </div>
             )}
             
@@ -306,12 +306,13 @@ Si no usas la barra (/), la IA entiende tus mensajes naturalmente.`;
               return (
                 <div key={i} style={{ display: 'flex', justifyContent: isUser ? 'flex-end' : 'flex-start' }}>
                   <div style={{ 
-                    background: isUser ? 'var(--accent-color)' : 'rgba(255,255,255,0.1)',
-                    color: 'white', padding: '0.75rem 1rem', borderRadius: '16px',
-                    borderBottomRightRadius: isUser ? '4px' : '16px',
-                    borderBottomLeftRadius: !isUser ? '4px' : '16px',
+                    background: isUser ? 'var(--brutal-green)' : 'var(--brutal-white)',
+                    color: '#000', padding: '0.75rem 1rem', borderRadius: '0',
+                    border: '3px solid #000',
+                    boxShadow: '4px 4px 0 #000',
                     maxWidth: '85%', wordBreak: 'break-word',
-                    fontSize: '0.95rem'
+                    fontSize: '0.95rem',
+                    fontWeight: 700
                   }}>
                     {msg.content}
                   </div>
@@ -320,7 +321,7 @@ Si no usas la barra (/), la IA entiende tus mensajes naturalmente.`;
             })}
             {isLoading && (
               <div style={{ display: 'flex', justifyContent: 'flex-start' }}>
-                <div style={{ background: 'rgba(255,255,255,0.05)', color: 'var(--text-secondary)', padding: '0.5rem 1rem', borderRadius: '16px', fontSize: '0.9rem' }}>
+                <div style={{ background: 'var(--brutal-orange)', border: '2px solid #000', boxShadow: '2px 2px 0 #000', color: '#000', padding: '0.5rem 1rem', borderRadius: '0', fontSize: '0.9rem', fontWeight: 800 }}>
                   ⏳ Pensando...
                 </div>
               </div>
@@ -329,20 +330,22 @@ Si no usas la barra (/), la IA entiende tus mensajes naturalmente.`;
           </div>
 
           {/* Input */}
-          <div style={{ padding: '1rem', borderTop: '1px solid rgba(255,255,255,0.1)', background: 'rgba(0,0,0,0.2)' }}>
+          <div style={{ padding: '1rem', borderTop: '4px solid #000', background: 'var(--brutal-yellow)' }}>
             <form onSubmit={(e) => { e.preventDefault(); handleSend(input); }} style={{ display: 'flex', gap: '0.5rem' }}>
               <input 
                 type="text" 
                 value={input} 
                 onChange={e => setInput(e.target.value)}
                 placeholder="Escribe un comando o pregunta..."
-                style={{ flex: 1, padding: '0.75rem', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.2)', background: 'rgba(0,0,0,0.5)', color: 'white', outline: 'none' }}
+                style={{ flex: 1, padding: '0.75rem', borderRadius: '0', border: '3px solid #000', background: '#fff', color: '#000', outline: 'none', fontWeight: 600, boxShadow: 'inset 2px 2px 0 rgba(0,0,0,0.1)' }}
                 disabled={isLoading}
               />
               <button 
                 type="submit" 
                 disabled={isLoading || !input.trim()}
-                style={{ background: 'var(--accent-color)', color: 'white', border: 'none', borderRadius: '8px', padding: '0 1rem', cursor: 'pointer', fontWeight: 'bold' }}
+                style={{ background: 'var(--brutal-blue)', color: '#000', border: '3px solid #000', borderRadius: '0', padding: '0 1rem', cursor: 'pointer', fontWeight: 900, boxShadow: '2px 2px 0 #000', transition: 'all 0.15s' }}
+                onMouseOver={e => { if(!e.currentTarget.disabled) { e.currentTarget.style.transform = 'translate(2px, 2px)'; e.currentTarget.style.boxShadow = '0 0 0 #000'; }}}
+                onMouseOut={e => { if(!e.currentTarget.disabled) { e.currentTarget.style.transform = 'none'; e.currentTarget.style.boxShadow = '2px 2px 0 #000'; }}}
               >
                 ➔
               </button>
