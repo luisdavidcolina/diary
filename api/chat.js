@@ -10,7 +10,7 @@ export default async function handler(req, res) {
   if (!apiKey) return res.status(500).json({ error: "Falta GEMINI_API_KEY en Vercel" });
 
   try {
-    const geminiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=${apiKey}`;
+    const geminiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`;
     
     // Tools schema for Gemini
     const tools = [{
@@ -66,40 +66,43 @@ export default async function handler(req, res) {
       ]
     }];
 
-    const systemInstruction = {
-      parts: [{
-        text: `Eres un asistente inteligente integrado en la aplicación web personal (Diario y Finanzas) del usuario.
+    const systemPrompt = `Eres un asistente inteligente integrado en la aplicación web personal (Diario y Finanzas) del usuario.
 Tu objetivo es ayudar al usuario a gestionar su vida. Tienes acceso a herramientas (functions) para leer y modificar su base de datos.
 REGLAS IMPORTANTES:
 - Si el usuario te pide registrar un gasto, usa la herramienta add_transaction y confírmale.
 - Si el usuario te pregunta por sus finanzas o saldo, usa get_finance_summary y luego explícale los datos.
 - Si el usuario te cuenta algo íntimo o del día a día y quiere que lo guardes, usa add_diary_entry.
-- Si el usuario pregunta por el contexto general de la app, sus materias, temarios o enlaces, usa get_docs_list para ver qué archivos existen y luego read_doc_file para leer el contenido que necesites antes de responder. Los enlaces directos de las materias están dentro de esos archivos.
-- Responde siempre de manera concisa, amigable y usando emojis.`
-      }]
-    };
+- Si el usuario pregunta por el contexto general de la app, sus materias, temarios o enlaces, usa get_docs_list para ver qué archivos existen y luego read_doc_file para leer el contenido que necesites antes de responder.
+- Responde siempre de manera concisa, amigable y usando emojis.`;
 
     // Format messages for Gemini API
-    const contents = messages.map(msg => {
-      // Si el mensaje es una llamada a función o un resultado de función,
-      // la estructura en Gemini es diferente.
-      
+    const contents = [
+      {
+        role: 'user',
+        parts: [{ text: "SYSTEM INSTRUCTIONS: " + systemPrompt }]
+      },
+      {
+        role: 'model',
+        parts: [{ text: "Entendido. Operaré estrictamente bajo estas instrucciones." }]
+      }
+    ];
+
+    for (const msg of messages) {
       if (msg.role === 'function') {
-        // Respuesta del cliente después de ejecutar la herramienta
-        return {
-          role: 'function', // In Gemini it's 'function' (Wait, in Gemini REST API the role is 'user' or 'model'. Actually, function response is role: 'function' or role: 'user' with parts: [{ functionResponse: { name, response: { ... } } }])
+        contents.push({
+          role: 'function',
           parts: [{
             functionResponse: {
               name: msg.name,
               response: { result: msg.content }
             }
           }]
-        };
+        });
+        continue;
       }
       
       if (msg.functionCall) {
-        // Historial de cuándo el modelo llamó a la herramienta
-        return {
+        contents.push({
           role: 'model',
           parts: [{
             functionCall: {
@@ -107,18 +110,17 @@ REGLAS IMPORTANTES:
               args: msg.functionCall.arguments
             }
           }]
-        };
+        });
+        continue;
       }
 
-      // Mensajes de texto normales
-      return {
+      contents.push({
         role: msg.role === 'user' ? 'user' : 'model',
         parts: [{ text: msg.content }]
-      };
-    });
+      });
+    }
 
     const bodyPayload = {
-      systemInstruction,
       contents,
       tools,
       generationConfig: {
