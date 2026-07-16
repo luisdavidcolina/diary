@@ -17,7 +17,13 @@ export default async function handler(req, res) {
       functionDeclarations: [
         {
           name: "get_finance_summary",
-          description: "Obtiene el balance actual y el total gastado en cada categoría de finanzas para el usuario actual."
+          description: "Obtiene el balance actual y el total gastado en cada categoría de finanzas para el usuario actual.",
+          parameters: {
+            type: "OBJECT",
+            properties: {
+              dummy: { type: "STRING", description: "Ignorar este parámetro." }
+            }
+          }
         },
         {
           name: "add_transaction",
@@ -46,11 +52,23 @@ export default async function handler(req, res) {
         },
         {
           name: "get_diary_entries",
-          description: "Obtiene las entradas más recientes del diario del usuario."
+          description: "Obtiene las entradas más recientes del diario del usuario.",
+          parameters: {
+            type: "OBJECT",
+            properties: {
+              dummy: { type: "STRING", description: "Ignorar este parámetro." }
+            }
+          }
         },
         {
           name: "get_docs_list",
-          description: "Explora la estructura de la aplicación y obtiene la lista de todos los documentos y materiales de estudio (archivos .md) disponibles en la carpeta docs/."
+          description: "Explora la estructura de la aplicación y obtiene la lista de todos los documentos y materiales de estudio (archivos .md) disponibles en la carpeta docs/.",
+          parameters: {
+            type: "OBJECT",
+            properties: {
+              dummy: { type: "STRING", description: "Ignorar este parámetro." }
+            }
+          }
         },
         {
           name: "read_doc_file",
