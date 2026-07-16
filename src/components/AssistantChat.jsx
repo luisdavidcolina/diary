@@ -1,4 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
+import ReactMarkdown from 'react-markdown';
 import { addTransaction, getTransactions, addJournalEntry, getJournalEntries, addHabitOrTask, getLifestyleItems, queryCollection, updateRecord, deleteRecord, addChatMessage, getChatMessages, getApiUsageLogs } from '../services/db';
 
 const txUSD = (t) => (t.amountUSD != null ? t.amountUSD : parseFloat(t.amount) || 0);
@@ -248,8 +249,13 @@ Si no usas la barra (/), la IA entiende tus mensajes naturalmente.`;
     setIsLoading(true);
     
     try {
-      // Send only the last 5 messages to save tokens
-      const contextToSend = newMessages.slice(-5);
+      // Send last 12 messages to balance tokens and context
+      let startIndex = Math.max(0, newMessages.length - 12);
+      // Ensure we don't split a proposal and its function result
+      if (startIndex > 0 && newMessages[startIndex].role === 'function') {
+        startIndex--;
+      }
+      const contextToSend = newMessages.slice(startIndex);
       
       const res = await fetch('/api/chat', {
         method: 'POST',
@@ -441,7 +447,7 @@ Si no usas la barra (/), la IA entiende tus mensajes naturalmente.`;
                     fontSize: '0.95rem',
                     fontWeight: 700
                   }}>
-                    {msg.content}
+                    <ReactMarkdown>{msg.content}</ReactMarkdown>
                   </div>
                 </div>
               );
