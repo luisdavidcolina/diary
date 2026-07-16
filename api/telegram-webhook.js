@@ -36,8 +36,8 @@ async function saveTransaction({ amount, description, type, category = 'other', 
 async function saveJournal(content) {
   return addDoc(collection(dbNode, "journal_entries"), { userId: OWNER_UID, content, mood: 'neutral', createdAt: nowIso() });
 }
-async function saveTask(title) {
-  return addDoc(collection(dbNode, "lifestyle"), { userId: OWNER_UID, title, category: 'task', isCompleted: false, createdAt: nowIso() });
+async function saveTask(title, extra = {}) {
+  return addDoc(collection(dbNode, "lifestyle"), { userId: OWNER_UID, title, category: 'task', isCompleted: false, createdAt: nowIso(), ...extra });
 }
 
 // Lectura scopeada por usuario (para comandos de consulta que NO gastan tokens de IA).
@@ -328,8 +328,12 @@ REGLAS (en este orden de prioridad):
       if (tool.name === 'schedule_reminder') {
         const dbDate = args.date || new Date().toISOString().split('T')[0];
 
-        // 1. Save Task
-        const docRef = await saveTask(args.title);
+        // 1. Save Task (con fecha/hora para que salga en el tablero "Por Hacer" de la web)
+        const docRef = await saveTask(args.title, {
+          reminderDate: dbDate,
+          reminderTime: args.time,
+          isRecurring: !!args.isRecurring
+        });
 
         // 2. Schedule
         const endpoint = args.isRecurring ? '/api/schedule-recurring-reminder' : '/api/schedule-exact-reminder';
@@ -630,8 +634,12 @@ Escribe cualquier mensaje normal (sin la /) y lo guardo como tarea o lo interpre
 
         timeStr = timeStr.padStart(5, '0');
         const title = parts.slice(titleStartIndex).join(' ') || 'Recordatorio Telegram';
-        
-        const docRef = await saveTask(title);
+
+        const docRef = await saveTask(title, {
+          reminderDate: dateStr || new Date().toISOString().split('T')[0],
+          reminderTime: timeStr,
+          isRecurring: isDaily
+        });
 
         const appUrl = `https://${req.headers.host}`;
         const endpoint = isDaily ? '/api/schedule-recurring-reminder' : '/api/schedule-exact-reminder';
