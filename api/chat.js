@@ -6,83 +6,84 @@ export default async function handler(req, res) {
     return res.status(400).json({ error: "Falta array de messages" });
   }
 
-  const apiKey = process.env.GEMINI_API_KEY;
-  if (!apiKey) return res.status(500).json({ error: "Falta GEMINI_API_KEY en Vercel" });
+  const apiKey = process.env.OPENROUTER_API_KEY;
+  if (!apiKey) return res.status(500).json({ error: "Falta OPENROUTER_API_KEY en Vercel" });
 
   try {
-    const geminiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`;
+    const openRouterUrl = 'https://openrouter.ai/api/v1/chat/completions';
     
-    // Tools schema for Gemini
-    const tools = [{
-      functionDeclarations: [
-        {
+    // Tools schema for OpenAI/OpenRouter
+    const tools = [
+      {
+        type: "function",
+        function: {
           name: "get_finance_summary",
           description: "Obtiene el balance actual y el total gastado en cada categoría de finanzas para el usuario actual.",
-          parameters: {
-            type: "OBJECT",
-            properties: {
-              dummy: { type: "STRING", description: "Ignorar este parámetro." }
-            }
-          }
-        },
-        {
+          parameters: { type: "object", properties: {} }
+        }
+      },
+      {
+        type: "function",
+        function: {
           name: "add_transaction",
           description: "Registra un nuevo gasto o ingreso en la base de datos de finanzas.",
           parameters: {
-            type: "OBJECT",
+            type: "object",
             properties: {
-              amount: { type: "NUMBER", description: "El monto de la transacción (ej. 15.5)" },
-              description: { type: "STRING", description: "Descripción de la transacción (ej. 'Taxi')" },
-              type: { type: "STRING", description: "El tipo: debe ser 'expense' (gasto) o 'income' (ingreso)" },
-              category: { type: "STRING", description: "Para gastos, debe ser una de: 'house', 'food', 'transport', 'fun', 'remittances', 'other'" }
+              amount: { type: "number", description: "El monto de la transacción (ej. 15.5)" },
+              description: { type: "string", description: "Descripción de la transacción (ej. 'Taxi')" },
+              type: { type: "string", description: "El tipo: debe ser 'expense' (gasto) o 'income' (ingreso)" },
+              category: { type: "string", description: "Para gastos, debe ser una de: 'house', 'food', 'transport', 'fun', 'remittances', 'other'" }
             },
             required: ["amount", "description", "type"]
           }
-        },
-        {
+        }
+      },
+      {
+        type: "function",
+        function: {
           name: "add_diary_entry",
           description: "Añade una nueva entrada al diario personal del usuario.",
           parameters: {
-            type: "OBJECT",
+            type: "object",
             properties: {
-              text: { type: "STRING", description: "El contenido de la entrada del diario" }
+              text: { type: "string", description: "El contenido de la entrada del diario" }
             },
             required: ["text"]
           }
-        },
-        {
+        }
+      },
+      {
+        type: "function",
+        function: {
           name: "get_diary_entries",
           description: "Obtiene las entradas más recientes del diario del usuario.",
-          parameters: {
-            type: "OBJECT",
-            properties: {
-              dummy: { type: "STRING", description: "Ignorar este parámetro." }
-            }
-          }
-        },
-        {
+          parameters: { type: "object", properties: {} }
+        }
+      },
+      {
+        type: "function",
+        function: {
           name: "get_docs_list",
           description: "Explora la estructura de la aplicación y obtiene la lista de todos los documentos y materiales de estudio (archivos .md) disponibles en la carpeta docs/.",
-          parameters: {
-            type: "OBJECT",
-            properties: {
-              dummy: { type: "STRING", description: "Ignorar este parámetro." }
-            }
-          }
-        },
-        {
+          parameters: { type: "object", properties: {} }
+        }
+      },
+      {
+        type: "function",
+        function: {
           name: "read_doc_file",
           description: "Lee el contenido exacto de un archivo de documento o materia.",
           parameters: {
-            type: "OBJECT",
+            type: "object",
             properties: {
-              filepath: { type: "STRING", description: "Ruta del archivo (ej. 'PLAN_ESTUDIO.md' o 'ingles/guia.md')" }
+              filepath: { type: "string", description: "Ruta del archivo (ej. 'PLAN_ESTUDIO.md' o 'ingles/guia.md')" }
             },
             required: ["filepath"]
           }
         }
-      ]
-    }];
+      }
+    ];
 
     const systemPrompt = `Eres un asistente inteligente integrado en la aplicación web personal (Diario y Finanzas) del usuario.
 Tu objetivo es ayudar al usuario a gestionar su vida. Tienes acceso a herramientas (functions) para leer y modificar su base de datos.
@@ -93,78 +94,71 @@ REGLAS IMPORTANTES:
 - Si el usuario pregunta por el contexto general de la app, sus materias, temarios o enlaces, usa get_docs_list para ver qué archivos existen y luego read_doc_file para leer el contenido que necesites antes de responder.
 - Responde siempre de manera concisa, amigable y usando emojis.`;
 
-    // Format messages for Gemini API
-    const contents = [
-      {
-        role: 'user',
-        parts: [{ text: "SYSTEM INSTRUCTIONS: " + systemPrompt }]
-      },
-      {
-        role: 'model',
-        parts: [{ text: "Entendido. Operaré estrictamente bajo estas instrucciones." }]
-      }
+    const formattedMessages = [
+      { role: 'system', content: systemPrompt }
     ];
 
+    // Mapear historial al formato de OpenAI
     for (const msg of messages) {
       if (msg.role === 'function') {
-        contents.push({
-          role: 'function',
-          parts: [{
-            functionResponse: {
-              name: msg.name,
-              response: { result: msg.content }
-            }
-          }]
+        formattedMessages.push({
+          role: 'tool',
+          tool_call_id: "call_" + msg.name, // Fake ID since our frontend doesn't track tool_call_ids
+          name: msg.name,
+          content: msg.content
         });
         continue;
       }
       
       if (msg.functionCall) {
-        contents.push({
-          role: 'model',
-          parts: [{
-            functionCall: {
+        formattedMessages.push({
+          role: 'assistant',
+          content: null,
+          tool_calls: [{
+            id: "call_" + msg.functionCall.name,
+            type: "function",
+            function: {
               name: msg.functionCall.name,
-              args: msg.functionCall.arguments
+              arguments: JSON.stringify(msg.functionCall.arguments)
             }
           }]
         });
         continue;
       }
 
-      contents.push({
-        role: msg.role === 'user' ? 'user' : 'model',
-        parts: [{ text: msg.content }]
+      formattedMessages.push({
+        role: msg.role === 'user' ? 'user' : 'assistant',
+        content: msg.content
       });
     }
 
-    const bodyPayload = {
-      contents,
-      tools,
-      generationConfig: {
-        temperature: 0.7
-      }
-    };
-
-    const response = await fetch(geminiUrl, {
+    const response = await fetch(openRouterUrl, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(bodyPayload)
+      headers: { 
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${apiKey}`
+      },
+      body: JSON.stringify({
+        model: 'openai/gpt-4o-mini',
+        messages: formattedMessages,
+        tools: tools,
+        temperature: 0.7
+      })
     });
 
     const data = await response.json();
-    if (data.error) throw new Error(data.error.message);
+    if (data.error) throw new Error(data.error.message || JSON.stringify(data.error));
 
-    const firstCandidate = data.candidates[0];
-    const firstPart = firstCandidate.content.parts[0];
+    const responseMessage = data.choices[0].message;
 
     // Verificar si es una llamada a función
-    if (firstPart.functionCall) {
+    if (responseMessage.tool_calls && responseMessage.tool_calls.length > 0) {
+      const toolCall = responseMessage.tool_calls[0].function;
       return res.status(200).json({
         type: 'function_call',
         functionCall: {
-          name: firstPart.functionCall.name,
-          arguments: firstPart.functionCall.args
+          name: toolCall.name,
+          arguments: JSON.parse(toolCall.arguments)
         }
       });
     }
@@ -172,7 +166,7 @@ REGLAS IMPORTANTES:
     // Es un mensaje de texto normal
     return res.status(200).json({
       type: 'text',
-      text: firstPart.text
+      text: responseMessage.content
     });
 
   } catch (error) {

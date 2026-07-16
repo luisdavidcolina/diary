@@ -4,9 +4,9 @@ export default async function handler(req, res) {
   const { imageUrl } = req.body;
   if (!imageUrl) return res.status(400).json({ error: "Falta imageUrl" });
 
-  // Cambiado a Gemini
-  const apiKey = process.env.GEMINI_API_KEY;
-  if (!apiKey) return res.status(500).json({ error: "Falta GEMINI_API_KEY" });
+  // Cambiado a OpenRouter
+  const apiKey = process.env.OPENROUTER_API_KEY;
+  if (!apiKey) return res.status(500).json({ error: "Falta OPENROUTER_API_KEY" });
 
   try {
     let base64Data = "";
@@ -36,37 +36,42 @@ Extrae la siguiente información y devuélvela estrictamente en un objeto JSON c
   "description": "texto descriptivo breve del comercio, banco o persona receptora",
   "type": "expense" (o "income" si es claramente un dinero recibido o saldo a favor)
 }
-No devuelvas NADA más que el JSON puro, sin marcadores de markdown.`;
+No devuelvas NADA más que el JSON puro.`;
 
-    const geminiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`;
+    const openRouterUrl = 'https://openrouter.ai/api/v1/chat/completions';
     
-    const response = await fetch(geminiUrl, {
+    const response = await fetch(openRouterUrl, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: { 
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${apiKey}`
+      },
       body: JSON.stringify({
-        contents: [{
-          parts: [
-            { text: promptText },
-            {
-              inline_data: {
-                mime_type: mimeType,
-                data: base64Data
+        model: "openai/gpt-4o-mini",
+        messages: [
+          {
+            role: "user",
+            content: [
+              { type: "text", text: promptText },
+              {
+                type: "image_url",
+                image_url: {
+                  url: `data:${mimeType};base64,${base64Data}`
+                }
               }
-            }
-          ]
-        }],
-        generationConfig: {
-          temperature: 0.1,
-          responseMimeType: "application/json"
-        }
+            ]
+          }
+        ],
+        response_format: { type: "json_object" },
+        temperature: 0.1
       })
     });
 
     const data = await response.json();
-    if (data.error) throw new Error(data.error.message);
+    if (data.error) throw new Error(data.error.message || JSON.stringify(data.error));
 
-    const resultText = data.candidates[0].content.parts[0].text.trim();
-    // Limpieza por si acaso, aunque Gemini JSON mode lo devuelve puro
+    const resultText = data.choices[0].message.content.trim();
+    // Limpieza por si acaso
     const jsonStr = resultText.replace(/```json/g, '').replace(/```/g, '').trim();
     const parsed = JSON.parse(jsonStr);
 
