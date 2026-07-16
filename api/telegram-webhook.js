@@ -117,7 +117,7 @@ REGLAS (en este orden de prioridad):
 - Para LEER/consultar datos o hallar el 'id' de un registro, usa db_query. Para MODIFICAR/corregir, db_update. Para BORRAR, db_delete.
   Colecciones: transactions (finanzas), journal_entries (diario), lifestyle (tareas/hábitos: title, isCompleted), accounts (cuentas), library_items (biblioteca).
   Completar una tarea = db_update en 'lifestyle' con { isCompleted: true }.
-- Si pregunta por sus MATERIAS, temarios, temas de estudio o material, usa get_docs_list (y read_doc_file para leer un documento). NO inventes materias.
+- Si pregunta por sus MATERIAS, TEMAS o temario (ej. "temas de cálculo"), consulta la colección 'syllabus' con db_query (tiene TODO el temario: materia, unidad y subtema). Para otros materiales/documentos usa get_docs_list/read_doc_file. NUNCA inventes materias ni temas.
 - Si solo saluda o hace una pregunta general, responde corto y amigable (usa emojis).`;
 
   const tools = [
@@ -341,14 +341,16 @@ REGLAS (en este orden de prioridad):
       }
 
       // CRUD genérico sobre la BD.
-      const AI_COLLECTIONS = ['transactions', 'journal_entries', 'lifestyle', 'accounts', 'library_items'];
+      const AI_COLLECTIONS = ['transactions', 'journal_entries', 'lifestyle', 'accounts', 'library_items', 'syllabus'];
       if (tool.name === 'db_query') {
         if (!AI_COLLECTIONS.includes(args.collection)) return `⚠️ Colección no permitida.`;
         const rows = (await readMine(args.collection))
           .sort((a, b) => (a.createdAt < b.createdAt ? 1 : -1))
-          .slice(0, args.limit || 8);
+          .slice(0, args.limit || (args.collection === 'syllabus' ? 100 : 8));
         if (!rows.length) return `No hay registros en ${args.collection}.`;
-        return `📋 ${args.collection}:\n${rows.map((r) => `• ${r.description || r.title || r.content || r.name || r.id}${r.amount != null ? ` ($${r.amount})` : ''} [id: ${r.id}]`).join('\n')}`;
+        // Segunda pasada: la IA interpreta/resume los datos en lenguaje natural.
+        const summary = await summarizeToolResult(apiKey, systemPrompt, text, tool, JSON.stringify(rows));
+        return summary || `📋 ${args.collection}:\n${rows.map((r) => `• ${r.description || r.title || r.content || r.name || r.id}${r.amount != null ? ` ($${r.amount})` : ''} [id: ${r.id}]`).join('\n')}`;
       }
       if (tool.name === 'db_update') {
         if (!AI_COLLECTIONS.includes(args.collection)) return `⚠️ Colección no permitida.`;

@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import Countdown from '../components/Countdown';
 import SubjectCard from '../components/SubjectCard';
 import TodayPlan from '../components/TodayPlan';
@@ -7,6 +7,7 @@ import Pomodoro from '../components/Pomodoro';
 import { SUBJECTS, SUBJECT_ORDER, ITEMS } from '../data/syllabus';
 import { buildPlan, progressBySubject, studyStreak } from '../services/planner';
 import { getConfig, getDoneMap, getPomodoros, saveConfig, toggleDone } from '../services/store';
+import { syncSyllabusIfNeeded } from '../services/db';
 
 const Dashboard = () => {
   const [doneMap, setDoneMap] = useState(() => getDoneMap());
@@ -14,6 +15,9 @@ const Dashboard = () => {
   const [showSettings, setShowSettings] = useState(false);
   const [openItem, setOpenItem] = useState(null);
   const [pomoMap, setPomoMap] = useState(() => getPomodoros());
+
+  // Sube el temario completo a la BD una vez (para que los chatbots lo consulten).
+  useEffect(() => { syncSyllabusIfNeeded(); }, []);
 
   const plan = useMemo(() => buildPlan(ITEMS, doneMap, config), [doneMap, config]);
   const progress = useMemo(() => progressBySubject(ITEMS, doneMap), [doneMap]);

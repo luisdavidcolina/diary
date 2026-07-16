@@ -1,5 +1,6 @@
 import { collection, addDoc, getDocs, query, where, doc, updateDoc, deleteDoc, setDoc } from "firebase/firestore/lite";
 import { db, auth } from "../firebase";
+import { ITEMS, SUBJECTS } from "../data/syllabus";
 
 // UID del usuario actual. Todos los datos se scopean por usuario para que
 // cada cuenta vea solo lo suyo.
@@ -20,7 +21,7 @@ async function fetchMine(collectionName) {
 
 // ─────────── CRUD genérico (para el asistente IA) ───────────
 // Colecciones sobre las que la IA puede operar. Whitelist = seguridad.
-export const AI_COLLECTIONS = ['transactions', 'journal_entries', 'lifestyle', 'accounts', 'library_items'];
+export const AI_COLLECTIONS = ['transactions', 'journal_entries', 'lifestyle', 'accounts', 'library_items', 'syllabus'];
 
 function assertAllowed(name) {
   if (!AI_COLLECTIONS.includes(name)) throw new Error(`Colección no permitida: ${name}`);
@@ -40,6 +41,43 @@ export const deleteRecord = (name, id) => {
   assertAllowed(name);
   return deleteDoc(doc(db, name, id));
 };
+
+// ─────────── Sincronización del temario a Firestore ───────────
+// Guarda TODO el temario (src/data/syllabus.js) en la colección `syllabus`,
+// scopeado por usuario, para que los chatbots (web y Telegram) lo consulten.
+// Idempotente: usa `${uid}_${itemId}` como id del documento (no duplica).
+const SYLLABUS_VERSION = 1;
+
+export async function syncSyllabus() {
+  const u = uid();
+  if (!u) return;
+  await Promise.all(
+    ITEMS.map((it) =>
+      setDoc(doc(db, "syllabus", `${u}_${it.id}`), {
+        userId: u,
+        itemId: it.id,
+        subject: it.subject,
+        subjectTitle: SUBJECTS[it.subject]?.title || it.subject,
+        unit: it.unit,
+        title: it.title,
+        details: it.details || [],
+        createdAt: new Date().toISOString()
+      })
+    )
+  );
+}
+
+// Sincroniza una sola vez por versión (evita reescribir en cada carga).
+export async function syncSyllabusIfNeeded() {
+  try {
+    const key = `diary.syllabusSync.${uid()}`;
+    if (localStorage.getItem(key) === String(SYLLABUS_VERSION)) return;
+    await syncSyllabus();
+    localStorage.setItem(key, String(SYLLABUS_VERSION));
+  } catch (e) {
+    console.error("syncSyllabus error", e);
+  }
+}
 
 // =============================
 // APUNTES (Notes)

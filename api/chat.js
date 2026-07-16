@@ -166,6 +166,7 @@ COLECCIONES de la base de datos y sus campos:
 - lifestyle (tareas y hábitos): title, category ('task'|'habit'), isCompleted (boolean).
 - accounts (cuentas/wallets): name, currency, balance.
 - library_items (biblioteca): title, url, type, status ('unread'|'read').
+- syllabus (TEMARIO de estudio): subjectTitle (materia), unit (tema/unidad), title (subtema), details (puntos). Consúltala para responder "qué temas estudio", "temas de cálculo", etc.
 
 REGLAS:
 - Registrar gasto/ingreso → add_transaction. Recordatorio/alarma con hora → schedule_reminder. Nota del diario → add_diary_entry.

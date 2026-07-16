@@ -106,7 +106,7 @@ export default function AssistantChat() {
       if (name === 'db_query') {
         const { collection, limit } = argsObj;
         const data = await queryCollection(collection);
-        return JSON.stringify(data.slice(0, limit || 10));
+        return JSON.stringify(data.slice(0, limit || (collection === 'syllabus' ? 100 : 10)));
       }
       if (name === 'db_update') {
         const { collection, id, data } = argsObj;
