@@ -18,6 +18,29 @@ async function fetchMine(collectionName) {
   return byNewest(out);
 }
 
+// ─────────── CRUD genérico (para el asistente IA) ───────────
+// Colecciones sobre las que la IA puede operar. Whitelist = seguridad.
+export const AI_COLLECTIONS = ['transactions', 'journal_entries', 'lifestyle', 'accounts', 'library_items'];
+
+function assertAllowed(name) {
+  if (!AI_COLLECTIONS.includes(name)) throw new Error(`Colección no permitida: ${name}`);
+}
+
+export const queryCollection = (name) => {
+  assertAllowed(name);
+  return fetchMine(name);
+};
+
+export const updateRecord = (name, id, data) => {
+  assertAllowed(name);
+  return updateDoc(doc(db, name, id), { ...data, updatedAt: new Date().toISOString() });
+};
+
+export const deleteRecord = (name, id) => {
+  assertAllowed(name);
+  return deleteDoc(doc(db, name, id));
+};
+
 // =============================
 // APUNTES (Notes)
 // =============================

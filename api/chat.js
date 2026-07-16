@@ -107,21 +107,74 @@ export default async function handler(req, res) {
             required: ["title", "time"]
           }
         }
+      },
+      {
+        type: "function",
+        function: {
+          name: "db_query",
+          description: "Lee/consulta registros de CUALQUIER colección de la base de datos del usuario. Úsala para revisar, buscar o listar datos (y para obtener el 'id' de un registro antes de modificarlo o borrarlo).",
+          parameters: {
+            type: "object",
+            properties: {
+              collection: { type: "string", description: "Nombre de la colección: 'transactions', 'journal_entries', 'lifestyle', 'accounts' o 'library_items'" },
+              limit: { type: "number", description: "Cuántos registros recientes traer (por defecto 10)" }
+            },
+            required: ["collection"]
+          }
+        }
+      },
+      {
+        type: "function",
+        function: {
+          name: "db_update",
+          description: "Modifica/corrige un registro existente en cualquier colección. Primero usa db_query para obtener su 'id'. Envía en 'data' solo los campos a cambiar.",
+          parameters: {
+            type: "object",
+            properties: {
+              collection: { type: "string", description: "'transactions', 'journal_entries', 'lifestyle', 'accounts' o 'library_items'" },
+              id: { type: "string", description: "El id del registro a modificar" },
+              data: { type: "object", description: "Campos a actualizar, ej. { amount: 20, description: 'Corregido' }" }
+            },
+            required: ["collection", "id", "data"]
+          }
+        }
+      },
+      {
+        type: "function",
+        function: {
+          name: "db_delete",
+          description: "Elimina un registro de cualquier colección. Primero usa db_query para obtener su 'id'. Pide confirmación al usuario si no está claro.",
+          parameters: {
+            type: "object",
+            properties: {
+              collection: { type: "string", description: "'transactions', 'journal_entries', 'lifestyle', 'accounts' o 'library_items'" },
+              id: { type: "string", description: "El id del registro a eliminar" }
+            },
+            required: ["collection", "id"]
+          }
+        }
       }
     ];
 
     const systemPrompt = `Eres un asistente inteligente integrado en la aplicación web personal (Diario y Finanzas) del usuario.
-Tu objetivo es ayudar al usuario a gestionar su vida. Tienes acceso a herramientas (functions) para leer y modificar su base de datos.
+Tu objetivo es ayudar al usuario a gestionar su vida. Tienes acceso COMPLETO (leer, crear, modificar y borrar) a su base de datos.
 La fecha y hora actual del servidor es: ${new Date().toLocaleString("es-VE", { timeZone: "America/Caracas" })}.
-REGLAS IMPORTANTES:
-- Si el usuario te pide registrar un gasto, usa add_transaction.
-- Si el usuario te pide que le recuerdes algo o ponga una alarma en una fecha/hora, usa schedule_reminder.
-- Si el usuario te pide agregar una tarea sin fecha/hora específica, usa add_diary_entry o su equivalente.
-- Si el usuario te pregunta por sus finanzas o saldo, usa get_finance_summary y luego explícale los datos.
-- Si el usuario te cuenta algo íntimo o del día a día y quiere que lo guardes, usa add_diary_entry.
-- Si el usuario pregunta por el contexto general de la app, sus materias, temarios o enlaces, usa get_docs_list para ver qué archivos existen y luego read_doc_file para leer el contenido que necesites antes de responder.
-- Si el usuario te pregunta por sus créditos, gastos de API o saldo de OpenRouter, usa check_api_credits.
-- Responde siempre de manera concisa, amigable y usando emojis.`;
+
+COLECCIONES de la base de datos y sus campos:
+- transactions (finanzas): amount, amountUSD, currency ('USD'|'VES'), description, type ('expense'|'income'), category.
+- journal_entries (diario): content, mood.
+- lifestyle (tareas y hábitos): title, category ('task'|'habit'), isCompleted (boolean).
+- accounts (cuentas/wallets): name, currency, balance.
+- library_items (biblioteca): title, url, type, status ('unread'|'read').
+
+REGLAS:
+- Registrar gasto/ingreso → add_transaction. Recordatorio/alarma con hora → schedule_reminder. Nota del diario → add_diary_entry.
+- Para LEER, buscar o listar cualquier dato → db_query (devuelve también el 'id' de cada registro).
+- Para MODIFICAR o CORREGIR un registro → primero db_query para hallar su 'id', luego db_update.
+- Para BORRAR → db_query para el 'id', luego db_delete (confirma con el usuario si hay ambigüedad).
+- Marcar una tarea como completada = db_update en 'lifestyle' con { isCompleted: true }.
+- Resumen de finanzas → get_finance_summary. Materias/temarios → get_docs_list + read_doc_file. Créditos → check_api_credits.
+- Responde conciso, amigable y con emojis.`;
 
     const formattedMessages = [
       { role: 'system', content: systemPrompt }

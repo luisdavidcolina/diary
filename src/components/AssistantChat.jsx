@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { addTransaction, getTransactions, addJournalEntry, getJournalEntries, addHabitOrTask, getLifestyleItems } from '../services/db';
+import { addTransaction, getTransactions, addJournalEntry, getJournalEntries, addHabitOrTask, getLifestyleItems, queryCollection, updateRecord, deleteRecord } from '../services/db';
 
 const txUSD = (t) => (t.amountUSD != null ? t.amountUSD : parseFloat(t.amount) || 0);
 const isThisMonth = (iso) => {
@@ -100,6 +100,23 @@ export default function AssistantChat() {
         const data = await res.json();
         if (data.error) return `Error al consultar saldo: ${data.error}`;
         return `Has consumido $${data.usage} de la API.`;
+      }
+
+      // CRUD genérico sobre cualquier colección permitida.
+      if (name === 'db_query') {
+        const { collection, limit } = argsObj;
+        const data = await queryCollection(collection);
+        return JSON.stringify(data.slice(0, limit || 10));
+      }
+      if (name === 'db_update') {
+        const { collection, id, data } = argsObj;
+        await updateRecord(collection, id, data);
+        return `Registro actualizado en ${collection}.`;
+      }
+      if (name === 'db_delete') {
+        const { collection, id } = argsObj;
+        await deleteRecord(collection, id);
+        return `Registro eliminado de ${collection}.`;
       }
 
       return "Error: Herramienta desconocida";

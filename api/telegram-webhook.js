@@ -1,4 +1,4 @@
-import { doc, updateDoc, collection, addDoc, getDocs, query, where } from "firebase/firestore/lite";
+import { doc, updateDoc, deleteDoc, collection, addDoc, getDocs, query, where } from "firebase/firestore/lite";
 import { dbNode } from "./_firebaseNode.js";
 
 const TELEGRAM_TOKEN = process.env.TELEGRAM_BOT_TOKEN;
@@ -87,6 +87,9 @@ REGLAS (en este orden de prioridad):
 - Si es una tarea pendiente SIN hora concreta, usa add_task.
 - Si es sobre un gasto o dinero, usa add_transaction.
 - Si es un pensamiento o algo para el diario personal, usa add_diary_entry.
+- Para LEER/consultar datos o hallar el 'id' de un registro, usa db_query. Para MODIFICAR/corregir, db_update. Para BORRAR, db_delete.
+  Colecciones: transactions (finanzas), journal_entries (diario), lifestyle (tareas/hábitos: title, isCompleted), accounts (cuentas), library_items (biblioteca).
+  Completar una tarea = db_update en 'lifestyle' con { isCompleted: true }.
 - Si solo saluda o hace una pregunta general, responde corto y amigable (usa emojis).`;
 
   const tools = [
@@ -148,6 +151,52 @@ REGLAS (en este orden de prioridad):
             isRecurring: { type: "boolean", description: "True si debe repetirse todos los días a esa hora" }
           },
           required: ["title", "time"]
+        }
+      }
+    },
+    {
+      type: "function",
+      function: {
+        name: "db_query",
+        description: "Lee/consulta registros de cualquier colección. Úsala para revisar datos o para obtener el 'id' antes de modificar o borrar.",
+        parameters: {
+          type: "object",
+          properties: {
+            collection: { type: "string", description: "'transactions', 'journal_entries', 'lifestyle', 'accounts' o 'library_items'" },
+            limit: { type: "number", description: "Cuántos registros recientes (por defecto 8)" }
+          },
+          required: ["collection"]
+        }
+      }
+    },
+    {
+      type: "function",
+      function: {
+        name: "db_update",
+        description: "Modifica/corrige un registro. Primero usa db_query para su 'id'. En 'data' van solo los campos a cambiar.",
+        parameters: {
+          type: "object",
+          properties: {
+            collection: { type: "string", description: "'transactions', 'journal_entries', 'lifestyle', 'accounts' o 'library_items'" },
+            id: { type: "string", description: "id del registro" },
+            data: { type: "object", description: "Campos a actualizar" }
+          },
+          required: ["collection", "id", "data"]
+        }
+      }
+    },
+    {
+      type: "function",
+      function: {
+        name: "db_delete",
+        description: "Elimina un registro. Primero usa db_query para su 'id'.",
+        parameters: {
+          type: "object",
+          properties: {
+            collection: { type: "string", description: "'transactions', 'journal_entries', 'lifestyle', 'accounts' o 'library_items'" },
+            id: { type: "string", description: "id del registro" }
+          },
+          required: ["collection", "id"]
         }
       }
     }
@@ -239,6 +288,27 @@ REGLAS (en este orden de prioridad):
           return `⏰ Recordatorio programado para las ${args.time}`;
         }
         return `⚠️ Tarea guardada, pero hubo un error programando la alarma del servidor.`;
+      }
+
+      // CRUD genérico sobre la BD.
+      const AI_COLLECTIONS = ['transactions', 'journal_entries', 'lifestyle', 'accounts', 'library_items'];
+      if (tool.name === 'db_query') {
+        if (!AI_COLLECTIONS.includes(args.collection)) return `⚠️ Colección no permitida.`;
+        const rows = (await readMine(args.collection))
+          .sort((a, b) => (a.createdAt < b.createdAt ? 1 : -1))
+          .slice(0, args.limit || 8);
+        if (!rows.length) return `No hay registros en ${args.collection}.`;
+        return `📋 ${args.collection}:\n${rows.map((r) => `• ${r.description || r.title || r.content || r.name || r.id}${r.amount != null ? ` ($${r.amount})` : ''} [id: ${r.id}]`).join('\n')}`;
+      }
+      if (tool.name === 'db_update') {
+        if (!AI_COLLECTIONS.includes(args.collection)) return `⚠️ Colección no permitida.`;
+        await updateDoc(doc(dbNode, args.collection, args.id), { ...args.data, updatedAt: nowIso() });
+        return `✏️ Registro actualizado en ${args.collection}.`;
+      }
+      if (tool.name === 'db_delete') {
+        if (!AI_COLLECTIONS.includes(args.collection)) return `⚠️ Colección no permitida.`;
+        await deleteDoc(doc(dbNode, args.collection, args.id));
+        return `🗑 Registro eliminado de ${args.collection}.`;
       }
     }
 
