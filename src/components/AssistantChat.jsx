@@ -53,6 +53,19 @@ export default function AssistantChat() {
         return JSON.stringify(entries.slice(0, 5).map(e => ({ date: e.createdAt, content: e.content })));
       }
 
+      if (name === 'get_docs_list') {
+        const res = await fetch('/api/read-doc');
+        const data = await res.json();
+        return JSON.stringify(data.files || data.error);
+      }
+
+      if (name === 'read_doc_file') {
+        const { filepath } = argsObj;
+        const res = await fetch(`/api/read-doc?filepath=${encodeURIComponent(filepath)}`);
+        const data = await res.json();
+        return data.content || data.error || "No se pudo leer el archivo";
+      }
+
       return "Error: Herramienta desconocida";
     } catch (e) {
       return `Error ejecutando herramienta: ${e.message}`;
