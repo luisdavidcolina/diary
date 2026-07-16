@@ -1,6 +1,7 @@
 import { doc, getDoc, updateDoc, deleteDoc, collection, addDoc, getDocs, query, where } from "firebase/firestore/lite";
 import { dbNode } from "./_firebaseNode.js";
-import { SYSTEM_CONTEXT } from "./_context.js";
+import { buildSystemPrompt } from "./_context.js";
+import { loadBotBrain } from "./_botConfig.js";
 
 const TELEGRAM_TOKEN = process.env.TELEGRAM_BOT_TOKEN;
 
@@ -116,12 +117,16 @@ async function processTextWithAI(text, chatId, reqHost) {
   if (!apiKey) return "⚠️ Falta OPENROUTER_API_KEY en el servidor.";
 
   const nowCaracas = new Date().toLocaleString("es-VE", { timeZone: "America/Caracas" });
-  const systemPrompt = `${SYSTEM_CONTEXT}
+  // Cerebro editable desde la web (identidad, personalidad, reglas, conocimiento).
+  const brain = await loadBotBrain(OWNER_UID);
+  const systemPrompt = `${buildSystemPrompt({
+    config: brain.config,
+    knowledge: brain.knowledge,
+    surface: 'Estás respondiendo por Telegram (mensajes cortos).',
+    now: nowCaracas
+  })}
 
-Estás respondiendo por Telegram (mensajes cortos).
-La fecha y hora actual (Caracas) es: ${nowCaracas}.
-El usuario te enviará mensajes cortos (ideas, tareas, gastos, anécdotas).
-REGLAS (en este orden de prioridad):
+REGLAS OPERATIVAS (prioridad alta):
 - Si el mensaje pide un RECORDATORIO, ALARMA o AVISO con una HORA (ej. "recuérdame báñate a las 21:29", "avísame mañana 8am"), usa SIEMPRE schedule_reminder con esa hora. NO uses add_task en ese caso.
   · Si dice "hoy" o no da fecha, deja date vacío. Si dice "todos los días", pon isRecurring=true.
   · La hora debe ir en formato HH:MM de 24 horas (21:29, 08:00).

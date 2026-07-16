@@ -1,4 +1,5 @@
-import { SYSTEM_CONTEXT } from './_context.js';
+import { buildSystemPrompt } from './_context.js';
+import { loadBotBrain } from './_botConfig.js';
 
 export default async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).end();
@@ -158,10 +159,14 @@ export default async function handler(req, res) {
       }
     ];
 
-    const systemPrompt = `${SYSTEM_CONTEXT}
-
-Estás respondiendo dentro de la app web. Tienes acceso COMPLETO (leer, crear, modificar y borrar) a la base de datos.
-La fecha y hora actual del servidor es: ${new Date().toLocaleString("es-VE", { timeZone: "America/Caracas" })}.
+    // Cerebro editable desde la web (identidad, personalidad, reglas, conocimiento).
+    const brain = await loadBotBrain();
+    const systemPrompt = `${buildSystemPrompt({
+      config: brain.config,
+      knowledge: brain.knowledge,
+      surface: 'Estás respondiendo dentro de la app web. Tienes acceso COMPLETO (leer, crear, modificar y borrar) a la base de datos.',
+      now: new Date().toLocaleString("es-VE", { timeZone: "America/Caracas" })
+    })}
 
 COLECCIONES de la base de datos y sus campos:
 - transactions (finanzas): amount, amountUSD, currency ('USD'|'VES'), description, type ('expense'|'income'), category.

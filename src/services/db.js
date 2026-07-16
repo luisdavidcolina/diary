@@ -1,4 +1,4 @@
-import { collection, addDoc, getDocs, query, where, doc, updateDoc, deleteDoc, setDoc } from "firebase/firestore/lite";
+import { collection, addDoc, getDocs, query, where, doc, getDoc, updateDoc, deleteDoc, setDoc } from "firebase/firestore/lite";
 import { db, auth } from "../firebase";
 import { ITEMS, SUBJECTS } from "../data/syllabus";
 
@@ -21,7 +21,7 @@ async function fetchMine(collectionName) {
 
 // ─────────── CRUD genérico (para el asistente IA) ───────────
 // Colecciones sobre las que la IA puede operar. Whitelist = seguridad.
-export const AI_COLLECTIONS = ['transactions', 'journal_entries', 'lifestyle', 'accounts', 'library_items', 'syllabus'];
+export const AI_COLLECTIONS = ['transactions', 'journal_entries', 'lifestyle', 'accounts', 'library_items', 'syllabus', 'bot_knowledge'];
 
 function assertAllowed(name) {
   if (!AI_COLLECTIONS.includes(name)) throw new Error(`Colección no permitida: ${name}`);
@@ -30,6 +30,14 @@ function assertAllowed(name) {
 export const queryCollection = (name) => {
   assertAllowed(name);
   return fetchMine(name);
+};
+
+export const createRecord = async (name, data) => {
+  assertAllowed(name);
+  const docRef = await addDoc(collection(db, name), {
+    userId: uid(), ...data, createdAt: new Date().toISOString()
+  });
+  return docRef.id;
 };
 
 export const updateRecord = (name, id, data) => {
@@ -41,6 +49,31 @@ export const deleteRecord = (name, id) => {
   assertAllowed(name);
   return deleteDoc(doc(db, name, id));
 };
+
+// ─────────── Cerebro del asistente (editable desde la web) ───────────
+export const DEFAULT_BOT_CONFIG = {
+  botName: 'Luisda Bot',
+  persona: '',
+  ownerProfile: '',
+  tone: 'cercano',
+  responseLength: 'corto',
+  useEmojis: true,
+  customRules: []
+};
+
+export async function getBotConfig() {
+  try {
+    const snap = await getDoc(doc(db, "config", "bot"));
+    return snap.exists() ? { ...DEFAULT_BOT_CONFIG, ...snap.data() } : { ...DEFAULT_BOT_CONFIG };
+  } catch (e) {
+    console.error("getBotConfig error", e);
+    return { ...DEFAULT_BOT_CONFIG };
+  }
+}
+
+export function saveBotConfig(config) {
+  return setDoc(doc(db, "config", "bot"), { ...config, updatedAt: new Date().toISOString() });
+}
 
 // Registra el uid del dueño en config/owner para que el bot de Telegram sepa
 // a quién pertenecen los datos (evita tener que configurar OWNER_UID a mano).

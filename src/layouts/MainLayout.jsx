@@ -74,6 +74,13 @@ const MainLayout = () => {
             fontWeight: isActive ? 'bold' : 'normal',
             transition: 'color 0.2s'
           })}>🔖 Biblioteca</NavLink>
+
+          <NavLink to="/asistente" style={({ isActive }) => ({
+            color: isActive ? 'var(--accent-color)' : 'var(--text-primary)',
+            textDecoration: 'none',
+            fontWeight: isActive ? 'bold' : 'normal',
+            transition: 'color 0.2s'
+          })}>🧠 Asistente</NavLink>
         </div>
         
         <button 

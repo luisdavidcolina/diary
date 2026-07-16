@@ -10,6 +10,7 @@ import Lifestyle from './pages/Lifestyle';
 import Journal from './pages/Journal';
 import Library from './pages/Library';
 import Calendar from './pages/Calendar';
+import BotConfig from './pages/BotConfig';
 
 function App() {
   return (
@@ -22,6 +23,7 @@ function App() {
           <Route index element={<Dashboard />} />
           <Route path="subject/:id" element={<SubjectDetail />} />
           <Route path="calendar" element={<Calendar />} />
+          <Route path="asistente" element={<BotConfig />} />
           <Route path="finance" element={<Finance />} />
           <Route path="lifestyle" element={<Lifestyle />} />
           <Route path="journal" element={<Journal />} />
