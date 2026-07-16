@@ -10,7 +10,7 @@ export default async function handler(req, res) {
   if (!apiKey) return res.status(500).json({ error: "Falta GEMINI_API_KEY en Vercel" });
 
   try {
-    const geminiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`;
+    const geminiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=${apiKey}`;
     
     // Tools schema for Gemini
     const tools = [{
