@@ -496,9 +496,18 @@ const Finance = () => {
                   </div>
                 </div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                  <span style={{ fontWeight: 'bold', color: t.type === 'expense' ? '#ef4444' : '#10b981' }}>
-                    {t.type === 'expense' ? '-' : '+'}{t.currency === 'VES' ? 'Bs. ' : '$'}{formatNum(t.amount)}
-                  </span>
+                  <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '0.1rem' }}>
+                    <span style={{ fontWeight: 'bold', color: t.type === 'expense' ? '#ef4444' : '#10b981' }}>
+                      {t.type === 'expense' ? '-' : '+'}{t.currency === 'VES' ? 'Bs. ' : '$'}{formatNum(t.amount)}
+                    </span>
+                    <span style={{ fontSize: '0.7rem', color: 'var(--text-secondary)' }}>
+                      {t.currency === 'VES' ? (
+                        `≈ $${formatNum(t.amountUSD)}`
+                      ) : (
+                        `≈ Bs. ${formatNum(t.amount * (t.rate || rates.binance || rates.bcv || 1))}`
+                      )}
+                    </span>
+                  </div>
                   <button onClick={() => handleDeleteTransaction(t.id)} title="Eliminar" style={{ background: 'transparent', border: 'none', color: 'var(--text-secondary)', cursor: 'pointer' }}>🗑</button>
                 </div>
               </div>
