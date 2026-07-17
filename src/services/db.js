@@ -456,10 +456,13 @@ export const getChatMessages = async (sessionId) => {
 // =============================
 // LOGS DE CONSUMO API
 // =============================
-export const getApiUsageLogs = async () => {
+// limit=0 devuelve todo: los totales por modelo/conversación necesitan el
+// historial completo, no solo lo que se alcanza a listar en pantalla.
+export const getApiUsageLogs = async (limit = 50) => {
   const snap = await getDocs(collection(db, "api_usage"));
   const out = [];
   snap.forEach((d) => out.push({ id: d.id, ...d.data() }));
-  return out.sort((a, b) => (a.createdAt < b.createdAt ? 1 : -1)).slice(0, 50); // Últimos 50
+  out.sort((a, b) => (a.createdAt < b.createdAt ? 1 : -1));
+  return limit > 0 ? out.slice(0, limit) : out;
 };
 

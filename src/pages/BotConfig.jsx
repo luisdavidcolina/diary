@@ -72,6 +72,18 @@ const BotConfig = () => {
 
     return { ...summarize(withTok), byModel };
   }, [apiLogs]);
+
+  // Dólares reales gastados en cada conversación, y con qué modelos.
+  const costBySession = useMemo(() => {
+    const acc = {};
+    apiLogs.filter(l => l.sessionId).forEach(l => {
+      const s = acc[l.sessionId] || (acc[l.sessionId] = { cost: 0, calls: 0, models: new Set() });
+      s.cost += l.cost || 0;
+      s.calls += 1;
+      if (l.model) s.models.add(l.model);
+    });
+    return acc;
+  }, [apiLogs]);
   
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -86,7 +98,7 @@ const BotConfig = () => {
         setCfg(await getBotConfig());
         setKnowledge(await queryCollection('bot_knowledge'));
         setChatSessions(await getChatSessions());
-        setApiLogs(await getApiUsageLogs());
+        setApiLogs(await getApiUsageLogs(0));
       } catch (e) {
         console.error(e);
       } finally {
@@ -292,6 +304,23 @@ const BotConfig = () => {
                   <div style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>
                     {new Date(session.createdAt).toLocaleString()}
                   </div>
+                  {(() => {
+                    const s = costBySession[session.id];
+                    if (!s) return null;
+                    return (
+                      <div style={{ display: 'flex', gap: '0.4rem', alignItems: 'center', flexWrap: 'wrap', marginTop: '0.5rem' }}>
+                        <span style={{ fontWeight: 900, background: 'var(--brutal-yellow)', border: '2px solid #000', padding: '0.1rem 0.35rem', fontSize: '0.8rem' }}>
+                          ${s.cost < 0.01 ? s.cost.toFixed(4) : s.cost.toFixed(2)} reales
+                        </span>
+                        <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>
+                          {s.calls} llamada{s.calls === 1 ? '' : 's'}
+                        </span>
+                        {[...s.models].map(m => (
+                          <code key={m} style={{ fontSize: '0.68rem', background: '#ddd', border: '1px solid #000', padding: '0 0.25rem' }}>{m}</code>
+                        ))}
+                      </div>
+                    );
+                  })()}
                 </div>
                 <div style={{ display: 'flex', gap: '0.5rem' }}>
                   <button onClick={() => {
@@ -320,7 +349,7 @@ const BotConfig = () => {
           <p className="muted" style={{ marginBottom: '1rem', fontSize: '0.9rem' }}>Control detallado del gasto de tokens por consulta en la API de Inteligencia Artificial.</p>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
             {apiLogs.length === 0 ? <p className="muted">No hay consumos registrados recientemente.</p> : null}
-            {apiLogs.map(log => (
+            {apiLogs.slice(0, 50).map(log => (
               <div key={log.id} style={{ border: '3px solid #000', padding: '1rem', background: 'var(--brutal-white)', boxShadow: '4px 4px 0 #000' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem', fontWeight: 800 }}>
                   <span>{new Date(log.createdAt).toLocaleString()}</span>
