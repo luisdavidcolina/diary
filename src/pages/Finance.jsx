@@ -245,9 +245,9 @@ const Finance = () => {
     return d.getFullYear() === now.getFullYear() && d.getMonth() === now.getMonth();
   };
   const monthTx = transactions.filter((t) => isThisMonth(t.createdAt));
-  const income = monthTx.filter((t) => t.type === 'income').reduce((s, t) => s + parseFloat(t.amount), 0);
-  const expenses = monthTx.filter((t) => t.type === 'expense').reduce((s, t) => s + parseFloat(t.amount), 0);
-  const spentBy = (cat) => monthTx.filter((t) => t.type === 'expense' && t.category === cat).reduce((s, t) => s + parseFloat(t.amount), 0);
+  const income = monthTx.filter((t) => t.type === 'income').reduce((s, t) => s + parseFloat(t.amountUSD != null ? t.amountUSD : t.amount || 0), 0);
+  const expenses = monthTx.filter((t) => t.type === 'expense').reduce((s, t) => s + parseFloat(t.amountUSD != null ? t.amountUSD : t.amount || 0), 0);
+  const spentBy = (cat) => monthTx.filter((t) => t.type === 'expense' && t.category === cat).reduce((s, t) => s + parseFloat(t.amountUSD != null ? t.amountUSD : t.amount || 0), 0);
 
   return (
     <div style={{ animation: 'fadeInUp 0.6s ease' }}>
@@ -461,29 +461,43 @@ const Finance = () => {
             {transactions.length === 0 && <p style={{ color: 'var(--text-secondary)' }}>No hay transacciones aún.</p>}
             {transactions.map((t) => (
               <div key={t.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '0.5rem', padding: '0.75rem', background: '#fff', borderRadius: '0', border: '3px solid #000', borderLeft: `8px solid ${t.type === 'expense' ? '#ef4444' : '#10b981'}`, boxShadow: '2px 2px 0 #000' }}>
-                <span style={{ flex: 1 }}>
-                  {t.description}
-                  {t.type === 'expense' && t.category && (
-                    <span style={{ fontSize: '0.7rem', color: 'var(--text-secondary)', marginLeft: '0.5rem' }}>
-                      · {FINANCE_CATEGORIES.find(c => c.id === t.category)?.label || t.category}
-                    </span>
-                  )}
-                  {t.telegramFileIds && t.telegramFileIds.length > 0 ? (
-                    t.telegramFileIds.map((fid, idx) => (
-                      <a key={idx} href={`/api/telegram-image?id=${fid}`} target="_blank" rel="noreferrer" style={{ fontSize: '0.7rem', marginLeft: '0.5rem', color: 'var(--accent-color)', textDecoration: 'none' }}>
-                        📷 Doc {idx + 1}
+                <div style={{ flex: 1 }}>
+                  <div style={{ fontWeight: 'bold', color: '#000' }}>
+                    {t.description}
+                    {t.type === 'expense' && t.category && (
+                      <span style={{ fontSize: '0.7rem', color: 'var(--text-secondary)', marginLeft: '0.5rem', fontWeight: 'normal' }}>
+                        · {FINANCE_CATEGORIES.find(c => c.id === t.category)?.label || t.category}
+                      </span>
+                    )}
+                    {t.telegramFileIds && t.telegramFileIds.length > 0 ? (
+                      t.telegramFileIds.map((fid, idx) => (
+                        <a key={idx} href={`/api/telegram-image?id=${fid}`} target="_blank" rel="noreferrer" style={{ fontSize: '0.7rem', marginLeft: '0.5rem', color: 'var(--accent-color)', textDecoration: 'none' }}>
+                          📷 Doc {idx + 1}
+                        </a>
+                      ))
+                    ) : t.telegramFileId ? (
+                      <a href={`/api/telegram-image?id=${t.telegramFileId}`} target="_blank" rel="noreferrer" style={{ fontSize: '0.7rem', marginLeft: '0.5rem', color: 'var(--accent-color)', textDecoration: 'none' }}>
+                        📷 Ver
                       </a>
-                    ))
-                  ) : t.telegramFileId ? (
-                    <a href={`/api/telegram-image?id=${t.telegramFileId}`} target="_blank" rel="noreferrer" style={{ fontSize: '0.7rem', marginLeft: '0.5rem', color: 'var(--accent-color)', textDecoration: 'none' }}>
-                      📷 Ver
-                    </a>
-                  ) : null}
-                </span>
-                <span style={{ fontWeight: 'bold', color: t.type === 'expense' ? '#ef4444' : '#10b981' }}>
-                  {t.type === 'expense' ? '-' : '+'}${formatNum(t.amount)}
-                </span>
-                <button onClick={() => handleDeleteTransaction(t.id)} title="Eliminar" style={{ background: 'transparent', border: 'none', color: 'var(--text-secondary)', cursor: 'pointer' }}>🗑</button>
+                    ) : null}
+                  </div>
+                  
+                  {t.accountName && (
+                    <div style={{ fontSize: '0.7rem', color: '#555', marginTop: '0.2rem', fontWeight: 600 }}>
+                      💳 {t.accountName}: {t.currency === 'USD' ? '$' : 'Bs.'}{formatNum(t.balanceBefore)} ➔ {t.currency === 'USD' ? '$' : 'Bs.'}{formatNum(t.balanceAfter)}
+                    </div>
+                  )}
+
+                  <div style={{ fontSize: '0.65rem', color: '#888', marginTop: '0.15rem' }}>
+                    📅 {new Date(t.createdAt).toLocaleString('es-VE', { timeZone: 'America/Caracas', dateStyle: 'short', timeStyle: 'short' })}
+                  </div>
+                </div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                  <span style={{ fontWeight: 'bold', color: t.type === 'expense' ? '#ef4444' : '#10b981' }}>
+                    {t.type === 'expense' ? '-' : '+'}{t.currency === 'VES' ? 'Bs. ' : '$'}{formatNum(t.amount)}
+                  </span>
+                  <button onClick={() => handleDeleteTransaction(t.id)} title="Eliminar" style={{ background: 'transparent', border: 'none', color: 'var(--text-secondary)', cursor: 'pointer' }}>🗑</button>
+                </div>
               </div>
             ))}
           </div>

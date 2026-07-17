@@ -156,35 +156,44 @@ export const addTransaction = async (amount, description, type = 'expense', cate
   const amt = parseFloat(amount) || 0;
   const amountUSD = currency === 'VES' && rate ? amt / parseFloat(rate) : amt;
 
-  const payload = {
-    userId: uid(), amount: amt, currency, description, type, category,
-    amountUSD: Number(amountUSD.toFixed(2)),
-    createdAt: createdAt || new Date().toISOString()
-  };
-  if (rate) payload.rate = parseFloat(rate);
-  if (accountId) payload.accountId = accountId;
-  if (telegramFileIds) {
-    payload.telegramFileIds = Array.isArray(telegramFileIds) ? telegramFileIds : [telegramFileIds];
-    payload.telegramFileId = payload.telegramFileIds[0] || null; // for backward compatibility
-  }
+  let balanceBefore = null;
+  let balanceAfter = null;
+  let accountName = null;
 
-  const docRef = await addDoc(collection(db, "transactions"), payload);
-  
   if (accountId) {
     try {
       const accRef = doc(db, "accounts", accountId);
       const accSnap = await getDoc(accRef);
       if (accSnap.exists()) {
-        const curBal = parseFloat(accSnap.data().balance) || 0;
+        accountName = accSnap.data().name || '';
+        balanceBefore = parseFloat(accSnap.data().balance) || 0;
         const change = type === 'expense' ? -amt : amt;
-        const nextBal = Number((curBal + change).toFixed(2));
-        await updateDoc(accRef, { balance: nextBal, updatedAt: new Date().toISOString() });
+        balanceAfter = Number((balanceBefore + change).toFixed(2));
+        await updateDoc(accRef, { balance: balanceAfter, updatedAt: new Date().toISOString() });
       }
     } catch (e) {
       console.error("Error updating account balance:", e);
     }
   }
 
+  const payload = {
+    userId: uid(), amount: amt, currency, description, type, category,
+    amountUSD: Number(amountUSD.toFixed(2)),
+    createdAt: createdAt || new Date().toISOString()
+  };
+  if (rate) payload.rate = parseFloat(rate);
+  if (accountId) {
+    payload.accountId = accountId;
+    if (accountName !== null) payload.accountName = accountName;
+    if (balanceBefore !== null) payload.balanceBefore = balanceBefore;
+    if (balanceAfter !== null) payload.balanceAfter = balanceAfter;
+  }
+  if (telegramFileIds) {
+    payload.telegramFileIds = Array.isArray(telegramFileIds) ? telegramFileIds : [telegramFileIds];
+    payload.telegramFileId = payload.telegramFileIds[0] || null; // for backward compatibility
+  }
+
+  const docRef = await addDoc(collection(db, "transactions"), payload);
   return docRef.id;
 };
 
