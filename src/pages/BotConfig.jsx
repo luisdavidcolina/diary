@@ -20,14 +20,18 @@ const LENGTHS = [
 ];
 
 const MODELS = [
-  { id: 'openai/gpt-4o-mini', label: 'GPT-4o mini (OpenAI)' },
-  { id: 'openai/gpt-4o', label: 'GPT-4o (OpenAI)' },
-  { id: 'anthropic/claude-3-haiku', label: 'Claude 3 Haiku (Anthropic)' },
-  { id: 'anthropic/claude-3.5-sonnet', label: 'Claude 3.5 Sonnet (Anthropic)' },
-  { id: 'google/gemini-flash-1.5', label: 'Gemini 1.5 Flash (Google)' },
-  { id: 'google/gemini-pro-1.5', label: 'Gemini 1.5 Pro (Google)' },
-  { id: 'meta-llama/llama-3-8b-instruct', label: 'Llama 3 8B (Meta)' },
-  { id: 'meta-llama/llama-3-70b-instruct', label: 'Llama 3 70B (Meta)' }
+  { id: 'openai/gpt-4o-mini', label: 'GPT-4o mini (OpenAI) - Recomendado (Visión + Herramientas)' },
+  { id: 'openai/gpt-4o', label: 'GPT-4o (OpenAI) - Inteligencia superior (Visión + Herramientas)' },
+  { id: 'openai/o1-mini', label: 'o1-mini (OpenAI) - Razonamiento avanzado (Sin Herramientas/Visión)' },
+  { id: 'anthropic/claude-3-haiku', label: 'Claude 3 Haiku (Anthropic) - Rápido y conciso' },
+  { id: 'anthropic/claude-3.5-sonnet', label: 'Claude 3.5 Sonnet (Anthropic) - Avanzado (Visión + Herramientas)' },
+  { id: 'google/gemini-flash-1.5', label: 'Gemini 1.5 Flash (Google) - Visión, Contexto gigante' },
+  { id: 'google/gemini-pro-1.5', label: 'Gemini 1.5 Pro (Google) - Razonamiento multimodal' },
+  { id: 'meta-llama/llama-3-8b-instruct', label: 'Llama 3 8B (Meta) - Rápido, económico' },
+  { id: 'meta-llama/llama-3-70b-instruct', label: 'Llama 3 70B (Meta) - Equilibrado' },
+  { id: 'meta-llama/llama-3.1-405b-instruct', label: 'Llama 3.1 405B (Meta) - Máxima escala libre' },
+  { id: 'deepseek/deepseek-chat', label: 'DeepSeek Chat (DeepSeek) - Razonamiento eficiente' },
+  { id: 'qwen/qwen-2.5-72b-instruct', label: 'Qwen 2.5 72B (Alibaba) - Excelente en código y lógica' }
 ];
 
 const BotConfig = () => {

@@ -131,6 +131,13 @@ export default function AssistantChat() {
         });
         
         if (!res.ok) return "La tarea se guardó, pero hubo un error al programar la alarma en el servidor.";
+        const resData = await res.json();
+        if (resData.success) {
+          const rId = resData.messageId || resData.scheduleId;
+          if (rId) {
+            await updateRecord('lifestyle', docId, { reminderId: rId });
+          }
+        }
         return `⏰ Recordatorio programado para las ${time}`;
       }
 
@@ -268,19 +275,22 @@ export default function AssistantChat() {
           const currentCfg = await getBotConfig();
           
           if (!targetModel) {
-            responseContent = `🤖 Modelo actual: *${currentCfg.model || 'openai/gpt-4o-mini'}*\n\nModelos disponibles:\n` +
+            responseContent = `🤖 Modelo actual: *${currentCfg.model || 'openai/gpt-4o-mini'}*\n\nModelos rápidos disponibles:\n` +
               `• /modelo gpt-4o-mini (OpenAI)\n` +
               `• /modelo gpt-4o (OpenAI)\n` +
-              `• /modelo claude-3-haiku (Anthropic)\n` +
+              `• /modelo o1-mini (OpenAI)\n` +
               `• /modelo claude-3.5-sonnet (Anthropic)\n` +
               `• /modelo gemini-flash-1.5 (Google)\n` +
               `• /modelo gemini-pro-1.5 (Google)\n` +
-              `• /modelo llama-3-8b (Meta)\n` +
-              `• /modelo llama-3-70b (Meta)`;
+              `• /modelo deepseek (DeepSeek)\n` +
+              `• /modelo llama-3-70b (Meta)\n` +
+              `• /modelo qwen (Alibaba)\n\n` +
+              `O especifica cualquier identificador de OpenRouter (ej: \`/modelo mistralai/mixtral-8x7b-instruct\`).`;
           } else {
             const aliases = {
               'gpt-4o-mini': 'openai/gpt-4o-mini',
               'gpt-4o': 'openai/gpt-4o',
+              'o1-mini': 'openai/o1-mini',
               'claude-3-haiku': 'anthropic/claude-3-haiku',
               'claude-haiku': 'anthropic/claude-3-haiku',
               'haiku': 'anthropic/claude-3-haiku',
@@ -296,16 +306,19 @@ export default function AssistantChat() {
               'llama-3-8b': 'meta-llama/llama-3-8b-instruct',
               'llama-8b': 'meta-llama/llama-3-8b-instruct',
               'llama-3-70b': 'meta-llama/llama-3-70b-instruct',
-              'llama-70b': 'meta-llama/llama-3-70b-instruct'
+              'llama-70b': 'meta-llama/llama-3-70b-instruct',
+              'deepseek': 'deepseek/deepseek-chat',
+              'deepseek-chat': 'deepseek/deepseek-chat',
+              'qwen': 'qwen/qwen-2.5-72b-instruct'
             };
-            const canonical = aliases[targetModel.toLowerCase()];
+            const canonical = aliases[targetModel.toLowerCase()] || (targetModel.includes('/') ? targetModel : null);
             if (canonical) {
               const updated = { ...currentCfg, model: canonical };
               await saveBotConfig(updated);
               setBotConfig(updated);
               responseContent = `🤖 Motor de IA cambiado con éxito a:\n*${canonical}*`;
             } else {
-              responseContent = `⚠️ Modelo no reconocido. Escribe \`/modelo\` para ver las opciones válidas.`;
+              responseContent = `⚠️ Modelo no reconocido. Escribe \`/modelo\` para ver la lista de accesos rápidos, o especifica una ruta completa (ej: \`openai/gpt-4o\`).`;
             }
           }
         } else if (text === '/tareas') {

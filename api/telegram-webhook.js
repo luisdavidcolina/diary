@@ -497,6 +497,7 @@ export default async function handler(req, res) {
       const data = cb.data;
       const chatId = cb.message.chat.id;
       const messageId = cb.message.message_id;
+      const reqHost = req.headers.host;
 
       if (data.startsWith('complete_')) {
         const taskId = data.split('_')[1];

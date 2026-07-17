@@ -1,5 +1,12 @@
+import { checkDailyLimit, logApiCost } from "./_costTracker.js";
+
 export default async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).end();
+
+  const limitStatus = await checkDailyLimit();
+  if (!limitStatus.allowed) {
+    return res.status(200).json({ success: false, error: limitStatus.message });
+  }
 
   // `note` es OPCIONAL: si viene, ayuda a la IA a interpretar mejor el comprobante.
   const { imageUrl, note } = req.body;
@@ -82,6 +89,13 @@ No devuelvas NADA más que el JSON puro.`;
 
     const jsonStr = content.replace(/```json/gi, '').replace(/```/g, '').trim();
     const parsed = JSON.parse(jsonStr);
+
+    const usage = data.usage;
+    let cost = usage?.cost || 0;
+    if (!cost && usage) {
+      cost = (usage.prompt_tokens * 0.00000015) + (usage.completion_tokens * 0.00000060);
+    }
+    await logApiCost(cost, 'receipt-ocr', usage, "OCR: " + promptText.slice(0, 50));
 
     return res.status(200).json({ success: true, data: parsed });
 
