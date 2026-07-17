@@ -343,6 +343,37 @@ export default function AssistantChat() {
           responseContent = pend.length
             ? `📋 Tareas pendientes (${pend.length}):\n${pend.map(t => `• ${t.title}`).join('\n')}`
             : '✅ ¡Inbox limpio! Sin tareas pendientes.';
+        } else if (text.startsWith('/recordar ')) {
+          // Mismo formato que Telegram: HH:MM | YYYY-MM-DD HH:MM | diario HH:MM
+          const parts = text.replace('/recordar ', '').trim().split(' ');
+          const isTime = (s) => /^\d{1,2}:\d{2}$/.test(s || '');
+          let date = '', time = '', from = 0, recurring = false;
+
+          if (/^\d{4}-\d{2}-\d{2}$/.test(parts[0]) && isTime(parts[1])) {
+            date = parts[0]; time = parts[1]; from = 2;
+          } else if (/^(diario|diaria|todos)$/i.test(parts[0]) && isTime(parts[1])) {
+            time = parts[1]; from = 2; recurring = true;
+          } else if (isTime(parts[0])) {
+            time = parts[0]; from = 1;
+          }
+
+          if (!time) {
+            responseContent = `⚠️ Formato inválido. Ejemplos:\n• /recordar 15:30 Llamar al banco\n• /recordar 2026-07-20 15:30 Examen\n• /recordar diario 07:00 Estudiar inglés`;
+          } else {
+            const title = parts.slice(from).join(' ') || 'Recordatorio';
+            responseContent = await executeTool({
+              name: 'schedule_reminder',
+              arguments: { title, date, time: time.padStart(5, '0'), isRecurring: recurring }
+            });
+          }
+        } else if (text.startsWith('/tasas')) {
+          try {
+            const r = await fetch('/api/rates');
+            const d = await r.json();
+            responseContent = `💱 Tasas de hoy:\n🏦 BCV: Bs. ${d.bcv}\n🪙 Binance P2P: Bs. ${d.binance}`;
+          } catch {
+            responseContent = `⚠️ No pude obtener las tasas ahora mismo.`;
+          }
         } else if (text === '/help' || text === '/ayuda') {
           responseContent = `🤖 Comandos rápidos (sin gastar IA):
 
@@ -352,10 +383,16 @@ export default function AssistantChat() {
 • /diario [texto]
 • /tarea [texto]
 
+⏰ Recordatorios:
+• /recordar 15:30 Llamar al banco
+• /recordar 2026-07-20 15:30 Examen
+• /recordar diario 07:00 Estudiar inglés
+
 🔎 Consultar:
 • /saldo — balance del mes
 • /gastos — últimos movimientos
 • /tareas — pendientes
+• /tasas — BCV y Binance P2P
 • /creditos — saldo de IA
 • /modelo — ver/cambiar motor de IA
 

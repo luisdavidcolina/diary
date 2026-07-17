@@ -766,18 +766,22 @@ Escribe cualquier mensaje normal (sin la /) y lo guardo como tarea o lo interpre
 
 *⏰ Recordatorios:*
 \`/recordar HH:MM [texto]\` - Ej: \`/recordar 15:30 Llamar al banco\`
+\`/recordar YYYY-MM-DD HH:MM [texto]\`
+\`/recordar diario HH:MM [texto]\`
 
 *💸 Registrar Finanzas:*
 \`/gasto [monto] [concepto]\` - Ej: \`/gasto 10 Cine\`
 \`/ingreso [monto] [concepto]\` - Ej: \`/ingreso 500 Sueldo\`
 
-*📖 Diario:*
+*📖 Diario y tareas:*
 \`/diario [texto]\`
+\`/tarea [texto]\` - Tarea sin hora
 
 *🔎 Consultas (no gastan IA):*
 \`/saldo\` - Ingresos, gastos y balance del mes
 \`/gastos\` - Tus últimos movimientos
 \`/tareas\` - Tareas pendientes
+\`/tasas\` - Tasa BCV y Binance P2P
 \`/creditos\` - Saldo consumido de la API de IA`;
       }
       else if (text.startsWith('/saldo')) {
@@ -933,6 +937,20 @@ Escribe cualquier mensaje normal (sin la /) y lo guardo como tarea o lo interpre
           }
         } catch (e) {
           responseText = `⚠️ Error de conexión al consultar saldo.`;
+        }
+      }
+      else if (text.startsWith('/tarea ')) {
+        const title = text.replace('/tarea ', '').trim();
+        await saveTask(title);
+        responseText = `✅ Tarea guardada: *${title}*`;
+      }
+      else if (text.startsWith('/tasas')) {
+        try {
+          const r = await fetch(`https://${req.headers.host}/api/rates`);
+          const d = await r.json();
+          responseText = `💱 *Tasas de hoy:*\n🏦 BCV: Bs. ${d.bcv}\n🪙 Binance P2P: Bs. ${d.binance}`;
+        } catch (e) {
+          responseText = `⚠️ No pude obtener las tasas ahora mismo.`;
         }
       }
       else {

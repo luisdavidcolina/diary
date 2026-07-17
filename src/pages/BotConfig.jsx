@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import {
   getBotConfig, saveBotConfig, DEFAULT_BOT_CONFIG,
   queryCollection, createRecord, deleteRecord, updateRecord,
@@ -42,6 +42,21 @@ const BotConfig = () => {
   const [knowledge, setKnowledge] = useState([]);
   const [chatSessions, setChatSessions] = useState([]);
   const [apiLogs, setApiLogs] = useState([]);
+
+  // Promedio real de TU consumo: alimenta el cálculo de costo del ModelPicker
+  // en vez del estimado fijo. Solo cuentan las llamadas con tokens registrados.
+  const usageStats = useMemo(() => {
+    const withTok = apiLogs.filter(l => l.prompt_tokens);
+    if (!withTok.length) return null;
+    const n = withTok.length;
+    const avg = (fn) => Math.round(withTok.reduce((s, l) => s + (fn(l) || 0), 0) / n);
+    return {
+      calls: n,
+      avgIn: avg(l => l.prompt_tokens),
+      avgOut: avg(l => l.completion_tokens),
+      realPer1000: (withTok.reduce((s, l) => s + (l.cost || 0), 0) / n) * 1000
+    };
+  }, [apiLogs]);
   
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -134,6 +149,7 @@ const BotConfig = () => {
 
             <label className="cfg-label">Modelo del Motor de IA (OpenRouter · catálogo completo)</label>
             <ModelPicker
+              usageStats={usageStats}
               value={cfg.model || 'openai/gpt-4o-mini'}
               onChange={async (id) => {
                 const next = { ...cfg, model: id };

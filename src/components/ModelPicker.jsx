@@ -1,14 +1,16 @@
 import React, { useEffect, useMemo, useState } from 'react';
 
-// Coste REAL, no precio de lista: cada mensaje reenvía el system prompt + tools
-// (~1770 tokens de entrada). Un modelo sin caché paga esa entrada íntegra siempre,
-// por eso puede salir más caro que otro con salida "más cara" pero con caché.
-const IN_TOKENS = 1770;
-const OUT_TOKENS = 150;
+// Coste REAL, no precio de lista: cada mensaje reenvía el system prompt + tools,
+// así que un modelo sin caché paga esa entrada íntegra SIEMPRE y puede salir más
+// caro que otro con salida "más cara" pero con caché.
+// Los tokens salen de TU consumo real (api_usage); estos son solo el respaldo
+// si aún no hay historial.
+const FALLBACK_IN = 1770;
+const FALLBACK_OUT = 150;
 
-const costPer1000 = (m) => {
+const costPer1000 = (m, inTok = FALLBACK_IN, outTok = FALLBACK_OUT) => {
   const inPrice = m.supportsCache && m.priceCacheReadPerM > 0 ? m.priceCacheReadPerM : m.pricePromptPerM;
-  const perMsg = (IN_TOKENS / 1e6) * inPrice + (OUT_TOKENS / 1e6) * m.priceCompletionPerM;
+  const perMsg = (inTok / 1e6) * inPrice + (outTok / 1e6) * m.priceCompletionPerM;
   return perMsg * 1000;
 };
 
@@ -24,7 +26,12 @@ const SORTS = [
 
 const DEFAULT_FILTERS = { tools: true, cache: false, free: false, images: false, maxCost: '', minContext: '' };
 
-const ModelPicker = ({ value, onChange }) => {
+// `usageStats` (opcional) viene de tu historial real de api_usage:
+//   { calls, avgIn, avgOut, realPer1000 }
+const ModelPicker = ({ value, onChange, usageStats = null }) => {
+  const inTok = usageStats?.avgIn || FALLBACK_IN;
+  const outTok = usageStats?.avgOut || FALLBACK_OUT;
+  const cost1k = (m) => costPer1000(m, inTok, outTok);
   const [models, setModels] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -50,7 +57,7 @@ const ModelPicker = ({ value, onChange }) => {
   }, []);
 
   const current = models.find((m) => m.id === value);
-  const currentCost = current ? costPer1000(current) : null;
+  const currentCost = current ? cost1k(current) : null;
 
   // Proveedores con su conteo.
   const providers = useMemo(() => {
@@ -67,7 +74,7 @@ const ModelPicker = ({ value, onChange }) => {
       if (f.cache && !m.supportsCache) return false;
       if (f.free && !m.isFree) return false;
       if (f.images && !m.supportsImages) return false;
-      if (f.maxCost !== '' && costPer1000(m) > parseFloat(f.maxCost)) return false;
+      if (f.maxCost !== '' && cost1k(m) > parseFloat(f.maxCost)) return false;
       if (f.minContext !== '' && m.contextLength < parseFloat(f.minContext) * 1000) return false;
       // "Con herramientas" no oculta: atenúa (se ven al final).
       return true;
@@ -75,7 +82,7 @@ const ModelPicker = ({ value, onChange }) => {
 
     list.sort((a, b) => {
       if (f.tools && a.supportsTools !== b.supportsTools) return a.supportsTools ? -1 : 1;
-      if (sort === 'cost') return costPer1000(a) - costPer1000(b);
+      if (sort === 'cost') return cost1k(a) - cost1k(b);
       if (sort === 'context') return (b.contextLength || 0) - (a.contextLength || 0);
       return a.name.localeCompare(b.name);
     });
@@ -103,7 +110,7 @@ const ModelPicker = ({ value, onChange }) => {
   if (error) return <p style={{ color: '#b91c1c', fontWeight: 700 }}>⚠️ No se pudo cargar el catálogo: {error}</p>;
 
   const Card = (m) => {
-    const c = costPer1000(m);
+    const c = cost1k(m);
     const isCurrent = m.id === value;
     const mult = currentCost && currentCost > 0 && !isCurrent ? c / currentCost : null;
     return (
@@ -159,9 +166,18 @@ const ModelPicker = ({ value, onChange }) => {
           <strong>{current ? current.name : value}</strong>
         </div>
         {current && (
-          <div style={{ textAlign: 'right' }}>
-            <strong>{money(currentCost)}</strong>
-            <div style={{ fontSize: '0.62rem', fontWeight: 700 }}>cada 1000 msj</div>
+          <div style={{ display: 'flex', gap: '1rem', textAlign: 'right' }}>
+            <div>
+              <strong>{money(currentCost)}</strong>
+              <div style={{ fontSize: '0.62rem', fontWeight: 700 }}>estimado /1000 msj</div>
+            </div>
+            {usageStats?.realPer1000 > 0 && (
+              <div style={{ borderLeft: '2px solid #000', paddingLeft: '1rem' }}>
+                <strong>{money(usageStats.realPer1000)}</strong>
+                <div style={{ fontSize: '0.62rem', fontWeight: 700 }}>real /1000 msj</div>
+                <div style={{ fontSize: '0.55rem' }}>({usageStats.calls} llamadas)</div>
+              </div>
+            )}
           </div>
         )}
       </div>
@@ -200,7 +216,11 @@ const ModelPicker = ({ value, onChange }) => {
       </div>
 
       <p className="muted" style={{ fontSize: '0.75rem', marginBottom: '0.5rem' }}>
-        {filtered.length} modelo(s). Ordenado por <strong>costo real</strong> (estimado con {IN_TOKENS} tokens de entrada + {OUT_TOKENS} de salida por mensaje; los que tienen caché no repagan la entrada).
+        {filtered.length} modelo(s). Ordenado por <strong>costo real</strong>: {inTok} tokens de entrada + {outTok} de salida por mensaje
+        {usageStats?.calls
+          ? <> — <strong>medidos de tu uso real</strong> ({usageStats.calls} llamadas)</>
+          : <> (estimado; aún no hay historial de consumo)</>}
+        . Los modelos con caché no repagan la entrada.
       </p>
 
       {/* Lista */}
