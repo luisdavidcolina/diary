@@ -45,17 +45,32 @@ const BotConfig = () => {
 
   // Promedio real de TU consumo: alimenta el cálculo de costo del ModelPicker
   // en vez del estimado fijo. Solo cuentan las llamadas con tokens registrados.
+  //
+  // El promedio GLOBAL sirve de baseline para comparar el catálogo entero: mide
+  // tu carga de trabajo típica, que es lo que quieres mantener fijo al comparar
+  // precios. `byModel` es el costo medido de verdad, y solo existe para los
+  // modelos que ya corriste (los logs viejos no traen `model`).
   const usageStats = useMemo(() => {
     const withTok = apiLogs.filter(l => l.prompt_tokens);
     if (!withTok.length) return null;
-    const n = withTok.length;
-    const avg = (fn) => Math.round(withTok.reduce((s, l) => s + (fn(l) || 0), 0) / n);
-    return {
-      calls: n,
-      avgIn: avg(l => l.prompt_tokens),
-      avgOut: avg(l => l.completion_tokens),
-      realPer1000: (withTok.reduce((s, l) => s + (l.cost || 0), 0) / n) * 1000
+
+    const summarize = (rows) => {
+      const n = rows.length;
+      const avg = (fn) => Math.round(rows.reduce((s, l) => s + (fn(l) || 0), 0) / n);
+      return {
+        calls: n,
+        avgIn: avg(l => l.prompt_tokens),
+        avgOut: avg(l => l.completion_tokens),
+        per1000: (rows.reduce((s, l) => s + (l.cost || 0), 0) / n) * 1000
+      };
     };
+
+    const groups = {};
+    withTok.filter(l => l.model).forEach(l => { (groups[l.model] = groups[l.model] || []).push(l); });
+    const byModel = {};
+    Object.entries(groups).forEach(([id, rows]) => { byModel[id] = summarize(rows); });
+
+    return { ...summarize(withTok), byModel };
   }, [apiLogs]);
   
   const [loading, setLoading] = useState(true);

@@ -427,7 +427,8 @@ Si no usas la barra (/), la IA entiende tus mensajes naturalmente.`;
       const res = await fetch('/api/chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ messages: contextToSend })
+        // sessionId permite atribuir el costo real de la llamada a esta conversación
+        body: JSON.stringify({ messages: contextToSend, sessionId: currentSessionId })
       });
       
       const data = await res.json();

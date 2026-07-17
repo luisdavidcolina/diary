@@ -5,7 +5,7 @@ import { checkDailyLimit, logApiCost } from './_costTracker.js';
 export default async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).end();
   
-  const { messages } = req.body;
+  const { messages, sessionId = null } = req.body;
   if (!messages || !Array.isArray(messages)) {
     return res.status(400).json({ error: "Falta array de messages" });
   }
@@ -309,7 +309,7 @@ REGLAS:
     // 2. Registrar costo
     if (data.usage && data.usage.cost) {
       const promptPreview = messages.length > 0 ? messages[messages.length - 1].content : '';
-      await logApiCost(data.usage.cost, 'web', data.usage, promptPreview);
+      await logApiCost(data.usage.cost, 'web', data.usage, promptPreview, { model: data.model, sessionId });
     }
 
     const responseMessage = data.choices[0].message;

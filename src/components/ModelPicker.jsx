@@ -27,11 +27,18 @@ const SORTS = [
 const DEFAULT_FILTERS = { tools: true, cache: false, free: false, images: false, maxCost: '', minContext: '' };
 
 // `usageStats` (opcional) viene de tu historial real de api_usage:
-//   { calls, avgIn, avgOut, realPer1000 }
+//   { calls, avgIn, avgOut, per1000, byModel: { [id]: {calls, avgIn, avgOut, per1000} } }
+//
+// El ranking usa SIEMPRE el mismo baseline de tokens (tu carga típica). Medir
+// cada modelo con sus propios tokens los volvería incomparables: variarían a la
+// vez precio y carga, y un modelo saldría "barato" solo por haberlo usado en
+// consultas más cortas. `real()` sí es el costo medido, y solo existe para los
+// modelos que ya corriste.
 const ModelPicker = ({ value, onChange, usageStats = null }) => {
   const inTok = usageStats?.avgIn || FALLBACK_IN;
   const outTok = usageStats?.avgOut || FALLBACK_OUT;
   const cost1k = (m) => costPer1000(m, inTok, outTok);
+  const real = (m) => usageStats?.byModel?.[m.id] || null;
   const [models, setModels] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -111,6 +118,7 @@ const ModelPicker = ({ value, onChange, usageStats = null }) => {
 
   const Card = (m) => {
     const c = cost1k(m);
+    const r = real(m);
     const isCurrent = m.id === value;
     const mult = currentCost && currentCost > 0 && !isCurrent ? c / currentCost : null;
     return (
@@ -135,7 +143,14 @@ const ModelPicker = ({ value, onChange, usageStats = null }) => {
 
         <div style={{ textAlign: 'right', flexShrink: 0, minWidth: '132px' }}>
           <div style={{ fontSize: '1.25rem', fontWeight: 900, lineHeight: 1.1 }}>{money(c)}</div>
-          <div style={{ fontSize: '0.62rem', fontWeight: 700, textTransform: 'uppercase' }}>cada 1000 msj</div>
+          <div style={{ fontSize: '0.62rem', fontWeight: 700, textTransform: 'uppercase' }}>
+            {r ? 'estimado' : ''} cada 1000 msj
+          </div>
+          {r && (
+            <div style={{ fontSize: '0.66rem', fontWeight: 800, background: 'var(--brutal-blue)', border: '2px solid #000', padding: '0.1rem 0.25rem', marginTop: '0.2rem' }}>
+              real {money(r.per1000)} · {r.calls} uso{r.calls === 1 ? '' : 's'}
+            </div>
+          )}
           {mult && (
             <div style={{ fontSize: '0.68rem', fontWeight: 700, color: mult > 1 ? '#b91c1c' : '#15803d' }}>
               {mult > 1 ? `${mult.toFixed(1)}× más caro` : `${(1 / mult).toFixed(1)}× más barato`}
@@ -171,11 +186,11 @@ const ModelPicker = ({ value, onChange, usageStats = null }) => {
               <strong>{money(currentCost)}</strong>
               <div style={{ fontSize: '0.62rem', fontWeight: 700 }}>estimado /1000 msj</div>
             </div>
-            {usageStats?.realPer1000 > 0 && (
+            {real(current) && (
               <div style={{ borderLeft: '2px solid #000', paddingLeft: '1rem' }}>
-                <strong>{money(usageStats.realPer1000)}</strong>
+                <strong>{money(real(current).per1000)}</strong>
                 <div style={{ fontSize: '0.62rem', fontWeight: 700 }}>real /1000 msj</div>
-                <div style={{ fontSize: '0.55rem' }}>({usageStats.calls} llamadas)</div>
+                <div style={{ fontSize: '0.55rem' }}>({real(current).calls} llamadas con este modelo)</div>
               </div>
             )}
           </div>
@@ -218,9 +233,10 @@ const ModelPicker = ({ value, onChange, usageStats = null }) => {
       <p className="muted" style={{ fontSize: '0.75rem', marginBottom: '0.5rem' }}>
         {filtered.length} modelo(s). Ordenado por <strong>costo real</strong>: {inTok} tokens de entrada + {outTok} de salida por mensaje
         {usageStats?.calls
-          ? <> — <strong>medidos de tu uso real</strong> ({usageStats.calls} llamadas)</>
+          ? <> — <strong>tu carga real promedio</strong> ({usageStats.calls} llamadas)</>
           : <> (estimado; aún no hay historial de consumo)</>}
-        . Los modelos con caché no repagan la entrada.
+        , igual para todos para que el precio sea lo único que cambie. Los modelos con caché no repagan la entrada.
+        {' '}Un modelo que nunca usaste <strong>solo se puede estimar</strong>; los que sí corriste muestran además su costo <strong>real medido</strong>.
       </p>
 
       {/* Lista */}

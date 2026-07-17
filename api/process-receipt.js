@@ -95,7 +95,7 @@ No devuelvas NADA más que el JSON puro.`;
     if (!cost && usage) {
       cost = (usage.prompt_tokens * 0.00000015) + (usage.completion_tokens * 0.00000060);
     }
-    await logApiCost(cost, 'receipt-ocr', usage, "OCR: " + promptText.slice(0, 50));
+    await logApiCost(cost, 'receipt-ocr', usage, "OCR: " + promptText.slice(0, 50), { model: data.model || "openai/gpt-4o-mini" });
 
     return res.status(200).json({ success: true, data: parsed });
 

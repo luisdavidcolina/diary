@@ -23,7 +23,9 @@ export async function checkDailyLimit() {
   return { allowed: true, total: totalCost, limit: DAILY_LIMIT };
 }
 
-export async function logApiCost(cost, source, usage = null, promptPreview = null) {
+// meta.model: sin él solo queda un promedio que mezcla modelos y no compara nada.
+// meta.sessionId: atribuye el costo a una conversación concreta.
+export async function logApiCost(cost, source, usage = null, promptPreview = null, meta = {}) {
   if (!cost || cost <= 0) return;
   const today = new Date().toISOString().split('T')[0];
   const payload = {
@@ -32,6 +34,9 @@ export async function logApiCost(cost, source, usage = null, promptPreview = nul
     date: today,
     createdAt: new Date().toISOString()
   };
+
+  if (meta.model) payload.model = String(meta.model);
+  if (meta.sessionId) payload.sessionId = String(meta.sessionId);
   
   if (usage) {
     payload.prompt_tokens = usage.prompt_tokens || 0;
