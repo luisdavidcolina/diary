@@ -205,6 +205,77 @@ export const updateTransaction = (id, patch) =>
 
 export const deleteTransaction = (id) => deleteDoc(doc(db, "transactions", id));
 
+export const addTransfer = async (fromAccountId, toAccountId, amount, amountReceived, description, rate = null, createdAt = null) => {
+  const amtSent = parseFloat(amount) || 0;
+  const amtRec = parseFloat(amountReceived) || 0;
+  
+  let fromBalanceBefore = 0;
+  let fromBalanceAfter = 0;
+  let fromAccountName = '';
+  let fromCurrency = 'USD';
+  
+  let toBalanceBefore = 0;
+  let toBalanceAfter = 0;
+  let toAccountName = '';
+  let toCurrency = 'USD';
+
+  // 1. Debitar de la cuenta de origen
+  const fromAccRef = doc(db, "accounts", fromAccountId);
+  const fromSnap = await getDoc(fromAccRef);
+  if (fromSnap.exists()) {
+    fromAccountName = fromSnap.data().name || '';
+    fromCurrency = fromSnap.data().currency || 'USD';
+    fromBalanceBefore = parseFloat(fromSnap.data().balance) || 0;
+    fromBalanceAfter = Number((fromBalanceBefore - amtSent).toFixed(2));
+    await updateDoc(fromAccRef, { balance: fromBalanceAfter, updatedAt: new Date().toISOString() });
+  }
+
+  // 2. Acreditar a la cuenta de destino
+  const toAccRef = doc(db, "accounts", toAccountId);
+  const toSnap = await getDoc(toAccRef);
+  if (toSnap.exists()) {
+    toAccountName = toSnap.data().name || '';
+    toCurrency = toSnap.data().currency || 'USD';
+    toBalanceBefore = parseFloat(toSnap.data().balance) || 0;
+    toBalanceAfter = Number((toBalanceBefore + amtRec).toFixed(2));
+    await updateDoc(toAccRef, { balance: toBalanceAfter, updatedAt: new Date().toISOString() });
+  }
+
+  // 3. Calcular equivalente en USD para budget/patrimonio
+  let amountUSD = 0;
+  if (toCurrency === 'USD') {
+    amountUSD = amtRec;
+  } else if (fromCurrency === 'USD') {
+    amountUSD = amtSent;
+  } else {
+    amountUSD = toCurrency === 'VES' ? amtRec / 835.83 : amtRec / 3.75;
+  }
+
+  const payload = {
+    userId: uid(),
+    type: 'transfer',
+    amount: amtSent,
+    currency: fromCurrency,
+    amountReceived: amtRec,
+    currencyReceived: toCurrency,
+    rate: rate ? parseFloat(rate) : null,
+    fromAccountId,
+    fromAccountName,
+    fromBalanceBefore,
+    fromBalanceAfter,
+    toAccountId,
+    toAccountName,
+    toBalanceBefore,
+    toBalanceAfter,
+    description: description || `Transferencia de ${fromAccountName} a ${toAccountName}`,
+    amountUSD: Number(amountUSD.toFixed(2)),
+    createdAt: createdAt || new Date().toISOString()
+  };
+
+  const docRef = await addDoc(collection(db, "transactions"), payload);
+  return docRef.id;
+};
+
 export const uploadReceiptImage = async (file) => {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();

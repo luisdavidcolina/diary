@@ -673,10 +673,19 @@ h1, h2, h3 {
 .cfg-label:first-of-type { margin-top: 0; }
 
 /* Calendario */
-.cal-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 8px; }
+/* minmax(0, 1fr) evita que el contenido ensanche la grilla y la desborde. */
+.cal-grid {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: 8px;
+  width: 100%;
+  max-width: 100%;
+}
 .cal-cell {
   aspect-ratio: 1 / 1;
   min-height: 60px;
+  min-width: 0; /* clave: permite que la celda encoja */
+  overflow: hidden;
   display: flex;
   flex-direction: column;
   justify-content: space-between;
@@ -694,13 +703,16 @@ h1, h2, h3 {
 .cal-cell:hover { background: var(--brutal-yellow); transform: translate(1px, 1px); box-shadow: 1px 1px 0 #000; }
 .cal-cell.is-today { background: var(--brutal-pink); }
 .cal-cell.is-sel { background: var(--brutal-green); border-width: 3px; }
-.cal-day { font-size: 1rem; font-weight: 900; }
-.cal-marks { display: flex; align-items: center; gap: 4px; flex-wrap: wrap; }
-.cal-dot { width: 10px; height: 10px; border-radius: 0; border: 2px solid #000; background: #fff;}
-.cal-bell { font-size: 0.8rem; }
+.cal-day { font-size: 1rem; font-weight: 900; line-height: 1; }
+.cal-marks { display: flex; align-items: center; gap: 3px; flex-wrap: wrap; max-width: 100%; overflow: hidden; }
+.cal-dot { width: 10px; height: 10px; flex-shrink: 0; border-radius: 0; border: 2px solid #000; background: #fff;}
+.cal-bell { font-size: 0.8rem; white-space: nowrap; }
 @media (max-width: 640px) {
-  .cal-cell { min-height: 50px; padding: 0.3rem; }
-  .cal-day { font-size: 0.85rem; }
+  .cal-grid { gap: 4px; }
+  .cal-cell { min-height: 42px; padding: 0.25rem; box-shadow: 1px 1px 0 #000; border-width: 1.5px; }
+  .cal-day { font-size: 0.75rem; }
+  .cal-dot { width: 6px; height: 6px; border-width: 1px; }
+  .cal-bell { font-size: 0.6rem; }
 }
 
 /* Racha */

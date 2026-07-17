@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import {
   addTransaction, getTransactions, addOrUpdateAccount, getAccounts,
-  deleteTransaction, deleteAccount, getFinanceLimits, saveFinanceLimits, uploadReceiptImage
+  deleteTransaction, deleteAccount, getFinanceLimits, saveFinanceLimits, uploadReceiptImage,
+  addTransfer
 } from '../services/db';
 
 const inputStyle = { padding: '0.75rem', borderRadius: '0', background: '#fff', border: '3px solid #000', color: '#000', fontWeight: 600, boxShadow: 'inset 2px 2px 0 rgba(0,0,0,0.1)' };
@@ -39,6 +40,10 @@ const Finance = () => {
   const [txAccountId, setTxAccountId] = useState('');
   const [txCreatedAt, setTxCreatedAt] = useState('');
   const [txRate, setTxRate] = useState('');
+  const [transferFromId, setTransferFromId] = useState('');
+  const [transferToId, setTransferToId] = useState('');
+  const [transferAmountSent, setTransferAmountSent] = useState('');
+  const [transferAmountReceived, setTransferAmountReceived] = useState('');
 
   // Cuentas (con edición)
   const [accName, setAccName] = useState('');
@@ -112,6 +117,26 @@ const Finance = () => {
 
   const handleAddTransaction = async (e) => {
     e.preventDefault();
+    if (type === 'transfer') {
+      if (!transferFromId || !transferToId || !transferAmountSent || !transferAmountReceived || !desc) return;
+      try {
+        const timeVal = txCreatedAt ? new Date(txCreatedAt).toISOString() : null;
+        const parsedRate = txRate ? parseFloat(txRate) : null;
+        await addTransfer(transferFromId, transferToId, transferAmountSent, transferAmountReceived, desc, parsedRate, timeVal);
+        setTransferFromId('');
+        setTransferToId('');
+        setTransferAmountSent('');
+        setTransferAmountReceived('');
+        setDesc('');
+        setTxCreatedAt('');
+        setTxRate('');
+        loadTransactions();
+        loadAccounts();
+      } catch (e) {
+        console.error(e);
+      }
+      return;
+    }
     if (!amount || !desc) return;
     try {
       const opts = {
@@ -408,30 +433,53 @@ const Finance = () => {
                 </span>
               )}
             </div>
-            
+
             <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap' }}>
               <select value={type} onChange={(e) => setType(e.target.value)} style={inputStyle}>
                 <option value="expense">Gasto (-)</option>
                 <option value="income">Ingreso (+)</option>
+                <option value="transfer">Cambio / Transferencia (⇆)</option>
               </select>
-              {type === 'expense' && (
-                <select value={category} onChange={(e) => setCategory(e.target.value)} style={inputStyle}>
-                  {FINANCE_CATEGORIES.map(c => <option key={c.id} value={c.id}>{c.icon} {c.label}</option>)}
-                </select>
+
+              {type !== 'transfer' ? (
+                <>
+                  {type === 'expense' && (
+                    <select value={category} onChange={(e) => setCategory(e.target.value)} style={inputStyle}>
+                      {FINANCE_CATEGORIES.map(c => <option key={c.id} value={c.id}>{c.icon} {c.label}</option>)}
+                    </select>
+                  )}
+                  <select value={txCurrency} onChange={(e) => {
+                    setTxCurrency(e.target.value);
+                    if (e.target.value === 'VES' && !txRate) {
+                      setTxRate(rates.bcv || '');
+                    }
+                  }} style={inputStyle}>
+                    <option value="USD">USD ($)</option>
+                    <option value="VES">VES (Bs.)</option>
+                  </select>
+                  <input type="number" step="0.01" placeholder={`Monto (${txCurrency})`} value={amount} onChange={(e) => setAmount(e.target.value)} required style={{ ...inputStyle, flex: 1, minWidth: '100px' }} />
+                </>
+              ) : (
+                <>
+                  <select value={transferFromId} onChange={(e) => setTransferFromId(e.target.value)} required style={inputStyle}>
+                    <option value="">De Cuenta (Origen)</option>
+                    {accounts.map(acc => (
+                      <option key={acc.id} value={acc.id}>{acc.name} ({acc.currency} - Bal: {formatNum(acc.balance)})</option>
+                    ))}
+                  </select>
+                  <select value={transferToId} onChange={(e) => setTransferToId(e.target.value)} required style={inputStyle}>
+                    <option value="">A Cuenta (Destino)</option>
+                    {accounts.map(acc => (
+                      <option key={acc.id} value={acc.id}>{acc.name} ({acc.currency} - Bal: {formatNum(acc.balance)})</option>
+                    ))}
+                  </select>
+                  <input type="number" step="0.01" placeholder="Monto Enviado" value={transferAmountSent} onChange={(e) => setTransferAmountSent(e.target.value)} required style={{ ...inputStyle, flex: 1, minWidth: '110px' }} />
+                  <input type="number" step="0.01" placeholder="Monto Recibido" value={transferAmountReceived} onChange={(e) => setTransferAmountReceived(e.target.value)} required style={{ ...inputStyle, flex: 1, minWidth: '110px' }} />
+                </>
               )}
-              <select value={txCurrency} onChange={(e) => {
-                setTxCurrency(e.target.value);
-                if (e.target.value === 'VES' && !txRate) {
-                  setTxRate(rates.bcv || '');
-                }
-              }} style={inputStyle}>
-                <option value="USD">USD ($)</option>
-                <option value="VES">VES (Bs.)</option>
-              </select>
-              <input type="number" step="0.01" placeholder={`Monto (${txCurrency})`} value={amount} onChange={(e) => setAmount(e.target.value)} required style={{ ...inputStyle, flex: 1, minWidth: '100px' }} />
             </div>
 
-            {txCurrency === 'VES' && (
+            {type !== 'transfer' && txCurrency === 'VES' && (
               <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap' }}>
                 <div style={{ flex: 1, minWidth: '150px' }}>
                   <label style={{ fontSize: '0.8rem', fontWeight: 'bold', display: 'block', marginBottom: '0.25rem' }}>Tasa de Cambio (Bs./$)</label>
@@ -440,24 +488,35 @@ const Finance = () => {
               </div>
             )}
 
-            <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap' }}>
-              <div style={{ flex: 1, minWidth: '150px' }}>
-                <label style={{ fontSize: '0.8rem', fontWeight: 'bold', display: 'block', marginBottom: '0.25rem' }}>Asociar a Cuenta/Wallet</label>
-                <select value={txAccountId} onChange={(e) => setTxAccountId(e.target.value)} style={{ ...inputStyle, width: '100%' }}>
-                  <option value="">Ninguna (Efectivo/Otro)</option>
-                  {accounts.map(acc => (
-                    <option key={acc.id} value={acc.id}>{acc.name} ({acc.currency} - Bal: {formatNum(acc.balance)})</option>
-                  ))}
-                </select>
+            {type === 'transfer' && (
+              <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap' }}>
+                <div style={{ flex: 1, minWidth: '150px' }}>
+                  <label style={{ fontSize: '0.8rem', fontWeight: 'bold', display: 'block', marginBottom: '0.25rem' }}>Tasa de cambio usada (Opcional - Bs./$)</label>
+                  <input type="number" step="0.01" placeholder="Tasa" value={txRate} onChange={(e) => setTxRate(e.target.value)} style={{ ...inputStyle, width: '100%' }} />
+                </div>
               </div>
+            )}
+
+            <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap' }}>
+              {type !== 'transfer' && (
+                <div style={{ flex: 1, minWidth: '150px' }}>
+                  <label style={{ fontSize: '0.8rem', fontWeight: 'bold', display: 'block', marginBottom: '0.25rem' }}>Asociar a Cuenta/Wallet</label>
+                  <select value={txAccountId} onChange={(e) => setTxAccountId(e.target.value)} style={{ ...inputStyle, width: '100%' }}>
+                    <option value="">Ninguna (Efectivo/Otro)</option>
+                    {accounts.map(acc => (
+                      <option key={acc.id} value={acc.id}>{acc.name} ({acc.currency} - Bal: {formatNum(acc.balance)})</option>
+                    ))}
+                  </select>
+                </div>
+              )}
               <div style={{ flex: 1, minWidth: '150px' }}>
                 <label style={{ fontSize: '0.8rem', fontWeight: 'bold', display: 'block', marginBottom: '0.25rem' }}>Fecha y Hora (Opcional)</label>
                 <input type="datetime-local" value={txCreatedAt} onChange={(e) => setTxCreatedAt(e.target.value)} style={{ ...inputStyle, width: '100%' }} />
               </div>
             </div>
 
-            <input type="text" placeholder="Descripción (ej. Café, Transporte)" value={desc} onChange={(e) => setDesc(e.target.value)} required style={{ ...inputStyle, width: '100%' }} />
-            <button type="submit" style={{ background: type === 'expense' ? 'var(--brutal-pink)' : 'var(--brutal-green)', color: '#000', border: '3px solid #000', padding: '0.75rem', borderRadius: '0', fontWeight: '900', boxShadow: '4px 4px 0 #000', cursor: 'pointer' }}>
+            <input type="text" placeholder="Descripción (ej. Cambio de Bs a USD, Transferencia)" value={desc} onChange={(e) => setDesc(e.target.value)} required style={{ ...inputStyle, width: '100%' }} />
+            <button type="submit" style={{ background: type === 'expense' ? 'var(--brutal-pink)' : type === 'income' ? 'var(--brutal-green)' : 'var(--brutal-blue)', color: '#000', border: '3px solid #000', padding: '0.75rem', borderRadius: '0', fontWeight: '900', boxShadow: '4px 4px 0 #000', cursor: 'pointer' }}>
               Guardar
             </button>
           </form>
@@ -467,56 +526,69 @@ const Finance = () => {
           <h2>Historial Reciente</h2>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', marginTop: '1rem' }}>
             {transactions.length === 0 && <p style={{ color: 'var(--text-secondary)' }}>No hay transacciones aún.</p>}
-            {transactions.map((t) => (
-              <div key={t.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '0.5rem', padding: '0.75rem', background: '#fff', borderRadius: '0', border: '3px solid #000', borderLeft: `8px solid ${t.type === 'expense' ? '#ef4444' : '#10b981'}`, boxShadow: '2px 2px 0 #000' }}>
-                <div style={{ flex: 1 }}>
-                  <div style={{ fontWeight: 'bold', color: '#000' }}>
-                    {t.description}
-                    {t.type === 'expense' && t.category && (
-                      <span style={{ fontSize: '0.7rem', color: 'var(--text-secondary)', marginLeft: '0.5rem', fontWeight: 'normal' }}>
-                        · {FINANCE_CATEGORIES.find(c => c.id === t.category)?.label || t.category}
-                      </span>
-                    )}
-                    {t.telegramFileIds && t.telegramFileIds.length > 0 ? (
-                      t.telegramFileIds.map((fid, idx) => (
-                        <a key={idx} href={`/api/telegram-image?id=${fid}`} target="_blank" rel="noreferrer" style={{ fontSize: '0.7rem', marginLeft: '0.5rem', color: 'var(--accent-color)', textDecoration: 'none' }}>
-                          📷 Doc {idx + 1}
-                        </a>
-                      ))
-                    ) : t.telegramFileId ? (
-                      <a href={`/api/telegram-image?id=${t.telegramFileId}`} target="_blank" rel="noreferrer" style={{ fontSize: '0.7rem', marginLeft: '0.5rem', color: 'var(--accent-color)', textDecoration: 'none' }}>
-                        📷 Ver
-                      </a>
-                    ) : null}
-                  </div>
-                  
-                  {t.accountName && (
-                    <div style={{ fontSize: '0.7rem', color: '#555', marginTop: '0.2rem', fontWeight: 600 }}>
-                      💳 {t.accountName}: {t.currency === 'USD' ? '$' : 'Bs.'}{formatNum(t.balanceBefore)} ➔ {t.currency === 'USD' ? '$' : 'Bs.'}{formatNum(t.balanceAfter)}
-                    </div>
-                  )}
-
-                  <div style={{ fontSize: '0.65rem', color: '#888', marginTop: '0.15rem' }}>
-                    📅 {new Date(t.createdAt).toLocaleString('es-VE', { timeZone: 'America/Caracas', dateStyle: 'short', timeStyle: 'short' })}
-                  </div>
-                </div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                  <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '0.1rem' }}>
-                    <span style={{ fontWeight: 'bold', color: t.type === 'expense' ? '#ef4444' : '#10b981' }}>
-                      {t.type === 'expense' ? '-' : '+'}{t.currency === 'VES' ? 'Bs. ' : '$'}{formatNum(t.amount)}
-                    </span>
-                    <span style={{ fontSize: '0.7rem', color: 'var(--text-secondary)' }}>
-                      {t.currency === 'VES' ? (
-                        `≈ $${formatNum(t.amountUSD)}`
-                      ) : (
-                        `≈ Bs. ${formatNum(t.amount * (t.rate || rates.binance || rates.bcv || 1))}`
+            {transactions.map((t) => {
+              const isTransfer = t.type === 'transfer';
+              const fromSym = t.currency === 'USD' ? '$' : t.currency === 'PEN' ? 'S/' : 'Bs.';
+              const toSym = t.currencyReceived === 'USD' ? '$' : t.currencyReceived === 'PEN' ? 'S/' : 'Bs.';
+              return (
+                <div key={t.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '0.5rem', padding: '0.75rem', background: '#fff', borderRadius: '0', border: '3px solid #000', borderLeft: `8px solid ${isTransfer ? '#a855f7' : t.type === 'expense' ? '#ef4444' : '#10b981'}`, boxShadow: '2px 2px 0 #000' }}>
+                  <div style={{ flex: 1 }}>
+                    <div style={{ fontWeight: 'bold', color: '#000' }}>
+                      {t.description}
+                      {!isTransfer && t.type === 'expense' && t.category && (
+                        <span style={{ fontSize: '0.7rem', color: 'var(--text-secondary)', marginLeft: '0.5rem', fontWeight: 'normal' }}>
+                          · {FINANCE_CATEGORIES.find(c => c.id === t.category)?.label || t.category}
+                        </span>
                       )}
-                    </span>
+                      {t.telegramFileIds && t.telegramFileIds.length > 0 ? (
+                        t.telegramFileIds.map((fid, idx) => (
+                          <a key={idx} href={`/api/telegram-image?id=${fid}`} target="_blank" rel="noreferrer" style={{ fontSize: '0.7rem', marginLeft: '0.5rem', color: 'var(--accent-color)', textDecoration: 'none' }}>
+                            📷 Doc {idx + 1}
+                          </a>
+                        ))
+                      ) : t.telegramFileId ? (
+                        <a href={`/api/telegram-image?id=${t.telegramFileId}`} target="_blank" rel="noreferrer" style={{ fontSize: '0.7rem', marginLeft: '0.5rem', color: 'var(--accent-color)', textDecoration: 'none' }}>
+                          📷 Ver
+                        </a>
+                      ) : null}
+                    </div>
+                    
+                    {isTransfer ? (
+                      <div style={{ fontSize: '0.7rem', color: '#555', marginTop: '0.2rem', fontWeight: 600 }}>
+                        ⇆ De {t.fromAccountName} ({fromSym}{formatNum(t.fromBalanceBefore)} ➔ {fromSym}{formatNum(t.fromBalanceAfter)}) a {t.toAccountName} ({toSym}{formatNum(t.toBalanceBefore)} ➔ {toSym}{formatNum(t.toBalanceAfter)})
+                      </div>
+                    ) : (
+                      t.accountName && (
+                        <div style={{ fontSize: '0.7rem', color: '#555', marginTop: '0.2rem', fontWeight: 600 }}>
+                          💳 {t.accountName}: {t.currency === 'USD' ? '$' : 'Bs.'}{formatNum(t.balanceBefore)} ➔ {t.currency === 'USD' ? '$' : 'Bs.'}{formatNum(t.balanceAfter)}
+                        </div>
+                      )
+                    )}
+
+                    <div style={{ fontSize: '0.65rem', color: '#888', marginTop: '0.15rem' }}>
+                      📅 {new Date(t.createdAt).toLocaleString('es-VE', { timeZone: 'America/Caracas', dateStyle: 'short', timeStyle: 'short' })}
+                    </div>
                   </div>
-                  <button onClick={() => handleDeleteTransaction(t.id)} title="Eliminar" style={{ background: 'transparent', border: 'none', color: 'var(--text-secondary)', cursor: 'pointer' }}>🗑</button>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '0.1rem' }}>
+                      <span style={{ fontWeight: 'bold', color: isTransfer ? '#a855f7' : t.type === 'expense' ? '#ef4444' : '#10b981' }}>
+                        {isTransfer ? '⇆ ' : t.type === 'expense' ? '-' : '+'}{t.currency === 'VES' ? 'Bs. ' : t.currency === 'PEN' ? 'S/ ' : '$'}{formatNum(t.amount)}
+                      </span>
+                      <span style={{ fontSize: '0.7rem', color: 'var(--text-secondary)' }}>
+                        {isTransfer ? (
+                          `➔ ${toSym} ${formatNum(t.amountReceived)}`
+                        ) : t.currency === 'VES' ? (
+                          `≈ $${formatNum(t.amountUSD)}`
+                        ) : (
+                          `≈ Bs. ${formatNum(t.amount * (t.rate || rates.binance || rates.bcv || 1))}`
+                        )}
+                      </span>
+                    </div>
+                    <button onClick={() => handleDeleteTransaction(t.id)} title="Eliminar" style={{ background: 'transparent', border: 'none', color: 'var(--text-secondary)', cursor: 'pointer' }}>🗑</button>
+                  </div>
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         </div>
       </div>

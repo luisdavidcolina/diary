@@ -43,6 +43,35 @@ async function saveTask(title, extra = {}) {
 }
 
 // Lectura scopeada por usuario (para comandos de consulta que NO gastan tokens de IA).
+// ─────────── Memoria corta de conversación (últimos mensajes por chat) ───────────
+// Guarda solo los últimos MEMORY_TURNS pares para dar contexto sin disparar tokens.
+const MEMORY_TURNS = 5;
+
+async function loadMemory(chatId) {
+  try {
+    const snap = await getDoc(doc(dbNode, "telegram_memory", String(chatId)));
+    const msgs = snap.exists() ? snap.data()?.messages : null;
+    return Array.isArray(msgs) ? msgs.slice(-MEMORY_TURNS * 2) : [];
+  } catch (e) {
+    console.error("loadMemory error", e);
+    return [];
+  }
+}
+
+async function saveMemory(chatId, userText, botText) {
+  try {
+    const prev = await loadMemory(chatId);
+    const next = [...prev, { role: 'user', content: String(userText).slice(0, 800) }];
+    if (botText) next.push({ role: 'assistant', content: String(botText).slice(0, 800) });
+    await setDoc(doc(dbNode, "telegram_memory", String(chatId)), {
+      messages: next.slice(-MEMORY_TURNS * 2),
+      updatedAt: nowIso()
+    });
+  } catch (e) {
+    console.error("saveMemory error", e);
+  }
+}
+
 async function readMine(coll) {
   const ref = OWNER_UID
     ? query(collection(dbNode, coll), where("userId", "==", OWNER_UID))
@@ -295,6 +324,9 @@ REGLAS OPERATIVAS (prioridad alta):
   const hasTimeish = /\b\d{1,2}[:\s.hH]\d{2}\b|\ba las\b|\b\d{1,2}\s?(am|pm)\b/i.test(text);
   const forceReminder = reminderIntent && hasTimeish;
 
+  // Memoria corta: da continuidad a la conversación.
+  const memory = await loadMemory(chatId);
+
   try {
     const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
       method: "POST",
@@ -306,6 +338,7 @@ REGLAS OPERATIVAS (prioridad alta):
         model: brain.config?.model || 'openai/gpt-4o-mini',
         messages: [
           { role: 'system', content: systemPrompt },
+          ...memory,
           { role: 'user', content: text }
         ],
         tools: tools,
@@ -907,6 +940,8 @@ Escribe cualquier mensaje normal (sin la /) y lo guardo como tarea o lo interpre
         } else {
           await sendTelegramMessage(chatId, aiResponse.text, aiResponse.replyMarkup);
         }
+        // Recordar el turno para dar continuidad a la conversación.
+        await saveMemory(chatId, text, aiResponse.text);
         return res.status(200).send('OK');
       }
 

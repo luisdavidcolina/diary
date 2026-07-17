@@ -179,6 +179,25 @@ export default async function handler(req, res) {
             required: ["path"]
           }
         }
+      },
+      {
+        type: "function",
+        function: {
+          name: "add_transfer",
+          description: "Registra una transferencia o cambio de divisas entre dos cuentas/wallets (ej. cambio de bolívares a USDT en Binance).",
+          parameters: {
+            type: "object",
+            properties: {
+              fromAccountId: { type: "string", description: "El ID de la cuenta de origen de los fondos" },
+              toAccountId: { type: "string", description: "El ID de la cuenta de destino de los fondos" },
+              amount: { type: "number", description: "El monto enviado/debitado de la cuenta origen" },
+              amountReceived: { type: "number", description: "El monto recibido/acreditado en la cuenta destino" },
+              description: { type: "string", description: "Descripción del cambio/transferencia (ej. 'Cambio de Bs. a USDT')" },
+              rate: { type: "number", description: "Tasa de cambio usada si aplica (ej. 835.83)" }
+            },
+            required: ["fromAccountId", "toAccountId", "amount", "amountReceived", "description"]
+          }
+        }
       }
     ];
 
@@ -192,7 +211,7 @@ export default async function handler(req, res) {
     })}
 
 COLECCIONES de la base de datos y sus campos:
-- transactions (finanzas): amount, amountUSD, currency ('USD'|'VES'), description, type ('expense'|'income'), category.
+- transactions (finanzas): amount, amountUSD, currency ('USD'|'VES'), description, type ('expense'|'income'|'transfer'), category.
 - journal_entries (diario): content, mood.
 - lifestyle (tareas y hábitos): title, category ('task'|'habit'), isCompleted (boolean).
 - accounts (cuentas/wallets): name, currency, balance, accountNumber.
@@ -200,8 +219,8 @@ COLECCIONES de la base de datos y sus campos:
 - syllabus (TEMARIO de estudio): subjectTitle (materia), unit (tema/unidad), title (subtema), details (puntos). Consúltala para responder "qué temas estudio", "temas de cálculo", etc.
 
 REGLAS:
-- Registrar gasto/ingreso → add_transaction. Recordatorio/alarma con hora → schedule_reminder. Nota del diario → add_diary_entry.
-- Para LEER, buscar o listar cualquier dato → db_query (devuelve también el 'id' de cada registro).
+- Registrar gasto/ingreso → add_transaction. Transferencia/cambio entre cuentas → add_transfer. Recordatorio/alarma con hora → schedule_reminder. Nota del diario → add_diary_entry.
+- Para LEER, buscar o listar cualquier dato (incluyendo ver tus cuentas y sus IDs antes de hacer una transferencia) → db_query (devuelve también el 'id' de cada registro).
 - Para MODIFICAR o CORREGIR un registro → primero db_query para hallar su 'id', luego db_update.
 - Para BORRAR → db_query para el 'id', luego db_delete (confirma con el usuario si hay ambigüedad).
 - Marcar una tarea como completada = db_update en 'lifestyle' con { isCompleted: true }.

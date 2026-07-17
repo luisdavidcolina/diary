@@ -1,7 +1,14 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import ReactMarkdown from 'react-markdown';
-import { addTransaction, getTransactions, addJournalEntry, getJournalEntries, addHabitOrTask, getLifestyleItems, queryCollection, updateRecord, deleteRecord, addChatMessage, getChatMessages, getApiUsageLogs, createChatSession, getBotConfig, saveBotConfig } from '../services/db';
+import { addTransaction, getTransactions, addJournalEntry, getJournalEntries, addHabitOrTask, getLifestyleItems, queryCollection, updateRecord, deleteRecord, addChatMessage, getChatMessages, getApiUsageLogs, createChatSession, getBotConfig, saveBotConfig, addTransfer } from '../services/db';
+
+// Acciones que MODIFICAN datos → requieren aprobación del usuario.
+// Las de solo lectura (db_query, get_*, read_*) se ejecutan directamente.
+// Debe coincidir con `modifyingTools` de api/telegram-webhook.js (acciones unificadas).
+const MODIFYING_TOOLS = [
+  'add_task', 'add_transaction', 'add_diary_entry', 'schedule_reminder', 'db_update', 'db_delete'
+];
 
 const txUSD = (t) => (t.amountUSD != null ? t.amountUSD : parseFloat(t.amount) || 0);
 const isThisMonth = (iso) => {
@@ -83,6 +90,12 @@ export default function AssistantChat() {
         await addTransaction(amount, description, type, category);
         return `Transacción agregada exitosamente: $${amount} (${description})`;
       } 
+      
+      if (name === 'add_transfer') {
+        const { fromAccountId, toAccountId, amount, amountReceived, description, rate } = argsObj;
+        await addTransfer(fromAccountId, toAccountId, amount, amountReceived, description, rate);
+        return `Transferencia/Cambio registrada exitosamente: de cuenta ${fromAccountId} (monto: ${amount}) a cuenta ${toAccountId} (monto recibido: ${amountReceived}).`;
+      }
       
       if (name === 'get_finance_summary') {
         const txs = await getTransactions();
@@ -382,11 +395,26 @@ Si no usas la barra (/), la IA entiende tus mensajes naturalmente.`;
         setMessages([...newMessages, { role: 'model', content: data.text }]);
         addChatMessage(sid, 'model', data.text);
       } else if (data.type === 'function_call') {
-        // En lugar de ejecutar de inmediato, lo mandamos a la bandeja de aprobación
-        const proposalMsg = { 
-          role: 'model', 
-          type: 'proposal', 
-          content: `Me gustaría ejecutar una acción: ${data.functionCall.name}`, 
+        // Las LECTURAS se ejecutan solas; solo agregar/modificar/eliminar pide aprobación
+        // (misma regla que el bot de Telegram → acciones unificadas).
+        if (!MODIFYING_TOOLS.includes(data.functionCall.name)) {
+          const funcResult = await executeTool(data.functionCall);
+          const historyWithFunc = [
+            ...newMessages,
+            { role: 'model', content: `(Consultando: ${data.functionCall.name}…)`, functionCall: data.functionCall },
+            { role: 'function', name: data.functionCall.name, content: funcResult }
+          ];
+          setMessages(historyWithFunc);
+          addChatMessage(sid, 'function', funcResult, null, { name: data.functionCall.name, result: funcResult });
+          await handleSend('', historyWithFunc);
+          return;
+        }
+
+        // Acción que modifica datos → pedir aprobación
+        const proposalMsg = {
+          role: 'model',
+          type: 'proposal',
+          content: `Me gustaría ejecutar una acción: ${data.functionCall.name}`,
           functionCall: data.functionCall,
           status: 'pending'
         };
