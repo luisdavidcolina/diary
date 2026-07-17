@@ -244,8 +244,13 @@ const Finance = () => {
     return d.getFullYear() === now.getFullYear() && d.getMonth() === now.getMonth();
   };
   const monthTx = transactions.filter((t) => isThisMonth(t.createdAt));
-  const income = monthTx.filter((t) => t.type === 'income').reduce((s, t) => s + parseFloat(t.amountUSD != null ? t.amountUSD : t.amount || 0), 0);
+  const monthIncome = monthTx.filter((t) => t.type === 'income').reduce((s, t) => s + parseFloat(t.amountUSD != null ? t.amountUSD : t.amount || 0), 0);
   const expenses = monthTx.filter((t) => t.type === 'expense').reduce((s, t) => s + parseFloat(t.amountUSD != null ? t.amountUSD : t.amount || 0), 0);
+  
+  // El ingreso inicial son los saldos iniciales (patrimonio neto inicial antes del flujo mensual)
+  const initialBalance = totalUSD - (monthIncome - expenses);
+  const income = initialBalance + monthIncome;
+
   const spentBy = (cat) => {
     const exp = monthTx.filter((t) => t.type === 'expense' && t.category === cat).reduce((s, t) => s + parseFloat(t.amountUSD != null ? t.amountUSD : t.amount || 0), 0);
     const inc = monthTx.filter((t) => t.type === 'income' && t.category === cat).reduce((s, t) => s + parseFloat(t.amountUSD != null ? t.amountUSD : t.amount || 0), 0);
