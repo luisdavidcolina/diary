@@ -51,11 +51,62 @@ async function handleRates(res) {
   }
 }
 
+// ─────────── Catálogo completo de modelos de OpenRouter ───────────
+// Se cachea en el edge de Vercel 6 h (el catálogo cambia poco y son ~300+ modelos).
+// Normaliza lo que necesita el selector: precios, contexto, herramientas, caché,
+// visión y proveedor. El coste real por 1000 mensajes se calcula en el cliente.
+async function handleModels(res) {
+  try {
+    const r = await fetch('https://openrouter.ai/api/v1/models');
+    if (!r.ok) throw new Error(`OpenRouter models ${r.status}`);
+    const j = await r.json();
+
+    const models = (j.data || []).map((m) => {
+      const p = m.pricing || {};
+      const num = (v) => {
+        const n = parseFloat(v);
+        return Number.isFinite(n) ? n : 0;
+      };
+      // OpenRouter da precios por token → los pasamos a precio por millón.
+      const promptM = num(p.prompt) * 1e6;
+      const completionM = num(p.completion) * 1e6;
+      const cacheReadM = num(p.input_cache_read) * 1e6;
+      const params = m.supported_parameters || [];
+      const modalities = m.architecture?.input_modalities || [];
+
+      return {
+        id: m.id,
+        name: m.name || m.id,
+        provider: (m.id.split('/')[0] || 'otros'),
+        description: m.description || '',
+        contextLength: m.context_length || m.top_provider?.context_length || 0,
+        pricePromptPerM: promptM,
+        priceCompletionPerM: completionM,
+        priceCacheReadPerM: cacheReadM,
+        // Capacidades que el selector filtra:
+        supportsTools: params.includes('tools') || params.includes('tool_choice'),
+        supportsCache: num(p.input_cache_read) > 0 || num(p.input_cache_write) > 0,
+        supportsImages: modalities.includes('image'),
+        isFree: promptM === 0 && completionM === 0
+      };
+    });
+
+    res.setHeader('Cache-Control', 's-maxage=21600, stale-while-revalidate=86400');
+    return res.status(200).json({ models, count: models.length, updatedAt: new Date().toISOString() });
+  } catch (error) {
+    console.error('Models Error:', error);
+    return res.status(500).json({ error: error.message });
+  }
+}
+
 export default async function handler(req, res) {
   if (req.method !== 'GET') return res.status(405).end();
 
   // Ruta de tasas (reescrita desde /api/rates).
   if (req.query?.type === 'rates') return handleRates(res);
+
+  // Catálogo de modelos para el selector del Asistente.
+  if (req.query?.type === 'models') return handleModels(res);
 
   // Ruta de costo diario.
   if (req.query?.type === 'daily') {

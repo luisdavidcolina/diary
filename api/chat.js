@@ -120,7 +120,7 @@ export default async function handler(req, res) {
           parameters: {
             type: "object",
             properties: {
-              collection: { type: "string", description: "Nombre de la colección: 'transactions', 'journal_entries', 'lifestyle', 'accounts' o 'library_items'" },
+              collection: { type: "string", description: "Nombre de la colección: 'transactions', 'journal_entries', 'lifestyle', 'accounts', 'library_items', 'syllabus' (TEMARIO de estudio) o 'bot_knowledge'" },
               limit: { type: "number", description: "Cuántos registros recientes traer (por defecto 10)" }
             },
             required: ["collection"]
@@ -135,7 +135,7 @@ export default async function handler(req, res) {
           parameters: {
             type: "object",
             properties: {
-              collection: { type: "string", description: "'transactions', 'journal_entries', 'lifestyle', 'accounts' o 'library_items'" },
+              collection: { type: "string", description: "'transactions', 'journal_entries', 'lifestyle', 'accounts', 'library_items', 'syllabus' o 'bot_knowledge'" },
               id: { type: "string", description: "El id del registro a modificar" },
               data: { type: "object", description: "Campos a actualizar, ej. { amount: 20, description: 'Corregido' }" }
             },
@@ -151,7 +151,7 @@ export default async function handler(req, res) {
           parameters: {
             type: "object",
             properties: {
-              collection: { type: "string", description: "'transactions', 'journal_entries', 'lifestyle', 'accounts' o 'library_items'" },
+              collection: { type: "string", description: "'transactions', 'journal_entries', 'lifestyle', 'accounts', 'library_items', 'syllabus' o 'bot_knowledge'" },
               id: { type: "string", description: "El id del registro a eliminar" }
             },
             required: ["collection", "id"]

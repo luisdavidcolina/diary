@@ -1,4 +1,4 @@
-import { doc, getDoc, updateDoc, deleteDoc, collection, addDoc, getDocs, query, where } from "firebase/firestore/lite";
+import { doc, getDoc, setDoc, updateDoc, deleteDoc, collection, addDoc, getDocs, query, where } from "firebase/firestore/lite";
 import { dbNode } from "./_firebaseNode.js";
 import { checkDailyLimit, logApiCost } from "./_costTracker.js";
 import { buildSystemPrompt } from "./_context.js";
@@ -248,7 +248,7 @@ REGLAS OPERATIVAS (prioridad alta):
         parameters: {
           type: "object",
           properties: {
-            collection: { type: "string", description: "'transactions', 'journal_entries', 'lifestyle', 'accounts' o 'library_items'" },
+            collection: { type: "string", description: "'transactions', 'journal_entries', 'lifestyle', 'accounts', 'library_items', 'syllabus' (TEMARIO de estudio) o 'bot_knowledge'" },
             limit: { type: "number", description: "Cuántos registros recientes (por defecto 8)" }
           },
           required: ["collection"]
@@ -263,7 +263,7 @@ REGLAS OPERATIVAS (prioridad alta):
         parameters: {
           type: "object",
           properties: {
-            collection: { type: "string", description: "'transactions', 'journal_entries', 'lifestyle', 'accounts' o 'library_items'" },
+            collection: { type: "string", description: "'transactions', 'journal_entries', 'lifestyle', 'accounts', 'library_items', 'syllabus' (TEMARIO de estudio) o 'bot_knowledge'" },
             id: { type: "string", description: "id del registro" },
             data: { type: "object", description: "Campos a actualizar" }
           },
@@ -279,7 +279,7 @@ REGLAS OPERATIVAS (prioridad alta):
         parameters: {
           type: "object",
           properties: {
-            collection: { type: "string", description: "'transactions', 'journal_entries', 'lifestyle', 'accounts' o 'library_items'" },
+            collection: { type: "string", description: "'transactions', 'journal_entries', 'lifestyle', 'accounts', 'library_items', 'syllabus' (TEMARIO de estudio) o 'bot_knowledge'" },
             id: { type: "string", description: "id del registro" }
           },
           required: ["collection", "id"]
@@ -324,6 +324,11 @@ REGLAS OPERATIVAS (prioridad alta):
   const hasTimeish = /\b\d{1,2}[:\s.hH]\d{2}\b|\ba las\b|\b\d{1,2}\s?(am|pm)\b/i.test(text);
   const forceReminder = reminderIntent && hasTimeish;
 
+  // Refuerzo determinista para el TEMARIO: el modelo tendía a decir "déjame
+  // consultar" sin invocar la herramienta (Telegram no tiene bucle multi-paso).
+  const syllabusIntent = /\b(tema|temas|temario|unidad|unidades|materia|materias|subtema|contenido|syllabus|pensum)\b/i.test(text);
+  const forceSyllabus = !forceReminder && syllabusIntent;
+
   // Memoria corta: da continuidad a la conversación.
   const memory = await loadMemory(chatId);
 
@@ -344,7 +349,9 @@ REGLAS OPERATIVAS (prioridad alta):
         tools: tools,
         tool_choice: forceReminder
           ? { type: 'function', function: { name: 'schedule_reminder' } }
-          : 'auto',
+          : forceSyllabus
+            ? { type: 'function', function: { name: 'db_query' } }
+            : 'auto',
         temperature: 0.7
       })
     });

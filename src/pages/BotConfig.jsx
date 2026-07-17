@@ -5,6 +5,7 @@ import {
   getChatSessions, deleteChatSession, getApiUsageLogs
 } from '../services/db';
 import ReactMarkdown from 'react-markdown';
+import ModelPicker from '../components/ModelPicker';
 
 const TONES = [
   { id: 'cercano', label: '🤝 Cercano' },
@@ -131,10 +132,16 @@ const BotConfig = () => {
             <label className="cfg-label">Nombre del bot</label>
             <input className="note-input" value={cfg.botName} onChange={(e) => set({ botName: e.target.value })} placeholder="Luisda Bot" />
 
-            <label className="cfg-label">Modelo del Motor de IA (OpenRouter)</label>
-            <select className="note-input" value={cfg.model || 'openai/gpt-4o-mini'} onChange={(e) => set({ model: e.target.value })}>
-              {MODELS.map((m) => <option key={m.id} value={m.id}>{m.label}</option>)}
-            </select>
+            <label className="cfg-label">Modelo del Motor de IA (OpenRouter · catálogo completo)</label>
+            <ModelPicker
+              value={cfg.model || 'openai/gpt-4o-mini'}
+              onChange={async (id) => {
+                const next = { ...cfg, model: id };
+                setCfg(next);
+                try { await saveBotConfig(next); setSaved(true); setTimeout(() => setSaved(false), 2500); }
+                catch (e) { alert('Error guardando modelo: ' + e.message); }
+              }}
+            />
 
             <label className="cfg-label">Personalidad (cómo es y cómo habla)</label>
             <textarea
