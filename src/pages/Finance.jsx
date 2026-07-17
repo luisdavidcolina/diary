@@ -9,8 +9,8 @@ const inputStyle = { padding: '0.75rem', borderRadius: '0', background: '#fff', 
 const FINANCE_CATEGORIES = [
   { id: 'house', label: 'Gastos de casa / Remesas', icon: '🏠', defaultLimit: 300, color: '#3b82f6' },
   { id: 'food_out', label: 'Comida / Delivery', icon: '🍔', defaultLimit: 150, color: '#f59e0b' },
-  { id: 'transport', label: 'Movilidad / Taxi', icon: '🚕', defaultLimit: 40, color: '#10b981' },
-  { id: 'recreation', label: 'Recreación / Salidas', icon: '🎬', defaultLimit: 150, color: '#8b5cf6' },
+  { id: 'transport', label: 'Movilidad / Taxi', icon: '🚕', defaultLimit: 50, color: '#10b981' },
+  { id: 'recreation', label: 'Recreación / Salidas', icon: '🎬', defaultLimit: 100, color: '#8b5cf6' },
   { id: 'other', label: 'Otros', icon: '❓', defaultLimit: 50, color: '#64748b' }
 ];
 
