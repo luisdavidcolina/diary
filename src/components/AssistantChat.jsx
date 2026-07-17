@@ -3,12 +3,14 @@ import { useNavigate } from 'react-router-dom';
 import ReactMarkdown from 'react-markdown';
 import { addTransaction, getTransactions, addJournalEntry, getJournalEntries, addHabitOrTask, getLifestyleItems, queryCollection, updateRecord, deleteRecord, addChatMessage, getChatMessages, getApiUsageLogs, createChatSession, getBotConfig, saveBotConfig, addTransfer } from '../services/db';
 
-// Acciones que MODIFICAN datos → requieren aprobación del usuario.
-// Las de solo lectura (db_query, get_*, read_*) se ejecutan directamente.
-// Debe coincidir con `modifyingTools` de api/telegram-webhook.js (acciones unificadas).
-const MODIFYING_TOOLS = [
-  'add_task', 'add_transaction', 'add_diary_entry', 'schedule_reminder', 'db_update', 'db_delete'
-];
+// Solo se pide confirmación para AGREGAR, EDITAR o ELIMINAR.
+// Todo lo demás (get_*, read_*, db_query, check_*, navigate_to…) se ejecuta directo.
+// Regla por PREFIJO, no lista fija: así cualquier herramienta nueva (add_transfer,
+// update_x…) queda cubierta sola y no se desincroniza con el bot de Telegram.
+// Debe coincidir con `isModifyingTool` de api/telegram-webhook.js.
+const isModifyingTool = (name = '') =>
+  /^(add_|create_|update_|edit_|delete_|remove_|save_|schedule_|set_)/.test(name) ||
+  name === 'db_update' || name === 'db_delete';
 
 const txUSD = (t) => (t.amountUSD != null ? t.amountUSD : parseFloat(t.amount) || 0);
 const isThisMonth = (iso) => {
@@ -193,13 +195,15 @@ export default function AssistantChat() {
 
       if (name === 'get_exchange_rates') {
         try {
-          const res = await fetch('https://pydolarvenezuela-api.vercel.app/api/v1/dollar');
+          // Endpoint propio (BCV vía dolarapi + promedio P2P de Binance).
+          // Antes usaba pydolarvenezuela, que está caído.
+          const res = await fetch('/api/rates');
+          if (!res.ok) throw new Error(`rates ${res.status}`);
           const data = await res.json();
-          const bcv = data.monitors.bcv.price;
-          const paralelo = data.monitors.enparalelovzla.price;
-          return `Tasas actuales: BCV (Bs. ${bcv}), Paralelo (Bs. ${paralelo})`;
-        } catch(e) {
-          return "No se pudieron obtener las tasas de cambio en este momento.";
+          if (!data.bcv && !data.binance) throw new Error('sin datos de tasas');
+          return `Tasas actuales: BCV Bs. ${data.bcv}, Binance P2P (paralelo) Bs. ${data.binance}`;
+        } catch (e) {
+          return `No pude obtener las tasas ahora mismo (${e.message}).`;
         }
       }
 
@@ -397,7 +401,7 @@ Si no usas la barra (/), la IA entiende tus mensajes naturalmente.`;
       } else if (data.type === 'function_call') {
         // Las LECTURAS se ejecutan solas; solo agregar/modificar/eliminar pide aprobación
         // (misma regla que el bot de Telegram → acciones unificadas).
-        if (!MODIFYING_TOOLS.includes(data.functionCall.name)) {
+        if (!isModifyingTool(data.functionCall.name)) {
           const funcResult = await executeTool(data.functionCall);
           const historyWithFunc = [
             ...newMessages,

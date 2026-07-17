@@ -23,6 +23,14 @@ async function resolveOwnerUid() {
 }
 const nowIso = () => new Date().toISOString();
 
+// Solo se pide confirmación para AGREGAR, EDITAR o ELIMINAR.
+// Todo lo demás (get_*, read_*, db_query…) se ejecuta directo.
+// Regla por PREFIJO, no lista fija: cualquier herramienta nueva queda cubierta sola.
+// Debe coincidir con `isModifyingTool` de src/components/AssistantChat.jsx.
+const isModifyingTool = (name = '') =>
+  /^(add_|create_|update_|edit_|delete_|remove_|save_|schedule_|set_)/.test(name) ||
+  name === 'db_update' || name === 'db_delete';
+
 // Escrituras unificadas con la app web (mismas colecciones y esquema que src/services/db.js).
 async function saveTransaction({ amount, description, type, category = 'other', currency = 'USD', rate = null, receiptUrl = null }) {
   const amt = parseFloat(amount) || 0;
@@ -376,8 +384,7 @@ REGLAS OPERATIVAS (prioridad alta):
       const tool = responseMsg.tool_calls[0].function;
       const args = JSON.parse(tool.arguments);
 
-      const modifyingTools = ['add_task', 'add_transaction', 'add_diary_entry', 'schedule_reminder', 'db_update', 'db_delete'];
-      if (modifyingTools.includes(tool.name)) {
+      if (isModifyingTool(tool.name)) {
         // En lugar de ejecutar, guardamos la propuesta en Firebase
         const proposalPayload = {
           userId: OWNER_UID,
@@ -494,15 +501,18 @@ REGLAS OPERATIVAS (prioridad alta):
 
       if (tool.name === 'get_exchange_rates') {
         try {
-          const r = await fetch('https://pydolarvenezuela-api.vercel.app/api/v1/dollar');
+          // Usa nuestro endpoint propio (BCV vía dolarapi + promedio P2P de Binance).
+          // Antes apuntaba a pydolarvenezuela, que está caído.
+          const r = await fetch(`https://${reqHost}/api/rates`);
+          if (!r.ok) throw new Error(`rates ${r.status}`);
           const d = await r.json();
-          const bcv = d.monitors.bcv.price;
-          const paralelo = d.monitors.enparalelovzla.price;
-          const resultText = `Tasas de cambio actuales: BCV (Bs. ${bcv}), Paralelo (Bs. ${paralelo})`;
+          if (!d.bcv && !d.binance) throw new Error('sin datos de tasas');
+          const resultText = `Tasas de cambio actuales: BCV Bs. ${d.bcv}, Binance P2P (paralelo) Bs. ${d.binance}`;
           const summary = await summarizeToolResult(apiKey, systemPrompt, text, tool, resultText);
           return { text: summary || resultText };
         } catch (e) {
-          return { text: "No se pudieron obtener las tasas de cambio en este momento." };
+          console.error('get_exchange_rates error', e);
+          return { text: `⚠️ No pude obtener las tasas ahora mismo (${e.message}).` };
         }
       }
 
