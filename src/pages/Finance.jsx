@@ -36,6 +36,10 @@ const Finance = () => {
   const [category, setCategory] = useState('house');
   const [isProcessingReceipt, setIsProcessingReceipt] = useState(false);
   const [receiptUrls, setReceiptUrls] = useState([]);
+  const [txCurrency, setTxCurrency] = useState('USD');
+  const [txAccountId, setTxAccountId] = useState('');
+  const [txCreatedAt, setTxCreatedAt] = useState('');
+  const [txRate, setTxRate] = useState('');
 
   // Cuentas (con edición)
   const [accName, setAccName] = useState('');
@@ -111,9 +115,22 @@ const Finance = () => {
     e.preventDefault();
     if (!amount || !desc) return;
     try {
-      await addTransaction(amount, desc, type, type === 'expense' ? category : null, receiptUrls);
-      setAmount(''); setDesc(''); setReceiptUrls([]);
+      const opts = {
+        currency: txCurrency,
+        rate: txCurrency === 'VES' ? parseFloat(txRate) || rates.bcv || 1 : null,
+        accountId: txAccountId || null,
+        createdAt: txCreatedAt ? new Date(txCreatedAt).toISOString() : null
+      };
+      await addTransaction(amount, desc, type, type === 'expense' ? category : null, receiptUrls, opts);
+      setAmount(''); 
+      setDesc(''); 
+      setReceiptUrls([]);
+      setTxAccountId('');
+      setTxCreatedAt('');
+      setTxRate('');
+      setTxCurrency('USD');
       loadTransactions();
+      loadAccounts();
     } catch (e) { console.error(e); }
   };
 
@@ -394,8 +411,43 @@ const Finance = () => {
                   {FINANCE_CATEGORIES.map(c => <option key={c.id} value={c.id}>{c.icon} {c.label}</option>)}
                 </select>
               )}
-              <input type="number" step="0.01" placeholder="Monto ($)" value={amount} onChange={(e) => setAmount(e.target.value)} required style={{ ...inputStyle, flex: 1, minWidth: '100px' }} />
+              <select value={txCurrency} onChange={(e) => {
+                setTxCurrency(e.target.value);
+                if (e.target.value === 'VES' && !txRate) {
+                  setTxRate(rates.bcv || '');
+                }
+              }} style={inputStyle}>
+                <option value="USD">USD ($)</option>
+                <option value="VES">VES (Bs.)</option>
+              </select>
+              <input type="number" step="0.01" placeholder={`Monto (${txCurrency})`} value={amount} onChange={(e) => setAmount(e.target.value)} required style={{ ...inputStyle, flex: 1, minWidth: '100px' }} />
             </div>
+
+            {txCurrency === 'VES' && (
+              <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap' }}>
+                <div style={{ flex: 1, minWidth: '150px' }}>
+                  <label style={{ fontSize: '0.8rem', fontWeight: 'bold', display: 'block', marginBottom: '0.25rem' }}>Tasa de Cambio (Bs./$)</label>
+                  <input type="number" step="0.01" placeholder="Tasa" value={txRate} onChange={(e) => setTxRate(e.target.value)} required style={{ ...inputStyle, width: '100%' }} />
+                </div>
+              </div>
+            )}
+
+            <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap' }}>
+              <div style={{ flex: 1, minWidth: '150px' }}>
+                <label style={{ fontSize: '0.8rem', fontWeight: 'bold', display: 'block', marginBottom: '0.25rem' }}>Asociar a Cuenta/Wallet</label>
+                <select value={txAccountId} onChange={(e) => setTxAccountId(e.target.value)} style={{ ...inputStyle, width: '100%' }}>
+                  <option value="">Ninguna (Efectivo/Otro)</option>
+                  {accounts.map(acc => (
+                    <option key={acc.id} value={acc.id}>{acc.name} ({acc.currency} - Bal: {formatNum(acc.balance)})</option>
+                  ))}
+                </select>
+              </div>
+              <div style={{ flex: 1, minWidth: '150px' }}>
+                <label style={{ fontSize: '0.8rem', fontWeight: 'bold', display: 'block', marginBottom: '0.25rem' }}>Fecha y Hora (Opcional)</label>
+                <input type="datetime-local" value={txCreatedAt} onChange={(e) => setTxCreatedAt(e.target.value)} style={{ ...inputStyle, width: '100%' }} />
+              </div>
+            </div>
+
             <input type="text" placeholder="Descripción (ej. Café, Transporte)" value={desc} onChange={(e) => setDesc(e.target.value)} required style={{ ...inputStyle, width: '100%' }} />
             <button type="submit" style={{ background: type === 'expense' ? 'var(--brutal-pink)' : 'var(--brutal-green)', color: '#000', border: '3px solid #000', padding: '0.75rem', borderRadius: '0', fontWeight: '900', boxShadow: '4px 4px 0 #000', cursor: 'pointer' }}>
               Guardar

@@ -152,22 +152,39 @@ export const deleteNote = (id) => deleteDoc(doc(db, "notes", id));
 // Toda transacción guarda su equivalente en USD (amountUSD) para sumar en una sola
 // moneda. En Bs se divide por la tasa (Binance por defecto, o una manual puntual).
 export const addTransaction = async (amount, description, type = 'expense', category = null, telegramFileIds = null, opts = {}) => {
-  const { currency = 'USD', rate = null } = opts || {};
+  const { currency = 'USD', rate = null, accountId = null, createdAt = null } = opts || {};
   const amt = parseFloat(amount) || 0;
   const amountUSD = currency === 'VES' && rate ? amt / parseFloat(rate) : amt;
 
   const payload = {
     userId: uid(), amount: amt, currency, description, type, category,
     amountUSD: Number(amountUSD.toFixed(2)),
-    createdAt: new Date().toISOString()
+    createdAt: createdAt || new Date().toISOString()
   };
   if (rate) payload.rate = parseFloat(rate);
+  if (accountId) payload.accountId = accountId;
   if (telegramFileIds) {
     payload.telegramFileIds = Array.isArray(telegramFileIds) ? telegramFileIds : [telegramFileIds];
     payload.telegramFileId = payload.telegramFileIds[0] || null; // for backward compatibility
   }
 
   const docRef = await addDoc(collection(db, "transactions"), payload);
+  
+  if (accountId) {
+    try {
+      const accRef = doc(db, "accounts", accountId);
+      const accSnap = await getDoc(accRef);
+      if (accSnap.exists()) {
+        const curBal = parseFloat(accSnap.data().balance) || 0;
+        const change = type === 'expense' ? -amt : amt;
+        const nextBal = Number((curBal + change).toFixed(2));
+        await updateDoc(accRef, { balance: nextBal, updatedAt: new Date().toISOString() });
+      }
+    } catch (e) {
+      console.error("Error updating account balance:", e);
+    }
+  }
+
   return docRef.id;
 };
 
