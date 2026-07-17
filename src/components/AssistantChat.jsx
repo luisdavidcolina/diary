@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import ReactMarkdown from 'react-markdown';
-import { addTransaction, getTransactions, addJournalEntry, getJournalEntries, addHabitOrTask, getLifestyleItems, queryCollection, updateRecord, deleteRecord, addChatMessage, getChatMessages, getApiUsageLogs, createChatSession } from '../services/db';
+import { addTransaction, getTransactions, addJournalEntry, getJournalEntries, addHabitOrTask, getLifestyleItems, queryCollection, updateRecord, deleteRecord, addChatMessage, getChatMessages, getApiUsageLogs, createChatSession, getBotConfig, saveBotConfig } from '../services/db';
 
 const txUSD = (t) => (t.amountUSD != null ? t.amountUSD : parseFloat(t.amount) || 0);
 const isThisMonth = (iso) => {
@@ -20,6 +20,7 @@ export default function AssistantChat() {
   const [viewMode, setViewMode] = useState('chat'); // kept temporarily just in case
   const [attachedFiles, setAttachedFiles] = useState([]);
   const [isUploading, setIsUploading] = useState(false);
+  const [botConfig, setBotConfig] = useState(null);
   const messagesEndRef = useRef(null);
 
   const scrollToBottom = () => {
@@ -28,6 +29,7 @@ export default function AssistantChat() {
 
   useEffect(() => {
     if (isOpen) {
+      getBotConfig().then(cfg => setBotConfig(cfg));
       if (currentSessionId) {
         getChatMessages(currentSessionId).then(msgs => setMessages(msgs));
       } else {
@@ -261,6 +263,51 @@ export default function AssistantChat() {
           responseContent = txs.length
             ? `🧾 Últimos movimientos:\n${txs.map(t => `${t.type === 'expense' ? '💸' : '💰'} $${txUSD(t).toFixed(2)} — ${t.description || 'Sin concepto'}`).join('\n')}`
             : '🧾 No tienes movimientos aún.';
+        } else if (text.startsWith('/modelo')) {
+          const targetModel = text.replace('/modelo', '').trim();
+          const currentCfg = await getBotConfig();
+          
+          if (!targetModel) {
+            responseContent = `🤖 Modelo actual: *${currentCfg.model || 'openai/gpt-4o-mini'}*\n\nModelos disponibles:\n` +
+              `• /modelo gpt-4o-mini (OpenAI)\n` +
+              `• /modelo gpt-4o (OpenAI)\n` +
+              `• /modelo claude-3-haiku (Anthropic)\n` +
+              `• /modelo claude-3.5-sonnet (Anthropic)\n` +
+              `• /modelo gemini-flash-1.5 (Google)\n` +
+              `• /modelo gemini-pro-1.5 (Google)\n` +
+              `• /modelo llama-3-8b (Meta)\n` +
+              `• /modelo llama-3-70b (Meta)`;
+          } else {
+            const aliases = {
+              'gpt-4o-mini': 'openai/gpt-4o-mini',
+              'gpt-4o': 'openai/gpt-4o',
+              'claude-3-haiku': 'anthropic/claude-3-haiku',
+              'claude-haiku': 'anthropic/claude-3-haiku',
+              'haiku': 'anthropic/claude-3-haiku',
+              'claude-3.5-sonnet': 'anthropic/claude-3.5-sonnet',
+              'claude-sonnet': 'anthropic/claude-3.5-sonnet',
+              'sonnet': 'anthropic/claude-3.5-sonnet',
+              'gemini-flash': 'google/gemini-flash-1.5',
+              'gemini-flash-1.5': 'google/gemini-flash-1.5',
+              'flash': 'google/gemini-flash-1.5',
+              'gemini-pro': 'google/gemini-pro-1.5',
+              'gemini-pro-1.5': 'google/gemini-pro-1.5',
+              'pro': 'google/gemini-pro-1.5',
+              'llama-3-8b': 'meta-llama/llama-3-8b-instruct',
+              'llama-8b': 'meta-llama/llama-3-8b-instruct',
+              'llama-3-70b': 'meta-llama/llama-3-70b-instruct',
+              'llama-70b': 'meta-llama/llama-3-70b-instruct'
+            };
+            const canonical = aliases[targetModel.toLowerCase()];
+            if (canonical) {
+              const updated = { ...currentCfg, model: canonical };
+              await saveBotConfig(updated);
+              setBotConfig(updated);
+              responseContent = `🤖 Motor de IA cambiado con éxito a:\n*${canonical}*`;
+            } else {
+              responseContent = `⚠️ Modelo no reconocido. Escribe \`/modelo\` para ver las opciones válidas.`;
+            }
+          }
         } else if (text === '/tareas') {
           const pend = (await getLifestyleItems()).filter(i => i.category === 'task' && !i.isCompleted);
           responseContent = pend.length
@@ -280,6 +327,7 @@ export default function AssistantChat() {
 • /gastos — últimos movimientos
 • /tareas — pendientes
 • /creditos — saldo de IA
+• /modelo — ver/cambiar motor de IA
 
 Si no usas la barra (/), la IA entiende tus mensajes naturalmente.`;
         } else {
@@ -407,8 +455,13 @@ Si no usas la barra (/), la IA entiende tus mensajes naturalmente.`;
           <div style={{ padding: '1rem', background: 'var(--brutal-pink)', borderBottom: '4px solid #000', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                <h3 style={{ margin: 0, fontSize: '1.2rem', fontWeight: 900, textTransform: 'uppercase', color: '#000' }}>
+                <h3 style={{ margin: 0, fontSize: '1.2rem', fontWeight: 900, textTransform: 'uppercase', color: '#000', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
                   ✨ Luisda Bot
+                  {botConfig?.model && (
+                    <span style={{ fontSize: '0.6rem', background: '#000', color: '#fff', padding: '0.1rem 0.35rem', fontWeight: 'bold' }}>
+                      {botConfig.model.split('/')[1] || botConfig.model}
+                    </span>
+                  )}
                 </h3>
               </div>
               {dailyCostInfo && (

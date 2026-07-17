@@ -303,7 +303,7 @@ REGLAS OPERATIVAS (prioridad alta):
         "Authorization": `Bearer ${apiKey}`
       },
       body: JSON.stringify({
-        model: 'openai/gpt-4o-mini',
+        model: brain.config?.model || 'openai/gpt-4o-mini',
         messages: [
           { role: 'system', content: systemPrompt },
           { role: 'user', content: text }

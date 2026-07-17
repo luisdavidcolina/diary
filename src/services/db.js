@@ -58,7 +58,8 @@ export const DEFAULT_BOT_CONFIG = {
   tone: 'cercano',
   responseLength: 'corto',
   useEmojis: true,
-  customRules: []
+  customRules: [],
+  model: 'openai/gpt-4o-mini'
 };
 
 export async function getBotConfig() {

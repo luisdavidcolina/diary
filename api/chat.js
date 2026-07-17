@@ -277,7 +277,7 @@ REGLAS:
         "Authorization": `Bearer ${apiKey}`
       },
       body: JSON.stringify({
-        model: 'openai/gpt-4o-mini',
+        model: brain.config?.model || 'openai/gpt-4o-mini',
         messages: formattedMessages,
         tools: tools,
         temperature: 0.7

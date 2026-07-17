@@ -19,6 +19,17 @@ const LENGTHS = [
   { id: 'detallado', label: 'Detallado' }
 ];
 
+const MODELS = [
+  { id: 'openai/gpt-4o-mini', label: 'GPT-4o mini (OpenAI)' },
+  { id: 'openai/gpt-4o', label: 'GPT-4o (OpenAI)' },
+  { id: 'anthropic/claude-3-haiku', label: 'Claude 3 Haiku (Anthropic)' },
+  { id: 'anthropic/claude-3.5-sonnet', label: 'Claude 3.5 Sonnet (Anthropic)' },
+  { id: 'google/gemini-flash-1.5', label: 'Gemini 1.5 Flash (Google)' },
+  { id: 'google/gemini-pro-1.5', label: 'Gemini 1.5 Pro (Google)' },
+  { id: 'meta-llama/llama-3-8b-instruct', label: 'Llama 3 8B (Meta)' },
+  { id: 'meta-llama/llama-3-70b-instruct', label: 'Llama 3 70B (Meta)' }
+];
+
 const BotConfig = () => {
   const [activeTab, setActiveTab] = useState('config'); // 'config', 'chats', 'api'
   
@@ -115,6 +126,11 @@ const BotConfig = () => {
 
             <label className="cfg-label">Nombre del bot</label>
             <input className="note-input" value={cfg.botName} onChange={(e) => set({ botName: e.target.value })} placeholder="Luisda Bot" />
+
+            <label className="cfg-label">Modelo del Motor de IA (OpenRouter)</label>
+            <select className="note-input" value={cfg.model || 'openai/gpt-4o-mini'} onChange={(e) => set({ model: e.target.value })}>
+              {MODELS.map((m) => <option key={m.id} value={m.id}>{m.label}</option>)}
+            </select>
 
             <label className="cfg-label">Personalidad (cómo es y cómo habla)</label>
             <textarea
