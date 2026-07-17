@@ -247,7 +247,11 @@ const Finance = () => {
   const monthTx = transactions.filter((t) => isThisMonth(t.createdAt));
   const income = monthTx.filter((t) => t.type === 'income').reduce((s, t) => s + parseFloat(t.amountUSD != null ? t.amountUSD : t.amount || 0), 0);
   const expenses = monthTx.filter((t) => t.type === 'expense').reduce((s, t) => s + parseFloat(t.amountUSD != null ? t.amountUSD : t.amount || 0), 0);
-  const spentBy = (cat) => monthTx.filter((t) => t.type === 'expense' && t.category === cat).reduce((s, t) => s + parseFloat(t.amountUSD != null ? t.amountUSD : t.amount || 0), 0);
+  const spentBy = (cat) => {
+    const exp = monthTx.filter((t) => t.type === 'expense' && t.category === cat).reduce((s, t) => s + parseFloat(t.amountUSD != null ? t.amountUSD : t.amount || 0), 0);
+    const inc = monthTx.filter((t) => t.type === 'income' && t.category === cat).reduce((s, t) => s + parseFloat(t.amountUSD != null ? t.amountUSD : t.amount || 0), 0);
+    return Math.max(0, exp - inc);
+  };
 
   return (
     <div style={{ animation: 'fadeInUp 0.6s ease' }}>
