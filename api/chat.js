@@ -37,7 +37,7 @@ export default async function handler(req, res) {
               amount: { type: "number", description: "El monto de la transacción (ej. 15.5)" },
               description: { type: "string", description: "Descripción de la transacción (ej. 'Taxi')" },
               type: { type: "string", description: "El tipo: debe ser 'expense' (gasto) o 'income' (ingreso)" },
-              category: { type: "string", description: "Para gastos, debe ser una de: 'house', 'food', 'transport', 'fun', 'remittances', 'other'" }
+              category: { type: "string", description: "Para gastos, debe ser una de: 'house' (gastos de casa/remesas), 'food_out' (comida/delivery), 'transport' (transporte/taxi), 'recreation' (recreación/salidas), 'other'" }
             },
             required: ["amount", "description", "type"]
           }
